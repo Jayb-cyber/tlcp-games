@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Search Engine Optimization (SEO) -->
+  <title>TLCP@Games | Free CEFR Language Learning Browser Games</title>
+  <meta name="title" content="TLCP@Games | Free CEFR Language Learning Browser Games">
+  <meta name="description" content="Free, open-source educational browser games mapped to CEFR proficiency levels (Pre-A1, A1-B1, B2+). Master English and Mandarin Chinese vocabulary, grammar, and pronunciation through interactive play.">
+  <meta name="keywords" content="TLCP, TLCP Games, CEFR games, language learning games, learn Mandarin online, ESL browser games, free educational games, English language acquisition, Chinese pinyin game, open source educational games, Pre-A1, A1, B1, B2">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="TLCP Project">
+  <link rel="canonical" href="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/">
+
+  <!-- Google Search Console Verification (Replace with your token) -->
+  <meta name="google-site-verification" content="PASTE_YOUR_VERIFICATION_TOKEN_HERE" />
+
+  <!-- Open Graph / Facebook / Discord / LinkedIn -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/">
+  <meta property="og:title" content="TLCP@Games | Free CEFR Educational Video Games">
+  <meta property="og:description" content="Play free browser games engineered for English and Mandarin language acquisition, calibrated across CEFR benchmarks.">
+  <meta property="og:image" content="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/preview-card.png">
+
+  <!-- Twitter / X Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TLCP@Games | Free CEFR Language Learning Games">
+  <meta name="twitter:description" content="Free browser games designed for English and Mandarin learners across CEFR Pre-A1 to B2+.">
+  <meta name="twitter:image" content="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/preview-card.png">
+
+  <!-- Google Structured Data (Schema.org) for Rich Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "TLCP@Games",
+    "applicationCategory": "EducationalGame",
+    "operatingSystem": "Any modern web browser",
+    "inLanguage": ["en", "zh-Hant", "zh-Hans"],
+    "isAccessibleForFree": true,
+    "educationalLevel": ["CEFR Pre-A1", "CEFR A1", "CEFR A2", "CEFR B1", "CEFR B2"],
+    "description": "Open-source browser games structured for English and Mandarin language education across CEFR levels.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #F5F5F7;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --card-border: rgba(0, 0, 0, 0.06);
+      --text-main: #1D1D1F;
+      --text-muted: #86868B;
+      --accent-pill: #0071E3;
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.45;
+      padding-bottom: 90px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background-color: rgba(245, 245, 247, 0.8);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      z-index: 100;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      margin-left: 20px;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover { color: var(--text-main); }
+
+    .hero {
+      text-align: center;
+      padding: 64px 20px 40px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 19px;
+      color: var(--text-muted);
+      font-weight: 400;
+      max-width: 620px;
+      margin: 0 auto 32px;
+    }
+
+    /* Apple-style Segmented Control */
+    .filter-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 48px;
+    }
+    .segmented-control {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 980px;
+      padding: 3px;
+      display: inline-flex;
+      gap: 2px;
+    }
+    .tab-btn {
+      border: none;
+      background: none;
+      padding: 8px 22px;
+      border-radius: 980px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tab-btn.active {
+      background: #FFFFFF;
+      color: var(--text-main);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Cards Grid */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .game-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .game-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .cefr-tag {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 10px;
+      border-radius: 980px;
+      background: #E8E8ED;
+      color: #333336;
+    }
+    .lang-tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 980px;
+      background: #EBF4FF;
+      color: #0071E3;
+    }
+    .game-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .game-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      margin-bottom: 24px;
+    }
+    .play-link {
+      display: inline-block;
+      text-align: center;
+      background: var(--text-main);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 980px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s ease;
+    }
+    .play-link:hover {
+      background: #333336;
+    }
+
+    /* Fixed Floating Ko-fi Anchor */
+    .kofi-float {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #FFFFFF;
+      color: var(--text-main);
+      border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 10px 18px;
+      border-radius: 980px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 999;
+    }
+    .kofi-float:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="#" class="brand">TLCP@Games</a>
+    <div class="nav-links">
+      <a href="https://github.com/YOUR_GITHUB_USERNAME/tlcp-games" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://ko-fi.com/YOUR_KOFI_HANDLE" target="_blank" rel="noopener">Support</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Language Learning, Leveled.</h1>
+      <p>Free, browser-based games aligned with CEFR benchmarks. Designed for intuitive English and Mandarin acquisition.</p>
+      
+      <div class="filter-wrapper">
+        <div class="segmented-control" role="tablist">
+          <button class="tab-btn active" onclick="filterGames('all')" role="tab">All Levels</button>
+          <button class="tab-btn" onclick="filterGames('pre-a1')" role="tab">Pre-A1</button>
+          <button class="tab-btn" onclick="filterGames('a1-b1')" role="tab">A1–B1</button>
+          <button class="tab-btn" onclick="filterGames('b2')" role="tab">B2+</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="game-grid" id="grid">
+      <!-- Pre-A1 Game -->
+      <article class="game-card" data-level="pre-a1">
+        <div>
+          <div class="badge-row">
+            <span class="cefr-tag">Pre-A1</span>
+            <span class="lang-tag">English / Mandarin</span>
+          </div>
+          <h2 class="game-title">Sound Safari</h2>
+          <p class="game-desc">Auditory recognition game mapping basic phonics and Mandarin Pinyin initials to visual cues.</p>
+        </div>
+        <a href="./games/sound-safari/" class="play-link">Play Game</a>
+      </article>
+
+      <!-- A1-B1 Game -->
+      <article class="game-card" data-level="a1-b1">
+        <div>
+          <div class="badge-row">
+            <span class="cefr-tag">A1–B1</span>
+            <span class="lang-tag">Mandarin</span>
+          </div>
+          <h2 class="game-title">Tonal Runner</h2>
+          <p class="game-desc">Fast-paced rhythm runner practicing tone pitch contours (1st through 4th tones) in real time.</p>
+        </div>
+        <a href="./games/tonal-runner/" class="play-link">Play Game</a>
+      </article>
+
+      <!-- B2+ Game -->
+      <article class="game-card" data-level="b2">
+        <div>
+          <div class="badge-row">
+            <span class="cefr-tag">B2+</span>
+            <span class="lang-tag">English</span>
+          </div>
+          <h2 class="game-title">Idiom Chronicles</h2>
+          <p class="game-desc">Contextual text-adventure exploring metaphorical competence, nuanced collocations, and pragmatics.</p>
+        </div>
+        <a href="./games/idiom-chronicles/" class="play-link">Play Game</a>
+      </article>
+    </section>
+  </main>
+
+  <!-- Floating Ko-fi Action -->
+  <a href="https://ko-fi.com/YOUR_KOFI_HANDLE" class="kofi-float" target="_blank" rel="noopener">
+    <span>☕ Support on Ko-fi</span>
+  </a>
+
+  <script>
+    function filterGames(level) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      const cards = document.querySelectorAll('.game-card');
+      cards.forEach(card => {
+        if (level === 'all' || card.getAttribute('data-level') === level) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
