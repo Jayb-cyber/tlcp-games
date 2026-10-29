@@ -121,7 +121,13 @@ All donations go directly toward game design, vector illustrations, and keeping 
 Distributed under the **MIT License**. See [`LICENSE`](https://www.google.com/search?q=LICENSE) for full details. Anyone is free to adapt, extend, and fork this codebase for their own educational projects.
 
 ```
+## 🔒 Privacy & Analytics
 
+TLCP@Games respects learner privacy—especially in classroom settings.
+
+* **No Cookies & No Personal Data:** We do not collect names, emails, IP addresses, or browser fingerprinting.
+* **Privacy-Friendly Metrics:** We use [GoatCounter](https://www.goatcounter.com/), an open-source web analytics platform, solely to monitor aggregate page views (e.g., game popularity and total visits).
+* **Classroom-Safe:** 100% compliant with GDPR, CCPA, and school privacy standards. No tracking cookies or advertising networks are used.
 ---
 
 ### Setup Checklist
