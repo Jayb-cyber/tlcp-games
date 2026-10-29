@@ -1,7 +1,7 @@
 ```markdown
 # TLCP@Games 🎮
 
-> Free, open-source educational browser games mapped to CEFR language proficiency benchmarks (English & Mandarin Chinese).
+> Free, open-source educational browser games mapped to CEFR language proficiency benchmarks (English & Mandarin Chinese). Currently in open beta, please feel free to report any bugs/issues you find.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Support on Ko-fi](https://img.shields.io/badge/Ko--fi-Support%20Project-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/YOUR_KOFI_HANDLE)
@@ -110,9 +110,9 @@ Contributions from language teachers, linguists, game designers, and frontend de
 
 ## ☕ Support & Donations
 
-TLCP@Games is an independent, non-profit open-source initiative. If you find these games helpful in your classroom or self-study, consider supporting server uptime and asset production:
+TLCP@Games is an independent, non-profit open-source initiative (currently solo-dev, but if you'd like to join the team, please feel free to contact me). If you find these games helpful in your classroom or self-study, please consider a donation:
 
-All donations go directly toward sound design, vector illustrations, and keeping the games 100% ad-free.
+All donations go directly toward game design, vector illustrations, and keeping the games 100% ad-free.
 
 ---
 
