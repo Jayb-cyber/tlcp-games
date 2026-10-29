@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OG English</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+    
+    <a href="../../index.html" id="back-hub-btn">
+    <span>←</span>
+    <span>TLCP@Games</span>
+  </a>
+
+    #certificate-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 9999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .cert-modal-card {
+      background: #1e272e;
+      border: 3px solid #f1c40f;
+      border-radius: 12px;
+      padding: 18px 24px;
+      max-width: 860px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    }
+
+    .cert-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+
+    .cert-controls label {
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .cert-controls input {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 2px solid #00d2d3;
+      background: #2f3640;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: bold;
+      outline: none;
+      width: 220px;
+    }
+
+    .cert-btn {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      color: #ffffff;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+    }
+
+    .cert-btn:hover {
+      transform: scale(1.04);
+      opacity: 0.95;
+    }
+
+    .cert-btn-png {
+      background: #00b894;
+    }
+
+    .cert-btn-print {
+      background: #0984e3;
+    }
+
+    .cert-btn-close {
+      background: #d63031;
+    }
+
+    #certificate-preview-img {
+      max-width: 100%;
+      max-height: 70vh;
+      border-radius: 6px;
+      border: 2px solid #f1c40f;
+      background: #ffffff;
+    }
+
+    #certificate-print-area {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: landscape;
+        margin: 0;
+      }
+      body {
+        background: #ffffff;
+        display: block;
+        height: auto;
+        overflow: visible;
+      }
+      canvas,
+      #certificate-modal {
+        display: none !important;
+      }
+      #certificate-print-area {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        width: 100vw;
+        height: 100vh;
+      }
+      #certificate-print-area img {
+        max-width: 96vw;
+        max-height: 94vh;
+        object-fit: contain;
+      }
+    }
+  </style>
+  <!-- 1. Load Phaser library first -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+</head>
+<body>
+  <div id="certificate-modal">
+    <div class="cert-modal-card">
+      <div class="cert-controls">
+        <label for="cert-student-name">Student Name / 學生姓名:</label>
+        <input id="cert-student-name" type="text" value="English Adventurer" maxlength="32" />
+        <button id="cert-download-png" class="cert-btn cert-btn-png">💾 Save PNG / 下載圖片</button>
+        <button id="cert-print-pdf" class="cert-btn cert-btn-print">🖨️ Print / Save PDF</button>
+        <button id="cert-close-btn" class="cert-btn cert-btn-close">✖ Close / 關閉</button>
+      </div>
+      <img id="certificate-preview-img" alt="Certificate of Completion" />
+    </div>
+  </div>
+
+  <div id="certificate-print-area"></div>
+
+  <!-- 2. Load your game script at the bottom of body -->
+  <script src="game.js"></script>
+</body>
+</html>
