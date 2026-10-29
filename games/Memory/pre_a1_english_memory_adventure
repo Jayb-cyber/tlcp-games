@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-A1 English Memory Adventure | 英語記憶大冒險</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <!-- jsPDF for direct PDF certificate export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Google Fonts: Nunito & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;800;900&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Nunito', 'Noto Sans TC', 'sans-serif'],
+          },
+          colors: {
+            kid: {
+              yellow: '#FFDE59',
+              orange: '#FF914D',
+              coral: '#FF5757',
+              blue: '#5CE1E6',
+              deepblue: '#004AAD',
+              green: '#7ED957',
+              purple: '#CB6CE6',
+              cream: '#FFF9E6',
+            }
+          },
+          boxShadow: {
+            'kid': '0 6px 0 0 rgba(0, 0, 0, 0.15)',
+            'kid-pressed': '0 2px 0 0 rgba(0, 0, 0, 0.15)',
+            'card': '0 8px 16px -2px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            'card-hover': '0 12px 24px -2px rgba(0, 0, 0, 0.15), 0 6px 10px -2px rgba(0, 0, 0, 0.08)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Card 3D Flip Styles */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+    
+    /* Smooth Pulse and Float Animations */
+    @keyframes gentle-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .animate-gentle-bounce {
+      animation: gentle-bounce 2.2s infinite ease-in-out;
+    }
+    
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+    .animate-wiggle {
+      animation: wiggle 0.6s ease-in-out infinite;
+    }
+
+    /* Print Styles for Certificate */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #certificate-print-area, #certificate-print-area * {
+        visibility: visible;
+      }
+      #certificate-print-area {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+      }
+      #certificateCanvas {
+        max-width: 100%;
+        max-height: 100%;
+        box-shadow: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-100 via-amber-50 to-emerald-50 min-h-screen text-slate-800 font-sans selection:bg-amber-200 selection:text-amber-900 pb-12">
+
+  <!-- TOP APP BAR -->
+  <header class="bg-white/95 backdrop-blur-md sticky top-0 z-30 shadow-sm border-b border-sky-100 px-4 py-2.5">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- LOGO & TITLE -->
+      <div class="flex items-center gap-2.5 cursor-pointer" id="btnLogoHome">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center shadow-md text-white text-xl font-black transform hover:rotate-6 transition">
+          🎮
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-tight flex items-center gap-1.5">
+            <span>Pre-A1 英語記憶大冒險</span>
+            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-300">CEFR Pre-A1</span>
+          </h1>
+          <p class="text-xs text-slate-500 font-semibold hidden sm:block">English Memory Game for Young Learners</p>
+        </div>
+      </div>
+
+      <!-- ROUND & LEVEL BADGE -->
+      <div class="flex items-center gap-2">
+        <!-- Level badge -->
+        <div id="levelDisplayBadge" class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
+          <span>🌟</span>
+          <span id="txtCurrentLevel">初級 Easy</span>
+        </div>
+
+        <!-- 3 Rounds Progress Pills -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div id="pillRound1" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-amber-400 text-white shadow-sm transition-all duration-300">1</div>
+          <div id="pillRound2" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400 transition-all duration-300">2</div>
+          <div id="pillRound3" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400 transition-all duration-300">3</div>
+        </div>
+      </div>
+
+      <!-- AUDIO & UTILITY CONTROLS -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- BGM Toggle Button -->
+        <button id="btnToggleBGM" title="背景音樂 / Background Music" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1 shadow-sm transition active:scale-95">
+          <span id="iconBGM">🎵</span>
+          <span class="hidden md:inline text-slate-600 font-bold" id="labelBGM">音樂：開</span>
+        </button>
+
+        <!-- SFX Toggle Button -->
+        <button id="btnToggleSFX" title="音效 / Sound Effects" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1 shadow-sm transition active:scale-95">
+          <span id="iconSFX">🔊</span>
+          <span class="hidden md:inline text-slate-600 font-bold" id="labelSFX">音效：開</span>
+        </button>
+
+        <!-- Voice Pronounce Toggle Button -->
+        <button id="btnToggleVoice" title="英語發音 / Voice Pronunciation" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1 shadow-sm transition active:scale-95">
+          <span id="iconVoice">🗣️</span>
+          <span class="hidden md:inline text-slate-600 font-bold" id="labelVoice">發音：開</span>
+        </button>
+
+        <!-- Instructions Button -->
+        <button id="btnShowInstructions" class="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-amber-950 font-extrabold text-xs flex items-center gap-1 shadow-sm transition active:scale-95">
+          <span>📖</span>
+          <span>遊戲說明</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl mx-auto px-4 pt-4">
+
+    <!-- LEVEL SELECTION & CONTROL BAR -->
+    <section class="bg-white rounded-3xl p-3.5 sm:p-4 shadow-card border border-slate-100 mb-4 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- LEVEL TABS -->
+      <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+        <span class="text-xs font-black text-slate-400 uppercase tracking-wider shrink-0 mr-1">難度 Level:</span>
+        <button id="btnSelectEasy" class="level-tab-btn px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 bg-emerald-500 text-white shadow-kid active:translate-y-0.5" data-level="easy">
+          <span>🌱</span>
+          <span>初級 Easy</span>
+          <span class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full font-bold">6 對 (12張)</span>
+        </button>
+        <button id="btnSelectMedium" class="level-tab-btn px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 active:translate-y-0.5" data-level="medium">
+          <span>⭐</span>
+          <span>中級 Medium</span>
+          <span class="text-[10px] bg-slate-200/80 px-1.5 py-0.5 rounded-full font-bold">8 對 (16張)</span>
+        </button>
+        <button id="btnSelectHard" class="level-tab-btn px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 active:translate-y-0.5" data-level="hard">
+          <span>🔥</span>
+          <span>高級 Hard</span>
+          <span class="text-[10px] bg-slate-200/80 px-1.5 py-0.5 rounded-full font-bold">10 對 (20張)</span>
+        </button>
+      </div>
+
+      <!-- ACTION BUTTONS: HINT & RESTART -->
+      <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+        <!-- MANDARIN HINT BUTTON -->
+        <button id="btnMandarinHint" class="relative group px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs sm:text-sm shadow-kid active:translate-y-0.5 transition flex items-center gap-2">
+          <span class="text-base animate-bounce">💡</span>
+          <span>中文提示 Mandarin Hint</span>
+          <span id="hintCountBadge" class="bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full font-black shadow-inner">3</span>
+        </button>
+
+        <!-- RESTART CURRENT ROUND BUTTON -->
+        <button id="btnRestartRound" class="p-2 sm:px-3 sm:py-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs sm:text-sm flex items-center gap-1.5 transition active:scale-95" title="重新開始本回合">
+          <span>🔄</span>
+          <span class="hidden sm:inline font-black">重新洗牌</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- LIVE GAME STATS DASHBOARD -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5 mb-5">
+      <!-- SCORE CARD -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl shrink-0">
+          🏆
+        </div>
+        <div>
+          <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">總分 Total Score</div>
+          <div id="statScore" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">0</div>
+        </div>
+      </div>
+
+      <!-- TIMER CARD -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl shrink-0">
+          ⏱️
+        </div>
+        <div>
+          <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">累積時間 Total Time</div>
+          <div id="statTime" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight font-mono">00:00</div>
+        </div>
+      </div>
+
+      <!-- MOVES / FLIPS CARD -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+          🎴
+        </div>
+        <div>
+          <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">翻牌次數 Flips</div>
+          <div id="statMoves" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">0</div>
+        </div>
+      </div>
+
+      <!-- COMBO STREAK CARD -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl shrink-0">
+          🔥
+        </div>
+        <div>
+          <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">連對獎勵 Combo</div>
+          <div id="statStreak" class="text-xl sm:text-2xl font-black text-rose-500 tracking-tight">0x</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARDS BOARD CONTAINER -->
+    <section class="bg-white/80 backdrop-blur-sm rounded-3xl p-3 sm:p-6 shadow-card border border-white min-h-[460px] flex flex-col justify-center relative">
+      
+      <!-- FLOATING POPUP NOTIFICATIONS (Points & Combos) -->
+      <div id="floatingPointsContainer" class="absolute inset-0 pointer-events-none overflow-hidden z-20"></div>
+
+      <!-- CARDS GRID -->
+      <div id="gameBoard" class="grid gap-3 sm:gap-4 mx-auto w-full max-w-4xl transition-all duration-300">
+        <!-- Dynamically populated cards -->
+      </div>
+
+      <!-- PROGRESS SUMMARY BAR AT BOTTOM OF BOARD -->
+      <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between text-xs text-slate-500 font-bold px-2 gap-2">
+        <div class="flex items-center gap-2">
+          <span>配對進度 Matching:</span>
+          <span id="txtPairsMatched" class="text-indigo-600 font-black text-sm">0 / 6 對</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1 text-emerald-600">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+            圖片對應英語
+          </span>
+          <span class="flex items-center gap-1 text-amber-600">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+            中文對應英語
+          </span>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==================== MODALS & POPUPS ==================== -->
+
+  <!-- 1. CORRECT MATCH FLOATING CARD POPUP (pops up briefly on matching) -->
+  <div id="modalCorrectMatch" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-emerald-400 max-w-sm w-full text-center transform scale-90 transition-all duration-300" id="modalCorrectBox">
+      
+      <!-- Sparkle Header -->
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black mb-3">
+        <span>✨</span>
+        <span id="txtEncouragement">太棒了！配對成功！</span>
+        <span>✨</span>
+      </div>
+
+      <!-- Word Illustration -->
+      <div id="popupIllustration" class="w-28 h-28 mx-auto my-2 flex items-center justify-center bg-slate-50 rounded-2xl p-2 border border-slate-100 shadow-inner">
+        <!-- SVG Injected here -->
+      </div>
+
+      <!-- English Word with audio speaker button -->
+      <div class="flex items-center justify-center gap-2 mt-2">
+        <h3 id="popupEnglishWord" class="text-3xl font-black text-slate-800 tracking-tight">Apple</h3>
+        <button id="btnReplayAudio" class="w-9 h-9 rounded-full bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white flex items-center justify-center shadow-md transition" title="再次播放發音">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zm-2.5-1.23l-5 4h-3.5c-.55 0-1 .45-1 1v6c0 .55.45 1 1 1h3.5l5 4c.67.53 1.5.06 1.5-.78v-14.44c0-.84-.83-1.31-1.5-.78zm-1.5 13.59l-3.5-2.8h-2.5v-4h2.5l3.5-2.8v9.6z"/></svg>
+        </button>
+      </div>
+
+      <!-- Traditional Chinese Meaning + Zhuyin -->
+      <div class="mt-1 flex items-center justify-center gap-2">
+        <span id="popupMandarinWord" class="text-xl font-extrabold text-amber-600">蘋果</span>
+        <span id="popupZhuyinWord" class="text-xs font-bold text-slate-400 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">ㄆㄧㄥˊ ㄍㄨㄛˇ</span>
+      </div>
+
+      <!-- Word Category Badge -->
+      <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-400">
+        <span id="popupCategory">類別：水果食物 Food</span>
+        <span class="text-emerald-600 font-extrabold">+100 分</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 2. ROUND COMPLETE MODAL (between Round 1 -> 2, and 2 -> 3) -->
+  <div id="modalRoundComplete" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-400 max-w-md w-full text-center transform scale-90 transition-all duration-300">
+      
+      <!-- Big Trophy Icon -->
+      <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-100 text-amber-500 text-4xl flex items-center justify-center shadow-inner mb-3 animate-gentle-bounce">
+        🎉
+      </div>
+
+      <h3 id="roundCompleteTitle" class="text-2xl font-black text-slate-800">第一回合通關！</h3>
+      <p class="text-sm font-bold text-slate-500 mt-1">Round Completed! 表現非常優秀！</p>
+
+      <!-- Round Stats Summary -->
+      <div class="bg-amber-50/70 rounded-2xl p-4 my-5 border border-amber-200 grid grid-cols-2 gap-3 text-left">
+        <div>
+          <div class="text-xs font-extrabold text-slate-400">本回合分數 Round Score</div>
+          <div id="lblRoundScore" class="text-xl font-black text-amber-600">+800 分</div>
+        </div>
+        <div>
+          <div class="text-xs font-extrabold text-slate-400">累積總分 Total Score</div>
+          <div id="lblRoundTotalScore" class="text-xl font-black text-slate-800">1,600 分</div>
+        </div>
+        <div>
+          <div class="text-xs font-extrabold text-slate-400">翻牌次數 Total Moves</div>
+          <div id="lblRoundMoves" class="text-base font-extrabold text-slate-700">14 次</div>
+        </div>
+        <div>
+          <div class="text-xs font-extrabold text-slate-400">下一個挑戰 Next</div>
+          <div id="lblNextRoundInfo" class="text-base font-extrabold text-indigo-600">第 2 回合 / 共 3 回合</div>
+        </div>
+      </div>
+
+      <button id="btnProceedNextRound" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-base shadow-kid active:translate-y-0.5 transition flex items-center justify-center gap-2">
+        <span>前進下一回合！ Next Round</span>
+        <span>👉</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- 3. CERTIFICATE CELEBRATION MODAL (after Round 3 completion) -->
+  <div id="modalCertificate" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 overflow-y-auto p-4 sm:p-6 transition-all duration-300 opacity-0 pointer-events-none flex flex-col items-center justify-center min-h-screen">
+    
+    <div class="bg-white rounded-3xl p-5 sm:p-8 shadow-2xl border-4 border-amber-400 max-w-4xl w-full text-center transform scale-95 transition-all duration-300 my-auto">
+      
+      <!-- Celebration Header -->
+      <div class="flex flex-col sm:flex-row items-center justify-between pb-4 border-b border-slate-100 gap-3">
+        <div class="text-left">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black mb-1">
+            <span>🎓</span>
+            <span>CEFR Pre-A1 通關認證</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-800">恭喜完成 3 回合挑戰！獲得專屬榮譽證書</h2>
+        </div>
+
+        <!-- Student Name Input on Certificate -->
+        <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-2xl border border-slate-200">
+          <label for="inputStudentName" class="text-xs font-black text-slate-500 shrink-0">學生姓名：</label>
+          <input type="text" id="inputStudentName" value="Little Explorer" maxlength="24" class="bg-white text-slate-800 text-xs sm:text-sm font-black px-2.5 py-1 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-400 w-36 sm:w-44 text-center" placeholder="請輸入姓名">
+        </div>
+      </div>
+
+      <!-- CANVAS CERTIFICATE PREVIEW CONTAINER -->
+      <div id="certificate-print-area" class="my-5 w-full flex items-center justify-center overflow-x-auto bg-slate-50 rounded-2xl p-2 sm:p-4 border border-slate-200 shadow-inner">
+        <canvas id="certificateCanvas" width="1200" height="850" class="w-full max-w-3xl h-auto rounded-xl shadow-lg bg-white"></canvas>
+      </div>
+
+      <!-- CERTIFICATE ACTIONS & BUTTONS -->
+      <div class="flex flex-wrap items-center justify-center sm:justify-between gap-3 pt-3 border-t border-slate-100">
+        
+        <!-- Left buttons: Replay / Switch Level -->
+        <div class="flex items-center gap-2">
+          <button id="btnCertPlayAgain" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs sm:text-sm flex items-center gap-1.5 transition active:scale-95">
+            <span>🔄</span>
+            <span>再玩一次 Play Again</span>
+          </button>
+          <button id="btnCertChangeLevel" class="px-4 py-2.5 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-black text-xs sm:text-sm flex items-center gap-1.5 transition active:scale-95">
+            <span>🎚️</span>
+            <span>更換難度 Level</span>
+          </button>
+        </div>
+
+        <!-- Right buttons: Download PNG & Print PDF -->
+        <div class="flex items-center gap-2.5">
+          <button id="btnPrintCertificate" class="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-900 text-white font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-sm active:translate-y-0.5 transition" title="使用瀏覽器列印">
+            <span>🖨️</span>
+            <span>列印證書</span>
+          </button>
+          <button id="btnDownloadPDF" class="px-4 py-2.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-kid active:translate-y-0.5 transition" title="直接下載 PDF 檔案">
+            <span>📄</span>
+            <span>下載 PDF</span>
+          </button>
+          <button id="btnDownloadCertificate" class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex items-center gap-1.5 shadow-kid active:translate-y-0.5 transition" title="下載高解析度 PNG 圖片">
+            <span>🖼️</span>
+            <span>下載 PNG</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 4. BILINGUAL INSTRUCTION PANEL MODAL -->
+  <div id="modalInstructions" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-sky-400 max-w-xl w-full text-left transform scale-90 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl font-bold">
+            📖
+          </div>
+          <div>
+            <h3 class="text-lg sm:text-xl font-black text-slate-800">遊戲說明 How to Play</h3>
+            <p class="text-xs text-slate-400 font-bold">適合 Pre-A1 英語初學者的記憶配對遊戲</p>
+          </div>
+        </div>
+        <button id="btnCloseInstructions" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-black flex items-center justify-center text-sm transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Bilingual Rule Cards -->
+      <div class="space-y-3.5 my-4 text-xs sm:text-sm text-slate-600">
+        
+        <!-- Rule 1: Goal -->
+        <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-100 flex gap-3">
+          <span class="text-2xl shrink-0">🎯</span>
+          <div>
+            <h4 class="font-black text-sky-900 text-sm">遊戲目標 / Objective</h4>
+            <p class="mt-0.5 font-semibold text-sky-800">每次翻開兩張牌，找出相對應的配對！每關共有 <strong>3 個回合 (3 Rounds)</strong>，全部通關即可領取專屬榮譽證書！</p>
+            <p class="text-xs text-sky-600 mt-0.5 font-medium">Flip two cards at a time to find matching pairs! Complete all 3 rounds to earn your official certificate!</p>
+          </div>
+        </div>
+
+        <!-- Rule 2: Matching types -->
+        <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-100 flex gap-3">
+          <span class="text-2xl shrink-0">🎴</span>
+          <div>
+            <h4 class="font-black text-amber-900 text-sm">多元配對模式 / Matching Styles</h4>
+            <ul class="mt-1 space-y-1 font-semibold text-amber-800 list-disc list-inside">
+              <li><strong>圖片與英語 (Picture ↔ English)</strong>：看可愛圖畫配對英文單字。</li>
+              <li><strong>中文與英語 (Mandarin ↔ English)</strong>：繁體中文（附注音符號）配對英文單字。</li>
+            </ul>
+            <p class="text-xs text-amber-600 mt-1 font-medium">Match English words to pictures or Taiwanese Mandarin translations with Zhuyin phonetics.</p>
+          </div>
+        </div>
+
+        <!-- Rule 3: Pronunciation & Audio -->
+        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100 flex gap-3">
+          <span class="text-2xl shrink-0">🗣️</span>
+          <div>
+            <h4 class="font-black text-emerald-900 text-sm">標準英語真人發音 / Audio Pronunciation</h4>
+            <p class="mt-0.5 font-semibold text-emerald-800">配對成功時，遊戲會彈出單字卡並<strong>朗讀正確發音</strong>，讓小朋友邊玩邊學正確音感！</p>
+            <p class="text-xs text-emerald-600 mt-0.5 font-medium">When you match correctly, the game will read out the English word clearly to build listening skills.</p>
+          </div>
+        </div>
+
+        <!-- Rule 4: Hint & Replay -->
+        <div class="p-3.5 rounded-2xl bg-purple-50 border border-purple-100 flex gap-3">
+          <span class="text-2xl shrink-0">💡</span>
+          <div>
+            <h4 class="font-black text-purple-900 text-sm">中文提示按鈕 / Mandarin Hint</h4>
+            <p class="mt-0.5 font-semibold text-purple-800">卡關時，點擊<strong>「中文提示」</strong>按鈕，卡片會發光並短暫提示中文線索喔！（每回合限用 3 次）</p>
+            <p class="text-xs text-purple-600 mt-0.5 font-medium">Need help? Press the Mandarin Hint button to get a glowing clue! (3 hints per round)</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Start button -->
+      <button id="btnStartPlaying" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-black text-base shadow-kid active:translate-y-0.5 transition flex items-center justify-center gap-2">
+        <span>開始遊戲！ Let's Play!</span>
+        <span>🚀</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPT ENGINE ==================== -->
+  <script>
+  /**
+   * PRE-A1 CEFR VOCABULARY DATABASE
+   * Fully localized for Taiwanese Mandarin Native Speakers (繁體中文 + 注音符號 Zhuyin)
+   * High-contrast, friendly SVG illustrations for each word
+   */
+  const VOCABULARY_BANK = [
+    // --- ANIMALS ---
+    {
+      id: 'cat',
+      en: 'Cat',
+      zh: '貓咪',
+      zhuyin: 'ㄇㄠ ㄇㄧ',
+      category: '動物 Animals',
+      color: '#FFF0F5',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <circle cx="50" cy="55" r="32" fill="#FFA94D"/>
+        <!-- Ears -->
+        <polygon points="25,40 18,16 42,28" fill="#FFA94D"/>
+        <polygon points="27,37 23,22 38,29" fill="#FFC9C9"/>
+        <polygon points="75,40 82,16 58,28" fill="#FFA94D"/>
+        <polygon points="73,37 77,22 62,29" fill="#FFC9C9"/>
+        <!-- Eyes -->
+        <circle cx="38" cy="50" r="5" fill="#2B2D42"/>
+        <circle cx="39.5" cy="48.5" r="1.5" fill="#FFFFFF"/>
+        <circle cx="62" cy="50" r="5" fill="#2B2D42"/>
+        <circle cx="63.5" cy="48.5" r="1.5" fill="#FFFFFF"/>
+        <!-- Cheeks -->
+        <ellipse cx="28" cy="58" rx="4" ry="2.5" fill="#FF8787" opacity="0.6"/>
+        <ellipse cx="72" cy="58" rx="4" ry="2.5" fill="#FF8787" opacity="0.6"/>
+        <!-- Nose & Mouth -->
+        <polygon points="50,56 46,53 54,53" fill="#D9480F"/>
+        <path d="M46,60 Q50,64 50,56 Q50,64 54,60" fill="none" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <!-- Whiskers -->
+        <line x1="22" y1="52" x2="10" y2="50" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <line x1="22" y1="56" x2="10" y2="57" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <line x1="78" y1="52" x2="90" y2="50" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <line x1="78" y1="56" x2="90" y2="57" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'dog',
+      en: 'Dog',
+      zh: '狗狗',
+      zhuyin: 'ㄍㄡˇ ㄍㄡˇ',
+      category: '動物 Animals',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Ears -->
+        <ellipse cx="22" cy="50" rx="9" ry="20" fill="#8C5B3F" transform="rotate(-15 22 50)"/>
+        <ellipse cx="78" cy="50" rx="9" ry="20" fill="#8C5B3F" transform="rotate(15 78 50)"/>
+        <!-- Head -->
+        <circle cx="50" cy="50" r="30" fill="#D4A373"/>
+        <!-- White blaze -->
+        <ellipse cx="50" cy="58" rx="14" ry="16" fill="#FAEDCD"/>
+        <!-- Eyes -->
+        <circle cx="38" cy="46" r="4.5" fill="#2B2D42"/>
+        <circle cx="39.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
+        <circle cx="62" cy="46" r="4.5" fill="#2B2D42"/>
+        <circle cx="63.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
+        <!-- Nose -->
+        <ellipse cx="50" cy="54" rx="6" ry="4.5" fill="#2B2D42"/>
+        <!-- Tongue -->
+        <path d="M47,62 Q50,72 53,62 Z" fill="#FF6B6B"/>
+        <path d="M44,60 Q50,65 56,60" fill="none" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'bird',
+      en: 'Bird',
+      zh: '小鳥',
+      zhuyin: 'ㄒㄧㄠˇ ㄋㄧㄠˇ',
+      category: '動物 Animals',
+      color: '#E3FAFC',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Body -->
+        <ellipse cx="48" cy="54" rx="26" ry="22" fill="#3BC9DB"/>
+        <!-- Wing -->
+        <path d="M36,54 C36,44 50,46 56,58 C46,62 36,60 36,54 Z" fill="#15AABF"/>
+        <!-- Beak -->
+        <polygon points="72,50 86,54 72,58" fill="#F59F00"/>
+        <!-- Eye -->
+        <circle cx="62" cy="48" r="4" fill="#2B2D42"/>
+        <circle cx="63" cy="47" r="1.3" fill="#FFFFFF"/>
+        <!-- Tail -->
+        <polygon points="24,54 10,48 12,62" fill="#15AABF"/>
+        <!-- Belly highlight -->
+        <path d="M44,68 Q56,72 64,62" fill="none" stroke="#66D9E8" stroke-width="3" stroke-linecap="round"/>
+        <!-- Legs -->
+        <line x1="44" y1="74" x2="44" y2="84" stroke="#F59F00" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="54" y1="74" x2="54" y2="84" stroke="#F59F00" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'fish',
+      en: 'Fish',
+      zh: '魚兒',
+      zhuyin: 'ㄩˊ ㄦ',
+      category: '動物 Animals',
+      color: '#EBFBEE',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Tail -->
+        <polygon points="26,50 12,34 16,50 12,66" fill="#FF922B"/>
+        <!-- Body -->
+        <ellipse cx="52" cy="50" rx="28" ry="20" fill="#FFA94D"/>
+        <!-- Dorsal fin -->
+        <path d="M44,30 Q56,22 66,33" fill="#FF922B"/>
+        <!-- Eye -->
+        <circle cx="68" cy="47" r="4.5" fill="#FFFFFF"/>
+        <circle cx="69" cy="47" r="3" fill="#2B2D42"/>
+        <circle cx="70" cy="46" r="1" fill="#FFFFFF"/>
+        <!-- Mouth -->
+        <path d="M78,53 Q74,56 78,59" fill="none" stroke="#D9480F" stroke-width="2"/>
+        <!-- Bubbles -->
+        <circle cx="85" cy="42" r="2.5" fill="#74C0FC" opacity="0.8"/>
+        <circle cx="91" cy="35" r="3.5" fill="#74C0FC" opacity="0.6"/>
+      </svg>`
+    },
+    {
+      id: 'rabbit',
+      en: 'Rabbit',
+      zh: '兔子',
+      zhuyin: 'ㄊㄨˋ ˙ㄗ',
+      category: '動物 Animals',
+      color: '#F8F0FC',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Ears -->
+        <ellipse cx="38" cy="28" rx="8" ry="22" fill="#FFFFFF" stroke="#DEE2E6" stroke-width="2"/>
+        <ellipse cx="38" cy="28" rx="4.5" ry="16" fill="#FCC2D7"/>
+        <ellipse cx="62" cy="28" rx="8" ry="22" fill="#FFFFFF" stroke="#DEE2E6" stroke-width="2"/>
+        <ellipse cx="62" cy="28" rx="4.5" ry="16" fill="#FCC2D7"/>
+        <!-- Head -->
+        <circle cx="50" cy="60" r="28" fill="#FFFFFF" stroke="#DEE2E6" stroke-width="2"/>
+        <!-- Cheeks -->
+        <circle cx="34" cy="66" r="4" fill="#FF8787" opacity="0.5"/>
+        <circle cx="66" cy="66" r="4" fill="#FF8787" opacity="0.5"/>
+        <!-- Eyes -->
+        <circle cx="40" cy="56" r="3.5" fill="#2B2D42"/>
+        <circle cx="60" cy="56" r="3.5" fill="#2B2D42"/>
+        <!-- Nose & Mouth -->
+        <polygon points="50,62 47,59 53,59" fill="#F06595"/>
+        <path d="M47,65 Q50,68 53,65" fill="none" stroke="#2B2D42" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'bear',
+      en: 'Bear',
+      zh: '熊熊',
+      zhuyin: 'ㄒㄩㄥˊ ㄒㄩㄥˊ',
+      category: '動物 Animals',
+      color: '#FFF4E6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Ears -->
+        <circle cx="28" cy="32" r="12" fill="#A0674B"/>
+        <circle cx="28" cy="32" r="6" fill="#D4A373"/>
+        <circle cx="72" cy="32" r="12" fill="#A0674B"/>
+        <circle cx="72" cy="32" r="6" fill="#D4A373"/>
+        <!-- Head -->
+        <circle cx="50" cy="55" r="30" fill="#A0674B"/>
+        <!-- Snout -->
+        <ellipse cx="50" cy="62" rx="14" ry="11" fill="#D4A373"/>
+        <!-- Eyes -->
+        <circle cx="40" cy="50" r="3.5" fill="#2B2D42"/>
+        <circle cx="60" cy="50" r="3.5" fill="#2B2D42"/>
+        <!-- Nose & Mouth -->
+        <ellipse cx="50" cy="58" rx="5" ry="3.5" fill="#2B2D42"/>
+        <path d="M50,62 L50,66 M46,66 Q50,69 54,66" fill="none" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'duck',
+      en: 'Duck',
+      zh: '鴨子',
+      zhuyin: 'ㄧㄚ ˙ㄗ',
+      category: '動物 Animals',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Body -->
+        <ellipse cx="45" cy="58" rx="28" ry="20" fill="#FFD43B"/>
+        <!-- Head -->
+        <circle cx="62" cy="42" r="16" fill="#FFD43B"/>
+        <!-- Beak -->
+        <ellipse cx="80" cy="44" rx="10" ry="5" fill="#FF922B"/>
+        <!-- Eye -->
+        <circle cx="66" cy="39" r="3" fill="#2B2D42"/>
+        <circle cx="67" cy="38" r="1" fill="#FFFFFF"/>
+        <!-- Wing -->
+        <ellipse cx="40" cy="58" rx="14" ry="9" fill="#FCC419"/>
+        <!-- Tail -->
+        <polygon points="18,52 28,58 20,64" fill="#FFD43B"/>
+      </svg>`
+    },
+    {
+      id: 'pig',
+      en: 'Pig',
+      zh: '小豬',
+      zhuyin: 'ㄒㄧㄠˇ ㄓㄨ',
+      category: '動物 Animals',
+      color: '#FFF0F6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Ears -->
+        <polygon points="26,38 20,18 38,26" fill="#F783AC"/>
+        <polygon points="74,38 80,18 62,26" fill="#F783AC"/>
+        <!-- Head -->
+        <circle cx="50" cy="52" r="30" fill="#FCC2D7"/>
+        <!-- Snout -->
+        <ellipse cx="50" cy="58" rx="14" ry="10" fill="#F783AC"/>
+        <ellipse cx="45" cy="58" rx="2.5" ry="4" fill="#A61E4D"/>
+        <ellipse cx="55" cy="58" rx="2.5" ry="4" fill="#A61E4D"/>
+        <!-- Eyes -->
+        <circle cx="38" cy="44" r="3.5" fill="#2B2D42"/>
+        <circle cx="62" cy="44" r="3.5" fill="#2B2D42"/>
+        <!-- Cheeks -->
+        <circle cx="28" cy="56" r="4" fill="#F06595" opacity="0.6"/>
+        <circle cx="72" cy="56" r="4" fill="#F06595" opacity="0.6"/>
+      </svg>`
+    },
+    {
+      id: 'elephant',
+      en: 'Elephant',
+      zh: '大象',
+      zhuyin: 'ㄉㄚˋ ㄒㄧㄤˋ',
+      category: '動物 Animals',
+      color: '#F1F3F5',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Ears -->
+        <ellipse cx="26" cy="46" rx="14" ry="18" fill="#ADB5BD"/>
+        <ellipse cx="26" cy="46" rx="9" ry="13" fill="#CED4DA"/>
+        <!-- Head -->
+        <circle cx="54" cy="48" r="26" fill="#CED4DA"/>
+        <!-- Trunk -->
+        <path d="M54,58 Q56,76 70,76 Q78,76 74,68" fill="none" stroke="#CED4DA" stroke-width="9" stroke-linecap="round"/>
+        <!-- Eye -->
+        <circle cx="48" cy="44" r="3.5" fill="#2B2D42"/>
+        <circle cx="49" cy="43" r="1" fill="#FFFFFF"/>
+        <!-- Cheek -->
+        <circle cx="40" cy="52" r="3.5" fill="#FF8787" opacity="0.6"/>
+      </svg>`
+    },
+
+    // --- FRUITS & FOOD ---
+    {
+      id: 'apple',
+      en: 'Apple',
+      zh: '蘋果',
+      zhuyin: 'ㄆㄧㄥˊ ㄍㄨㄛˇ',
+      category: '食物 Food',
+      color: '#FFF5F5',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Leaf & Stem -->
+        <path d="M50,28 Q52,14 56,12" fill="none" stroke="#7950F2" stroke-width="4" stroke-linecap="round"/>
+        <path d="M52,20 Q66,14 62,26 Q54,28 52,20 Z" fill="#51CF66"/>
+        <!-- Apple Body -->
+        <path d="M30,34 C16,34 16,56 22,70 C28,84 44,84 50,78 C56,84 72,84 78,70 C84,56 84,34 70,34 C60,34 54,40 50,42 C46,40 40,34 30,34 Z" fill="#FA5252"/>
+        <!-- Highlight -->
+        <ellipse cx="36" cy="48" rx="6" ry="12" fill="#FFA8A8" transform="rotate(-20 36 48)" opacity="0.6"/>
+      </svg>`
+    },
+    {
+      id: 'banana',
+      en: 'Banana',
+      zh: '香蕉',
+      zhuyin: 'ㄒㄧㄤ ㄐㄧㄠ',
+      category: '食物 Food',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Stem -->
+        <path d="M72,22 L76,18" stroke="#5C940D" stroke-width="4" stroke-linecap="round"/>
+        <!-- Banana Curve -->
+        <path d="M72,22 C64,48 40,74 16,74 C26,76 56,76 78,38 C80,32 76,24 72,22 Z" fill="#FCC419"/>
+        <path d="M68,24 C56,48 36,70 18,73 C30,73 54,68 72,34 Z" fill="#FFE066" opacity="0.8"/>
+        <!-- Tip -->
+        <circle cx="16" cy="74" r="2.5" fill="#5C940D"/>
+      </svg>`
+    },
+    {
+      id: 'orange',
+      en: 'Orange',
+      zh: '橘子',
+      zhuyin: 'ㄐㄩˊ ˙ㄗ',
+      category: '食物 Food',
+      color: '#FFF4E6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Leaf -->
+        <path d="M50,22 Q64,12 66,26 Z" fill="#51CF66"/>
+        <line x1="50" y1="22" x2="50" y2="16" stroke="#845EF7" stroke-width="3" stroke-linecap="round"/>
+        <!-- Orange Fruit -->
+        <circle cx="50" cy="55" r="32" fill="#FD7E14"/>
+        <!-- Texture dots -->
+        <circle cx="40" cy="50" r="1.5" fill="#E8590C"/>
+        <circle cx="60" cy="52" r="1.5" fill="#E8590C"/>
+        <circle cx="48" cy="65" r="1.5" fill="#E8590C"/>
+        <!-- Highlight -->
+        <ellipse cx="38" cy="42" rx="7" ry="12" fill="#FFA94D" transform="rotate(-30 38 42)" opacity="0.6"/>
+      </svg>`
+    },
+    {
+      id: 'strawberry',
+      en: 'Strawberry',
+      zh: '草莓',
+      zhuyin: 'ㄘㄠˇ ㄇㄟˊ',
+      category: '食物 Food',
+      color: '#FFF0F5',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Body -->
+        <path d="M50,86 C30,76 22,54 26,38 C30,26 70,26 74,38 C78,54 70,76 50,86 Z" fill="#F03E3E"/>
+        <!-- Leaves -->
+        <path d="M50,30 L40,18 L46,30 L50,16 L54,30 L60,18 L50,30 Z" fill="#40C057"/>
+        <line x1="50" y1="18" x2="50" y2="10" stroke="#2F9E44" stroke-width="3" stroke-linecap="round"/>
+        <!-- Seeds -->
+        <ellipse cx="40" cy="44" rx="1.5" ry="2.5" fill="#FFE066"/>
+        <ellipse cx="60" cy="44" rx="1.5" ry="2.5" fill="#FFE066"/>
+        <ellipse cx="50" cy="54" rx="1.5" ry="2.5" fill="#FFE066"/>
+        <ellipse cx="38" cy="62" rx="1.5" ry="2.5" fill="#FFE066"/>
+        <ellipse cx="62" cy="62" rx="1.5" ry="2.5" fill="#FFE066"/>
+        <ellipse cx="50" cy="72" rx="1.5" ry="2.5" fill="#FFE066"/>
+      </svg>`
+    },
+    {
+      id: 'milk',
+      en: 'Milk',
+      zh: '牛奶',
+      zhuyin: 'ㄋㄧㄡˊ ㄋㄞˇ',
+      category: '食物 Food',
+      color: '#F8F9FA',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Bottle / Carton -->
+        <polygon points="34,36 40,24 60,24 66,36" fill="#74C0FC"/>
+        <rect x="34" y="36" width="32" height="46" rx="4" fill="#FFFFFF" stroke="#CED4DA" stroke-width="2"/>
+        <!-- Label & Drop -->
+        <rect x="34" y="48" width="32" height="18" fill="#4DABF7"/>
+        <path d="M50,52 C46,56 46,62 50,62 C54,62 54,56 50,52 Z" fill="#FFFFFF"/>
+        <text x="50" y="44" font-size="8" font-weight="900" text-anchor="middle" fill="#1864AB">MILK</text>
+      </svg>`
+    },
+    {
+      id: 'bread',
+      en: 'Bread',
+      zh: '麵包',
+      zhuyin: 'ㄇㄧㄢˋ ㄅㄠ',
+      category: '食物 Food',
+      color: '#FFF4E6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Loaf Body -->
+        <path d="M22,50 C22,34 34,30 50,30 C66,30 78,34 78,50 L78,66 C78,72 72,74 50,74 C28,74 22,72 22,66 Z" fill="#D9480F"/>
+        <!-- Crust top -->
+        <path d="M26,50 C26,38 36,34 50,34 C64,34 74,38 74,50 L74,62 C74,68 68,70 50,70 C32,70 26,68 26,62 Z" fill="#F76707"/>
+        <!-- Score marks -->
+        <path d="M38,40 Q40,48 42,54" stroke="#FFF4E6" stroke-width="3" stroke-linecap="round"/>
+        <path d="M48,38 Q50,48 52,54" stroke="#FFF4E6" stroke-width="3" stroke-linecap="round"/>
+        <path d="M58,40 Q60,48 62,54" stroke="#FFF4E6" stroke-width="3" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'egg',
+      en: 'Egg',
+      zh: '雞蛋',
+      zhuyin: 'ㄐㄧ ㄉㄢˋ',
+      category: '食物 Food',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Fried Egg White -->
+        <path d="M24,52 C16,42 32,24 50,22 C68,20 84,32 82,48 C80,64 74,78 52,78 C30,78 32,62 24,52 Z" fill="#FFFFFF" stroke="#DEE2E6" stroke-width="2"/>
+        <!-- Sunny Yolk -->
+        <circle cx="52" cy="50" r="16" fill="#F59F00"/>
+        <circle cx="50" cy="48" r="14" fill="#FCC419"/>
+        <!-- Highlight -->
+        <circle cx="46" cy="44" r="3" fill="#FFFFFF"/>
+      </svg>`
+    },
+    {
+      id: 'cake',
+      en: 'Cake',
+      zh: '蛋糕',
+      zhuyin: 'ㄉㄢˋ ㄍㄠ',
+      category: '食物 Food',
+      color: '#FFF0F6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Cake Base -->
+        <rect x="24" y="52" width="52" height="26" rx="4" fill="#FFA8A8"/>
+        <!-- Cream layer -->
+        <path d="M24,54 C28,60 32,54 36,54 C40,60 44,54 48,54 C52,60 56,54 60,54 C64,60 68,54 72,54 C76,60 76,54 76,54" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+        <!-- Candle -->
+        <rect x="47" y="32" width="6" height="20" rx="2" fill="#74C0FC"/>
+        <!-- Flame -->
+        <path d="M50,20 Q54,26 50,30 Q46,26 50,20 Z" fill="#FF922B"/>
+        <circle cx="50" cy="26" r="2" fill="#FFE066"/>
+        <!-- Cherry -->
+        <circle cx="34" cy="48" r="4" fill="#F03E3E"/>
+        <circle cx="66" cy="48" r="4" fill="#F03E3E"/>
+      </svg>`
+    },
+
+    // --- NATURE & EVERYDAY OBJECTS ---
+    {
+      id: 'sun',
+      en: 'Sun',
+      zh: '太陽',
+      zhuyin: 'ㄊㄞˋ ㄧㄤˊ',
+      category: '大自然 Nature',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Rays -->
+        <g stroke="#F59F00" stroke-width="4" stroke-linecap="round">
+          <line x1="50" y1="12" x2="50" y2="20"/>
+          <line x1="50" y1="80" x2="50" y2="88"/>
+          <line x1="12" y1="50" x2="20" y2="50"/>
+          <line x1="80" y1="50" x2="88" y2="50"/>
+          <line x1="23" y1="23" x2="29" y2="29"/>
+          <line x1="71" y1="71" x2="77" y2="77"/>
+          <line x1="23" y1="77" x2="29" y2="71"/>
+          <line x1="71" y1="29" x2="77" y2="23"/>
+        </g>
+        <!-- Sun center -->
+        <circle cx="50" cy="50" r="22" fill="#FCC419"/>
+        <!-- Cute Face -->
+        <circle cx="43" cy="46" r="2.5" fill="#D9480F"/>
+        <circle cx="57" cy="46" r="2.5" fill="#D9480F"/>
+        <path d="M44,54 Q50,60 56,54" fill="none" stroke="#D9480F" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="38" cy="52" r="2" fill="#FFA8A8"/>
+        <circle cx="62" cy="52" r="2" fill="#FFA8A8"/>
+      </svg>`
+    },
+    {
+      id: 'star',
+      en: 'Star',
+      zh: '星星',
+      zhuyin: 'ㄒㄧㄥ ㄒㄧㄥ',
+      category: '大自然 Nature',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- 5-Point Star -->
+        <polygon points="50,15 61,38 86,41 68,58 73,83 50,71 27,83 32,58 14,41 39,38" fill="#FFD43B" stroke="#F59F00" stroke-width="3" stroke-linejoin="round"/>
+        <!-- Cute face -->
+        <circle cx="43" cy="48" r="2.5" fill="#2B2D42"/>
+        <circle cx="57" cy="48" r="2.5" fill="#2B2D42"/>
+        <path d="M45,56 Q50,60 55,56" fill="none" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <!-- Cheeks -->
+        <circle cx="37" cy="54" r="2" fill="#FF8787"/>
+        <circle cx="63" cy="54" r="2" fill="#FF8787"/>
+      </svg>`
+    },
+    {
+      id: 'flower',
+      en: 'Flower',
+      zh: '花朵',
+      zhuyin: 'ㄏㄨㄚ ㄉㄨㄛˇ',
+      category: '大自然 Nature',
+      color: '#FFF0F5',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Stem & Leaf -->
+        <path d="M50,55 L50,86" stroke="#40C057" stroke-width="5" stroke-linecap="round"/>
+        <path d="M50,72 Q64,66 60,78 Z" fill="#51CF66"/>
+        <!-- Petals -->
+        <circle cx="50" cy="34" r="13" fill="#FF8787"/>
+        <circle cx="65" cy="45" r="13" fill="#FF8787"/>
+        <circle cx="59" cy="62" r="13" fill="#FF8787"/>
+        <circle cx="41" cy="62" r="13" fill="#FF8787"/>
+        <circle cx="35" cy="45" r="13" fill="#FF8787"/>
+        <!-- Center -->
+        <circle cx="50" cy="49" r="12" fill="#FFD43B"/>
+        <circle cx="47" cy="47" r="1.5" fill="#D9480F"/>
+        <circle cx="53" cy="47" r="1.5" fill="#D9480F"/>
+        <path d="M47,52 Q50,55 53,52" fill="none" stroke="#D9480F" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'tree',
+      en: 'Tree',
+      zh: '樹木',
+      zhuyin: 'ㄕㄨˋ ㄇㄨˋ',
+      category: '大自然 Nature',
+      color: '#EBFBEE',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Trunk -->
+        <rect x="43" y="60" width="14" height="26" rx="2" fill="#8C5B3F"/>
+        <!-- Foliage -->
+        <circle cx="50" cy="38" r="22" fill="#40C057"/>
+        <circle cx="34" cy="48" r="16" fill="#37B24D"/>
+        <circle cx="66" cy="48" r="16" fill="#37B24D"/>
+        <circle cx="50" cy="54" r="18" fill="#2F9E44"/>
+        <!-- Highlight apple / fruits -->
+        <circle cx="42" cy="42" r="3" fill="#F03E3E"/>
+        <circle cx="58" cy="48" r="3" fill="#F03E3E"/>
+        <circle cx="48" cy="56" r="3" fill="#F03E3E"/>
+      </svg>`
+    },
+    {
+      id: 'book',
+      en: 'Book',
+      zh: '書本',
+      zhuyin: 'ㄕㄨ ㄅㄣˇ',
+      category: '物品 Objects',
+      color: '#E7F5FF',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Book Pages -->
+        <path d="M50,34 C42,28 26,28 16,32 L16,70 C26,66 42,66 50,72 C58,66 74,66 84,70 L84,32 C74,28 58,28 50,34 Z" fill="#FFFFFF" stroke="#CED4DA" stroke-width="2"/>
+        <!-- Cover bottom -->
+        <path d="M14,72 C26,68 42,68 50,74 C58,68 74,68 86,72 L86,76 C74,72 58,72 50,78 C42,72 26,72 14,76 Z" fill="#1C7ED6"/>
+        <!-- Spine -->
+        <line x1="50" y1="34" x2="50" y2="74" stroke="#1C7ED6" stroke-width="3"/>
+        <!-- Lines of text -->
+        <line x1="24" y1="42" x2="42" y2="40" stroke="#74C0FC" stroke-width="2" stroke-linecap="round"/>
+        <line x1="24" y1="50" x2="40" y2="48" stroke="#74C0FC" stroke-width="2" stroke-linecap="round"/>
+        <line x1="58" y1="40" x2="76" y2="42" stroke="#74C0FC" stroke-width="2" stroke-linecap="round"/>
+        <line x1="60" y1="48" x2="76" y2="50" stroke="#74C0FC" stroke-width="2" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: 'pencil',
+      en: 'Pencil',
+      zh: '鉛筆',
+      zhuyin: 'ㄑㄧㄢ ㄅㄧˇ',
+      category: '物品 Objects',
+      color: '#FFF9DB',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Slanted Pencil -->
+        <g transform="rotate(-35 50 50)">
+          <!-- Eraser -->
+          <rect x="24" y="44" width="12" height="12" rx="2" fill="#F783AC"/>
+          <!-- Metal ferrule -->
+          <rect x="36" y="44" width="6" height="12" fill="#CED4DA"/>
+          <!-- Pencil Body -->
+          <rect x="42" y="44" width="34" height="12" fill="#FCC419"/>
+          <!-- Sharpened wood -->
+          <polygon points="76,44 88,50 76,56" fill="#F8F9FA"/>
+          <!-- Lead tip -->
+          <polygon points="84,48 88,50 84,52" fill="#2B2D42"/>
+        </g>
+      </svg>`
+    },
+    {
+      id: 'ball',
+      en: 'Ball',
+      zh: '皮球',
+      zhuyin: 'ㄆㄧˊ ㄑㄧㄡˊ',
+      category: '物品 Objects',
+      color: '#FFF0F6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Beach Ball Circle -->
+        <circle cx="50" cy="50" r="32" fill="#FA5252"/>
+        <!-- Stripe 1 -->
+        <path d="M50,18 C34,18 24,34 24,50 C24,66 34,82 50,82 C42,70 38,50 50,18 Z" fill="#4DABF7"/>
+        <!-- Stripe 2 -->
+        <path d="M50,18 C66,18 76,34 76,50 C76,66 66,82 50,82 C58,70 62,50 50,18 Z" fill="#FCC419"/>
+        <!-- Center circle -->
+        <circle cx="50" cy="50" r="8" fill="#FFFFFF"/>
+      </svg>`
+    },
+    {
+      id: 'car',
+      en: 'Car',
+      zh: '車子',
+      zhuyin: 'ㄔㄜ ˙ㄗ',
+      category: '物品 Objects',
+      color: '#EBFBEE',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Car Body -->
+        <path d="M18,60 L24,46 Q32,36 46,36 L62,36 Q74,36 82,46 L86,60 Q88,68 82,68 L24,68 Q16,68 18,60 Z" fill="#20C997"/>
+        <!-- Windows -->
+        <path d="M34,44 L46,44 L46,54 L28,54 Z" fill="#E6FCF5"/>
+        <path d="M52,44 L66,44 L72,54 L52,54 Z" fill="#E6FCF5"/>
+        <!-- Headlight -->
+        <circle cx="84" cy="58" r="3" fill="#FFD43B"/>
+        <!-- Wheels -->
+        <circle cx="34" cy="68" r="10" fill="#343A40"/>
+        <circle cx="34" cy="68" r="4" fill="#CED4DA"/>
+        <circle cx="70" cy="68" r="10" fill="#343A40"/>
+        <circle cx="70" cy="68" r="4" fill="#CED4DA"/>
+      </svg>`
+    },
+    {
+      id: 'hat',
+      en: 'Hat',
+      zh: '帽子',
+      zhuyin: 'ㄇㄠˋ ˙ㄗ',
+      category: '物品 Objects',
+      color: '#F3F0FF',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Hat Crown -->
+        <path d="M30,58 C30,36 70,36 70,58 Z" fill="#845EF7"/>
+        <!-- Ribbon -->
+        <rect x="30" y="52" width="40" height="6" fill="#FFD43B"/>
+        <!-- Brim -->
+        <ellipse cx="50" cy="62" rx="36" ry="10" fill="#7048E8"/>
+      </svg>`
+    },
+    {
+      id: 'house',
+      en: 'House',
+      zh: '房子',
+      zhuyin: 'ㄈㄤˊ ˙ㄗ',
+      category: '物品 Objects',
+      color: '#FFF4E6',
+      svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
+        <!-- Chimney -->
+        <rect x="62" y="24" width="8" height="18" fill="#D9480F"/>
+        <!-- Roof -->
+        <polygon points="50,22 18,48 82,48" fill="#F76707"/>
+        <!-- Base walls -->
+        <rect x="26" y="48" width="48" height="34" fill="#FFE8CC"/>
+        <!-- Door -->
+        <rect x="42" y="60" width="16" height="22" rx="2" fill="#D9480F"/>
+        <circle cx="53" cy="72" r="1.5" fill="#FFD43B"/>
+        <!-- Window -->
+        <rect x="58" y="54" width="10" height="10" rx="1" fill="#74C0FC"/>
+      </svg>`
+    }
+  ];
+
+  /**
+   * AUDIO ENGINE (Web Audio API)
+   * 100% self-contained synthesized sounds & relaxing lofi background music
+   */
+  const AudioEngine = {
+    ctx: null,
+    bgmOscs: [],
+    bgmTimer: null,
+    isBGMPlaying: false,
+    sfxEnabled: true,
+    bgmEnabled: true,
+    speechEnabled: true,
+
+    init() {
+      if (!this.ctx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioContext();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    },
+
+    playTone(freq, type, duration, gain = 0.15) {
+      if (!this.sfxEnabled) return;
+      this.init();
+      try {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(gain, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.connect(g);
+        g.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio tone error', e);
+      }
+    },
+
+    playFlip() {
+      // Gentle wooden card flip sound
+      this.playTone(320, 'triangle', 0.12, 0.12);
+    },
+
+    playMatch() {
+      // Cheerful pentatonic ascending chime (C5, E5, G5, C6)
+      if (!this.sfxEnabled) return;
+      this.init();
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          this.playTone(freq, 'sine', 0.35, 0.18);
+        }, idx * 75);
+      });
+    },
+
+    playMismatch() {
+      // Gentle low double-tap (G3 -> E3)
+      if (!this.sfxEnabled) return;
+      this.playTone(196, 'sine', 0.18, 0.1);
+      setTimeout(() => {
+        this.playTone(164.8, 'sine', 0.22, 0.08);
+      }, 100);
+    },
+
+    playHint() {
+      // Magical harp sparkle
+      if (!this.sfxEnabled) return;
+      const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+      notes.forEach((freq, idx) => {
+        setTimeout(() => {
+          this.playTone(freq, 'triangle', 0.25, 0.12);
+        }, idx * 60);
+      });
+    },
+
+    playRoundWin() {
+      // Joyful victory fanfare
+      if (!this.sfxEnabled) return;
+      const melody = [
+        { f: 523.25, d: 0.15 },
+        { f: 659.25, d: 0.15 },
+        { f: 783.99, d: 0.15 },
+        { f: 1046.5, d: 0.45 }
+      ];
+      let delay = 0;
+      melody.forEach(note => {
+        setTimeout(() => this.playTone(note.f, 'triangle', note.d, 0.25), delay);
+        delay += note.d * 1000 * 0.9;
+      });
+    },
+
+    playCertificateFanfare() {
+      if (!this.sfxEnabled) return;
+      const chords = [523.25, 659.25, 783.99, 1046.50, 1318.51];
+      chords.forEach((freq, i) => {
+        setTimeout(() => this.playTone(freq, 'sine', 0.6, 0.2), i * 90);
+      });
+    },
+
+    startBGM() {
+      if (!this.bgmEnabled || this.isBGMPlaying) return;
+      this.init();
+      this.isBGMPlaying = true;
+      
+      // Gentle ambient lofi synth loop: Cmaj7 - Am7 - Fmaj7 - G
+      const chords = [
+        [261.63, 329.63, 392.00, 493.88], // Cmaj7
+        [220.00, 261.63, 329.63, 392.00], // Am7
+        [174.61, 220.00, 261.63, 329.63], // Fmaj7
+        [196.00, 246.94, 293.66, 392.00]  // G7
+      ];
+      const melodyNotes = [523.25, 659.25, 783.99, 880.00, 659.25, 587.33, 523.25];
+      let chordStep = 0;
+      let melodyStep = 0;
+
+      const loop = () => {
+        if (!this.isBGMPlaying) return;
+        const now = this.ctx.currentTime;
+        const curChord = chords[chordStep % chords.length];
+        
+        // Soft pad chord
+        curChord.forEach(freq => {
+          try {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now);
+            g.gain.setValueAtTime(0.012, now);
+            g.gain.linearRampToValueAtTime(0.025, now + 0.6);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+            osc.connect(g);
+            g.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 2.8);
+          } catch(e) {}
+        });
+
+        // Plucky marimba melody note
+        const mFreq = melodyNotes[melodyStep % melodyNotes.length];
+        try {
+          const mOsc = this.ctx.createOscillator();
+          const mGain = this.ctx.createGain();
+          mOsc.type = 'triangle';
+          mOsc.frequency.setValueAtTime(mFreq, now + 0.1);
+          mGain.gain.setValueAtTime(0.02, now + 0.1);
+          mGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+          mOsc.connect(mGain);
+          mGain.connect(this.ctx.destination);
+          mOsc.start(now + 0.1);
+          mOsc.stop(now + 0.9);
+        } catch(e) {}
+
+        chordStep++;
+        melodyStep++;
+        this.bgmTimer = setTimeout(loop, 2400);
+      };
+
+      loop();
+    },
+
+    stopBGM() {
+      this.isBGMPlaying = false;
+      if (this.bgmTimer) {
+        clearTimeout(this.bgmTimer);
+        this.bgmTimer = null;
+      }
+    }
+  };
+
+  /**
+   * TEXT TO SPEECH (Web Speech API)
+   * Clear, friendly English pronunciation tailored for young learners
+   */
+  function speakEnglishWord(word) {
+    if (!AudioEngine.speechEnabled) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.85; // friendly, gentle tempo for young Pre-A1 kids
+      utterance.pitch = 1.1; // warm & engaging
+      
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen')));
+        if (preferredVoice) utterance.voice = preferredVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn('Speech synthesis error:', e);
+    }
+  }
+
+  /**
+   * GAME STATE & MANAGER
+   */
+  const Game = {
+    // Config
+    level: 'easy', // 'easy' (6 pairs), 'medium' (8 pairs), 'hard' (10 pairs)
+    round: 1, // 1, 2, or 3
+    totalRounds: 3,
+    
+    // Per-Level / Round stats
+    score: 0,
+    roundScore: 0,
+    streak: 0,
+    maxStreak: 0,
+    hintsLeft: 3,
+    moves: 0,
+    matchedPairsCount: 0,
+    targetPairsCount: 6,
+    
+    // Timer
+    startTime: null,
+    elapsedSeconds: 0,
+    timerInterval: null,
+    isTimerRunning: false,
+    
+    // Cards board
+    cards: [], // array of card objects
+    flippedCards: [], // currently flipped [card1, card2]
+    isBusy: false,
+    lastMatchedWord: null,
+
+    // Initializer
+    init() {
+      this.bindEvents();
+      this.startPlaythrough('easy');
+    },
+
+    bindEvents() {
+      // Level Tab buttons
+      document.getElementById('btnSelectEasy').addEventListener('click', () => this.switchLevel('easy'));
+      document.getElementById('btnSelectMedium').addEventListener('click', () => this.switchLevel('medium'));
+      document.getElementById('btnSelectHard').addEventListener('click', () => this.switchLevel('hard'));
+
+      // Audio buttons
+      document.getElementById('btnToggleBGM').addEventListener('click', () => this.toggleBGM());
+      document.getElementById('btnToggleSFX').addEventListener('click', () => this.toggleSFX());
+      document.getElementById('btnToggleVoice').addEventListener('click', () => this.toggleVoice());
+
+      // Utility buttons
+      document.getElementById('btnMandarinHint').addEventListener('click', () => this.useMandarinHint());
+      document.getElementById('btnRestartRound').addEventListener('click', () => this.restartRound());
+      document.getElementById('btnShowInstructions').addEventListener('click', () => this.showInstructions(true));
+      document.getElementById('btnCloseInstructions').addEventListener('click', () => this.showInstructions(false));
+      document.getElementById('btnStartPlaying').addEventListener('click', () => {
+        this.showInstructions(false);
+        AudioEngine.startBGM();
+      });
+      document.getElementById('btnLogoHome').addEventListener('click', () => this.showInstructions(true));
+
+      // Replay speech button on popup
+      document.getElementById('btnReplayAudio').addEventListener('click', () => {
+        if (this.lastMatchedWord) {
+          speakEnglishWord(this.lastMatchedWord);
+        }
+      });
+
+      // Next round button
+      document.getElementById('btnProceedNextRound').addEventListener('click', () => {
+        this.hideModal('modalRoundComplete');
+        this.nextRound();
+      });
+
+      // Certificate buttons
+      document.getElementById('btnCertPlayAgain').addEventListener('click', () => {
+        this.hideModal('modalCertificate');
+        this.startPlaythrough(this.level);
+      });
+      document.getElementById('btnCertChangeLevel').addEventListener('click', () => {
+        this.hideModal('modalCertificate');
+        const nextLvl = this.level === 'easy' ? 'medium' : (this.level === 'medium' ? 'hard' : 'easy');
+        this.switchLevel(nextLvl);
+      });
+            document.getElementById('btnDownloadPDF').addEventListener('click', () => this.downloadPDFCertificate());
+      document.getElementById('btnDownloadCertificate').addEventListener('click', () => this.downloadCertificate());
+      document.getElementById('btnPrintCertificate').addEventListener('click', () => window.print());
+      document.getElementById('inputStudentName').addEventListener('input', () => this.renderCertificate());
+
+      // Start audio on first user interaction anywhere
+      const unlockAudio = () => {
+        AudioEngine.init();
+        if (AudioEngine.bgmEnabled && !AudioEngine.isBGMPlaying) {
+          AudioEngine.startBGM();
+        }
+        document.removeEventListener('click', unlockAudio);
+      };
+      document.addEventListener('click', unlockAudio);
+    },
+
+    switchLevel(lvl) {
+      this.level = lvl;
+      this.updateLevelTabsUI();
+      this.startPlaythrough(lvl);
+    },
+
+    updateLevelTabsUI() {
+      const tabs = [
+        { id: 'btnSelectEasy', lvl: 'easy', activeClass: 'bg-emerald-500 text-white shadow-kid' },
+        { id: 'btnSelectMedium', lvl: 'medium', activeClass: 'bg-indigo-500 text-white shadow-kid' },
+        { id: 'btnSelectHard', lvl: 'hard', activeClass: 'bg-rose-500 text-white shadow-kid' }
+      ];
+      tabs.forEach(tab => {
+        const btn = document.getElementById(tab.id);
+        if (this.level === tab.lvl) {
+          btn.className = `level-tab-btn px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 ${tab.activeClass} active:translate-y-0.5`;
+        } else {
+          btn.className = 'level-tab-btn px-3.5 py-1.5 rounded-2xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 bg-slate-100 text-slate-600 hover:bg-slate-200 active:translate-y-0.5';
+        }
+      });
+
+      // Update badge in top bar
+      const badgeTxt = { easy: '初級 Easy (6對)', medium: '中級 Medium (8對)', hard: '高級 Hard (10對)' };
+      document.getElementById('txtCurrentLevel').textContent = badgeTxt[this.level];
+    },
+
+    startPlaythrough(lvl) {
+      this.level = lvl;
+      this.round = 1;
+      this.score = 0;
+      this.moves = 0;
+      this.streak = 0;
+      this.maxStreak = 0;
+      this.elapsedSeconds = 0;
+      this.resetTimer();
+      this.startTimer();
+      this.setupRound();
+    },
+
+    setupRound() {
+      // Pairs count per level
+      const pairCounts = { easy: 6, medium: 8, hard: 10 };
+      this.targetPairsCount = pairCounts[this.level];
+      this.matchedPairsCount = 0;
+      this.hintsLeft = 3;
+      this.flippedCards = [];
+      this.isBusy = false;
+      this.roundScore = 0;
+
+      // Update Round Progress Indicator pills
+      [1, 2, 3].forEach(r => {
+        const pill = document.getElementById(`pillRound${r}`);
+        if (r < this.round) {
+          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-emerald-500 text-white shadow-sm';
+          pill.textContent = '✓';
+        } else if (r === this.round) {
+          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-amber-400 text-white shadow-sm ring-2 ring-amber-200';
+          pill.textContent = r;
+        } else {
+          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400';
+          pill.textContent = r;
+        }
+      });
+
+      // Update UI Counters
+      this.updateUI();
+
+      // Generate randomized cards for this round
+      this.generateCards();
+      this.renderBoard();
+    },
+
+    generateCards() {
+      // Shuffle vocabulary bank and pick targetPairsCount items
+      const shuffledBank = [...VOCABULARY_BANK].sort(() => Math.random() - 0.5);
+      const selectedWords = shuffledBank.slice(0, this.targetPairsCount);
+
+      const generatedCards = [];
+      let cardUid = 0;
+
+      selectedWords.forEach((wordItem, idx) => {
+        // Vary the pair style to provide Mandarin-English, Graphic-English, or Graphic-Mandarin
+        // For even indexes: Picture Card <-> English Card
+        // For odd indexes: Mandarin (with Zhuyin) Card <-> English Card
+        const isMandarinPair = (idx % 2 === 1);
+
+        // Card 1: Content Card (Picture or Mandarin)
+        const card1 = {
+          uid: ++cardUid,
+          wordId: wordItem.id,
+          wordItem: wordItem,
+          cardType: isMandarinPair ? 'mandarin' : 'picture',
+          isFlipped: false,
+          isMatched: false
+        };
+
+        // Card 2: English Word Card
+        const card2 = {
+          uid: ++cardUid,
+          wordId: wordItem.id,
+          wordItem: wordItem,
+          cardType: 'english',
+          isFlipped: false,
+          isMatched: false
+        };
+
+        generatedCards.push(card1, card2);
+      });
+
+      // Shuffle cards thoroughly
+      this.cards = generatedCards.sort(() => Math.random() - 0.5);
+    },
+
+    renderBoard() {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+
+      // Grid columns based on card count
+      // Easy (12 cards): 3 cols on mobile, 4 cols on desktop
+      // Medium (16 cards): 4 cols
+      // Hard (20 cards): 4 cols on mobile, 5 cols on desktop
+      if (this.cards.length === 12) {
+        board.className = 'grid grid-cols-3 sm:grid-cols-4 gap-2.5 sm:gap-4 mx-auto w-full max-w-2xl';
+      } else if (this.cards.length === 16) {
+        board.className = 'grid grid-cols-4 gap-2 sm:gap-3.5 mx-auto w-full max-w-3xl';
+      } else {
+        board.className = 'grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3 mx-auto w-full max-w-4xl';
+      }
+
+      this.cards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card-container relative h-28 sm:h-36 md:h-40 perspective-1000 cursor-pointer select-none';
+        cardEl.dataset.uid = card.uid;
+
+        // Inner Card Flip Wrapper
+        const cardInner = document.createElement('div');
+        cardInner.className = `card-inner w-full h-full duration-500 transform-style-3d rounded-2xl sm:rounded-3xl shadow-sm hover:shadow-md transition-transform ${card.isFlipped ? 'rotate-y-180' : ''}`;
+        cardInner.id = `card-inner-${card.uid}`;
+
+        // BACK OF CARD (Face Down)
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back absolute inset-0 w-full h-full backface-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-indigo-500 via-sky-500 to-blue-600 border-2 sm:border-4 border-white flex flex-col items-center justify-center p-2 shadow-kid';
+        cardBack.innerHTML = `
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-full bg-white/20 border border-white/40 flex items-center justify-center text-white text-lg sm:text-2xl font-black shadow-inner">
+            ?
+          </div>
+          <span class="text-[9px] sm:text-[11px] font-black text-white/90 mt-1 uppercase tracking-wider">Pre-A1</span>
+        `;
+
+        // FRONT OF CARD (Face Up)
+        const cardFront = document.createElement('div');
+        cardFront.className = 'card-front absolute inset-0 w-full h-full backface-hidden rotate-y-180 rounded-2xl sm:rounded-3xl border-2 sm:border-4 flex flex-col items-center justify-center p-2 text-center transition-all shadow-md';
+        
+        // Populate Front based on Card Type
+        if (card.cardType === 'picture') {
+          // PICTURE CARD
+          cardFront.className += ' bg-emerald-50/90 border-emerald-300';
+          cardFront.innerHTML = `
+            <div class="w-14 h-14 sm:w-20 sm:h-20 flex items-center justify-center p-1">
+              ${card.wordItem.svg}
+            </div>
+            <div class="mt-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[9px] sm:text-[11px] font-black">
+              🎨 圖片 Picture
+            </div>
+          `;
+        } else if (card.cardType === 'mandarin') {
+          // MANDARIN CARD with Zhuyin
+          cardFront.className += ' bg-amber-50/90 border-amber-300';
+          cardFront.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full">
+              <span class="text-xl sm:text-3xl font-black text-slate-800 tracking-wide">${card.wordItem.zh}</span>
+              <span class="text-[10px] sm:text-xs font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md mt-1 border border-amber-200">${card.wordItem.zhuyin}</span>
+              <span class="text-[9px] sm:text-[10px] font-extrabold text-amber-600 mt-1">繁體中文</span>
+            </div>
+          `;
+        } else {
+          // ENGLISH WORD CARD
+          cardFront.className += ' bg-indigo-50/90 border-indigo-300';
+          cardFront.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full">
+              <span class="text-lg sm:text-2xl font-black text-indigo-900 tracking-tight">${card.wordItem.en}</span>
+              <div class="mt-1.5 flex items-center gap-1 text-[10px] sm:text-xs font-black text-indigo-600 bg-indigo-100/80 px-2 py-0.5 rounded-full">
+                <span>🔊</span>
+                <span>English</span>
+              </div>
+            </div>
+          `;
+        }
+
+        // Matched state overlay styling
+        if (card.isMatched) {
+          cardFront.classList.add('ring-4', 'ring-emerald-400', 'bg-emerald-100/70');
+        }
+
+        cardInner.appendChild(cardBack);
+        cardInner.appendChild(cardFront);
+        cardEl.appendChild(cardInner);
+
+        // Click handler
+        cardEl.addEventListener('click', () => this.handleCardClick(card));
+
+        board.appendChild(cardEl);
+      });
+    },
+
+    handleCardClick(card) {
+      if (this.isBusy || card.isFlipped || card.isMatched) return;
+
+      // Flip the card
+      card.isFlipped = true;
+      AudioEngine.playFlip();
+
+      const inner = document.getElementById(`card-inner-${card.uid}`);
+      if (inner) inner.classList.add('rotate-y-180');
+
+      this.flippedCards.push(card);
+
+      // If this card is an English card, read it aloud immediately for reinforcement
+      if (card.cardType === 'english') {
+        speakEnglishWord(card.wordItem.en);
+      }
+
+      if (this.flippedCards.length === 2) {
+        this.moves++;
+        this.updateUI();
+        this.checkMatch();
+      }
+    },
+
+    checkMatch() {
+      this.isBusy = true;
+      const [card1, card2] = this.flippedCards;
+
+      if (card1.wordId === card2.wordId) {
+        // MATCH SUCCESS!
+        setTimeout(() => {
+          this.handleMatchSuccess(card1, card2);
+        }, 300);
+      } else {
+        // MATCH FAILED
+        setTimeout(() => {
+          this.handleMatchFailed(card1, card2);
+        }, 900);
+      }
+    },
+
+    handleMatchSuccess(card1, card2) {
+      card1.isMatched = true;
+      card2.isMatched = true;
+      this.matchedPairsCount++;
+
+      // Combo streak bonus
+      this.streak++;
+      if (this.streak > this.maxStreak) this.maxStreak = this.streak;
+
+      // Scoring: 100 base + 25 * streak
+      const earnedPoints = 100 + (this.streak * 25);
+      this.score += earnedPoints;
+      this.roundScore += earnedPoints;
+
+      // Visual points floating popup
+      this.showFloatingPoints(`+${earnedPoints}`, this.streak > 1 ? `Combo ${this.streak}x! 🔥` : 'Nice!');
+
+      // Highlight matched cards
+      const inner1 = document.getElementById(`card-inner-${card1.uid}`);
+      const inner2 = document.getElementById(`card-inner-${card2.uid}`);
+      if (inner1) inner1.querySelector('.card-front').classList.add('ring-4', 'ring-emerald-400', 'bg-emerald-100');
+      if (inner2) inner2.querySelector('.card-front').classList.add('ring-4', 'ring-emerald-400', 'bg-emerald-100');
+
+      // Audio effects
+      AudioEngine.playMatch();
+      this.lastMatchedWord = card1.wordItem.en;
+      speakEnglishWord(card1.wordItem.en);
+
+      // Trigger mini confetti burst
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 25,
+          spread: 45,
+          origin: { y: 0.6 }
+        });
+      }
+
+      // Show brief correct match popup modal
+      this.showCorrectMatchModal(card1.wordItem);
+
+      this.flippedCards = [];
+      this.isBusy = false;
+      this.updateUI();
+
+      // Check if Round is complete
+      if (this.matchedPairsCount >= this.targetPairsCount) {
+        setTimeout(() => {
+          this.handleRoundComplete();
+        }, 1200);
+      }
+    },
+
+    handleMatchFailed(card1, card2) {
+      this.streak = 0; // reset combo
+      AudioEngine.playMismatch();
+
+      // Wiggle animation on failed cards
+      const el1 = document.getElementById(`card-inner-${card1.uid}`);
+      const el2 = document.getElementById(`card-inner-${card2.uid}`);
+      if (el1) el1.classList.add('animate-wiggle');
+      if (el2) el2.classList.add('animate-wiggle');
+
+      setTimeout(() => {
+        if (el1) {
+          el1.classList.remove('animate-wiggle', 'rotate-y-180');
+        }
+        if (el2) {
+          el2.classList.remove('animate-wiggle', 'rotate-y-180');
+        }
+        card1.isFlipped = false;
+        card2.isFlipped = false;
+        this.flippedCards = [];
+        this.isBusy = false;
+        this.updateUI();
+      }, 500);
+    },
+
+    showCorrectMatchModal(wordItem) {
+      const modal = document.getElementById('modalCorrectMatch');
+      const box = document.getElementById('modalCorrectBox');
+      
+      const encouragements = [
+        '太棒了！配對成功！',
+        '做得很棒！ Great Job!',
+        '超厲害！ Super Star!',
+        '答對囉！ Wonderful!',
+        '你好聰明！ Excellent!'
+      ];
+      document.getElementById('txtEncouragement').textContent = encouragements[Math.floor(Math.random() * encouragements.length)];
+      document.getElementById('popupIllustration').innerHTML = wordItem.svg;
+      document.getElementById('popupEnglishWord').textContent = wordItem.en;
+      document.getElementById('popupMandarinWord').textContent = wordItem.zh;
+      document.getElementById('popupZhuyinWord').textContent = wordItem.zhuyin;
+      document.getElementById('popupCategory').textContent = `類別：${wordItem.category}`;
+
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      box.classList.remove('scale-90');
+      box.classList.add('scale-100');
+
+      // Auto dismiss after 1.8 seconds so game flows seamlessly
+      setTimeout(() => {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        box.classList.remove('scale-100');
+        box.classList.add('scale-90');
+      }, 1800);
+    },
+
+    useMandarinHint() {
+      if (this.hintsLeft <= 0 || this.isBusy) return;
+      this.hintsLeft--;
+      this.updateUI();
+      AudioEngine.playHint();
+
+      // Find an unmatched pair
+      const unmatchedCards = this.cards.filter(c => !c.isMatched);
+      if (unmatchedCards.length === 0) return;
+
+      // Group by wordId
+      const targetWordId = unmatchedCards[0].wordId;
+      const pair = this.cards.filter(c => c.wordId === targetWordId);
+
+      // Temporarily reveal the pair for 1.8 seconds with golden highlight
+      pair.forEach(card => {
+        const inner = document.getElementById(`card-inner-${card.uid}`);
+        if (inner) {
+          inner.classList.add('rotate-y-180', 'ring-4', 'ring-amber-400');
+        }
+      });
+
+      // Play English pronunciation if one of them is English
+      speakEnglishWord(pair[0].wordItem.en);
+
+      setTimeout(() => {
+        pair.forEach(card => {
+          if (!card.isFlipped) {
+            const inner = document.getElementById(`card-inner-${card.uid}`);
+            if (inner) {
+              inner.classList.remove('rotate-y-180', 'ring-4', 'ring-amber-400');
+            }
+          }
+        });
+      }, 1600);
+    },
+
+    handleRoundComplete() {
+      AudioEngine.playRoundWin();
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.5 }
+        });
+      }
+
+      if (this.round < this.totalRounds) {
+        // Show Round Complete Modal
+        document.getElementById('roundCompleteTitle').textContent = `第 ${this.round} 回合通關！`;
+        document.getElementById('lblRoundScore').textContent = `+${this.roundScore} 分`;
+        document.getElementById('lblRoundTotalScore').textContent = `${this.score} 分`;
+        document.getElementById('lblRoundMoves').textContent = `${this.moves} 次`;
+        document.getElementById('lblNextRoundInfo').textContent = `第 ${this.round + 1} 回合 / 共 3 回合`;
+        this.showModal('modalRoundComplete');
+      } else {
+        // All 3 Rounds Complete! Show Certificate celebration!
+        this.stopTimer();
+        AudioEngine.playCertificateFanfare();
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 150,
+            spread: 90,
+            origin: { y: 0.4 }
+          });
+        }
+        this.renderCertificate();
+        this.showModal('modalCertificate');
+      }
+    },
+
+    nextRound() {
+      this.round++;
+      this.setupRound();
+    },
+
+    restartRound() {
+      this.setupRound();
+    },
+
+    updateUI() {
+      document.getElementById('statScore').textContent = this.score.toLocaleString();
+      document.getElementById('statMoves').textContent = this.moves;
+      document.getElementById('statStreak').textContent = `${this.streak}x`;
+      document.getElementById('hintCountBadge').textContent = this.hintsLeft;
+      document.getElementById('txtPairsMatched').textContent = `${this.matchedPairsCount} / ${this.targetPairsCount} 對`;
+    },
+
+    startTimer() {
+      if (this.isTimerRunning) return;
+      this.isTimerRunning = true;
+      this.startTime = Date.now() - (this.elapsedSeconds * 1000);
+      this.timerInterval = setInterval(() => {
+        this.elapsedSeconds = Math.floor((Date.now() - this.startTime) / 1000);
+        const mins = String(Math.floor(this.elapsedSeconds / 60)).padStart(2, '0');
+        const secs = String(this.elapsedSeconds % 60).padStart(2, '0');
+        document.getElementById('statTime').textContent = `${mins}:${secs}`;
+      }, 1000);
+    },
+
+    stopTimer() {
+      this.isTimerRunning = false;
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+    },
+
+    resetTimer() {
+      this.stopTimer();
+      this.elapsedSeconds = 0;
+      document.getElementById('statTime').textContent = '00:00';
+    },
+
+    showFloatingPoints(pts, subtitle) {
+      const container = document.getElementById('floatingPointsContainer');
+      const floater = document.createElement('div');
+      floater.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-amber-400 text-amber-950 font-black text-lg px-4 py-1.5 rounded-full shadow-lg border-2 border-white pointer-events-none transition-all duration-700 ease-out z-30 flex items-center gap-1.5';
+      floater.innerHTML = `<span>⭐</span><span>${pts}</span><span class="text-xs bg-white text-orange-600 px-2 py-0.5 rounded-full ml-1">${subtitle}</span>`;
+      container.appendChild(floater);
+
+      requestAnimationFrame(() => {
+        floater.style.transform = 'translate(-50%, -140%) scale(1.15)';
+        floater.style.opacity = '0';
+      });
+
+      setTimeout(() => floater.remove(), 750);
+    },
+
+    showModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        const child = modal.querySelector('div');
+        if (child) {
+          child.classList.remove('scale-90', 'scale-95');
+          child.classList.add('scale-100');
+        }
+      }
+    },
+
+    hideModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        const child = modal.querySelector('div');
+        if (child) {
+          child.classList.remove('scale-100');
+          child.classList.add('scale-90');
+        }
+      }
+    },
+
+    showInstructions(show) {
+      if (show) {
+        this.showModal('modalInstructions');
+      } else {
+        this.hideModal('modalInstructions');
+      }
+    },
+
+    toggleBGM() {
+      AudioEngine.bgmEnabled = !AudioEngine.bgmEnabled;
+      const label = document.getElementById('labelBGM');
+      const icon = document.getElementById('iconBGM');
+      if (AudioEngine.bgmEnabled) {
+        AudioEngine.startBGM();
+        label.textContent = '音樂：開';
+        icon.textContent = '🎵';
+      } else {
+        AudioEngine.stopBGM();
+        label.textContent = '音樂：關';
+        icon.textContent = '🔇';
+      }
+    },
+
+    toggleSFX() {
+      AudioEngine.sfxEnabled = !AudioEngine.sfxEnabled;
+      const label = document.getElementById('labelSFX');
+      const icon = document.getElementById('iconSFX');
+      label.textContent = AudioEngine.sfxEnabled ? '音效：開' : '音效：關';
+      icon.textContent = AudioEngine.sfxEnabled ? '🔊' : '🔇';
+    },
+
+    toggleVoice() {
+      AudioEngine.speechEnabled = !AudioEngine.speechEnabled;
+      const label = document.getElementById('labelVoice');
+      const icon = document.getElementById('iconVoice');
+      label.textContent = AudioEngine.speechEnabled ? '發音：開' : '發音：關';
+      icon.textContent = AudioEngine.speechEnabled ? '🗣️' : '🔇';
+    },
+
+    /**
+     * HIGH RESOLUTION CANVAS CERTIFICATE RENDERING
+     * Generates a stunning, printable / downloadable A4 landscape certificate
+     */
+    renderCertificate() {
+      const canvas = document.getElementById('certificateCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const name = document.getElementById('inputStudentName').value || 'Little Explorer';
+
+      // Background Parchment Gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, '#FFFDF8');
+      bgGrad.addColorStop(1, '#F3F7FC');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Ornate Outer Gold Border
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = '#D4AF37'; // Classic gold
+      ctx.strokeRect(30, 30, width - 60, height - 60);
+
+      // Inner Navy Border
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#1E3A8A';
+      ctx.strokeRect(46, 46, width - 92, height - 92);
+
+      // Corner Rosettes / Flourishes
+      const drawCornerFlourish = (x, y) => {
+        ctx.fillStyle = '#D4AF37';
+        ctx.beginPath();
+        ctx.arc(x, y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      drawCornerFlourish(46, 46);
+      drawCornerFlourish(width - 46, 46);
+      drawCornerFlourish(46, height - 46);
+      drawCornerFlourish(width - 46, height - 46);
+
+      // Header Banner Ribbon
+      ctx.fillStyle = '#1E3A8A';
+      ctx.beginPath();
+      ctx.roundRect(width / 2 - 280, 75, 560, 48, [24]);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 20px "Nunito", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('CEFR PRE-A1 ENGLISH LANGUAGE ADVENTURE', width / 2, 106);
+
+      // Main Title
+      ctx.fillStyle = '#B45309'; // Warm amber gold
+      ctx.font = '900 48px "Nunito", "Noto Sans TC", sans-serif';
+      ctx.fillText('榮 譽 證 書', width / 2, 185);
+
+      ctx.fillStyle = '#1E293B';
+      ctx.font = 'bold 24px "Nunito", sans-serif';
+      ctx.fillText('Certificate of Achievement', width / 2, 222);
+
+      // Presentation line
+      ctx.fillStyle = '#64748B';
+      ctx.font = '600 20px "Noto Sans TC", sans-serif';
+      ctx.fillText('茲 證 明 本 證 書 頒 發 予 (Proudly Presented To):', width / 2, 275);
+
+      // Student Name with underline
+      ctx.fillStyle = '#0F172A';
+      ctx.font = '900 44px "Nunito", "Noto Sans TC", sans-serif';
+      ctx.fillText(name, width / 2, 335);
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#D4AF37';
+      ctx.beginPath();
+      ctx.moveTo(width / 2 - 220, 355);
+      ctx.lineTo(width / 2 + 220, 355);
+      ctx.stroke();
+
+      // Commendation text
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 19px "Noto Sans TC", "Nunito", sans-serif';
+      ctx.fillText('恭喜成功完成 3 回合英語記憶挑戰，展現優異的 Pre-A1 聽力與詞彙記憶專注力！', width / 2, 400);
+      ctx.font = '16px "Nunito", sans-serif';
+      ctx.fillText('For outstanding focus, vocabulary retention, and listening skills in completing all 3 rounds!', width / 2, 428);
+
+      // 3 Metrics Plaques
+      const levelNames = { easy: '初級 Easy', medium: '中級 Medium', hard: '高級 Hard' };
+      const mins = String(Math.floor(this.elapsedSeconds / 60)).padStart(2, '0');
+      const secs = String(this.elapsedSeconds % 60).padStart(2, '0');
+
+      const plaques = [
+        { label: '挑戰難度 Level', val: `${levelNames[this.level]} (3 Rounds)` },
+        { label: '累積總分 Final Score', val: `${this.score.toLocaleString()} Points` },
+        { label: '總耗時 Total Time', val: `${mins} 分 ${secs} 秒` }
+      ];
+
+      plaques.forEach((p, idx) => {
+        const px = width / 2 - 340 + (idx * 235);
+        const py = 470;
+        
+        // Box
+        ctx.fillStyle = '#FFFFFF';
+        ctx.strokeStyle = '#E2E8F0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(px, py, 210, 85, [16]);
+        ctx.fill();
+        ctx.stroke();
+
+        // Top accent
+        ctx.fillStyle = '#F59E0B';
+        ctx.beginPath();
+        ctx.roundRect(px, py, 210, 8, [16, 16, 0, 0]);
+        ctx.fill();
+
+        // Text
+        ctx.fillStyle = '#64748B';
+        ctx.font = 'bold 13px "Noto Sans TC", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.label, px + 105, py + 34);
+
+        ctx.fillStyle = '#1E293B';
+        ctx.font = '900 18px "Nunito", "Noto Sans TC", sans-serif';
+        ctx.fillText(p.val, px + 105, py + 64);
+      });
+
+      // 3 Gold Stars
+      const drawStar = (cx, cy, spikes, outerRadius, innerRadius) => {
+        let rot = Math.PI / 2 * 3;
+        let x = cx;
+        let y = cy;
+        let step = Math.PI / spikes;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - outerRadius);
+        for (let i = 0; i < spikes; i++) {
+          x = cx + Math.cos(rot) * outerRadius;
+          y = cy + Math.sin(rot) * outerRadius;
+          ctx.lineTo(x, y);
+          rot += step;
+
+          x = cx + Math.cos(rot) * innerRadius;
+          y = cy + Math.sin(rot) * innerRadius;
+          ctx.lineTo(x, y);
+          rot += step;
+        }
+        ctx.lineTo(cx, cy - outerRadius);
+        ctx.closePath();
+        ctx.fillStyle = '#FFD700';
+        ctx.fill();
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      };
+
+      drawStar(width / 2 - 60, 595, 5, 20, 9);
+      drawStar(width / 2, 590, 5, 26, 12);
+      drawStar(width / 2 + 60, 595, 5, 20, 9);
+
+      // Official Stamp / Golden Seal (Bottom Right)
+      const sealX = width - 180;
+      const sealY = height - 165;
+      ctx.fillStyle = '#D97706';
+      ctx.beginPath();
+      ctx.arc(sealX, sealY, 52, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.beginPath();
+      ctx.arc(sealX, sealY, 44, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 11px "Nunito", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ OFFICIAL ★', sealX, sealY - 14);
+      ctx.font = '900 13px "Nunito", sans-serif';
+      ctx.fillText('PRE-A1', sealX, sealY + 4);
+      ctx.font = 'bold 10px "Nunito", sans-serif';
+      ctx.fillText('EXCELLENCE', sealX, sealY + 20);
+
+      // Date & Signature (Bottom Left & Middle)
+      const dateStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 16px "Noto Sans TC", sans-serif';
+      ctx.fillText(`發證日期 (Date): ${dateStr}`, 90, height - 135);
+
+      ctx.fillText('學習評鑑認證 (Accredited by): Pre-A1 Learning Lab', 90, height - 105);
+
+      // Signature graphic line
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(width / 2 - 80, height - 120);
+      ctx.bezierCurveTo(width / 2 - 30, height - 150, width / 2 + 20, height - 110, width / 2 + 70, height - 130);
+      ctx.stroke();
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'italic 14px "Nunito", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Language Program Director', width / 2, height - 105);
+    },
+
+    downloadPDFCertificate() {
+      const canvas = document.getElementById('certificateCanvas');
+      if (!canvas) return;
+      try {
+        const imgData = canvas.toDataURL('image/png');
+        if (window.jspdf && window.jspdf.jsPDF) {
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [1200, 850]
+          });
+          pdf.addImage(imgData, 'PNG', 0, 0, 1200, 850);
+          pdf.save(`Pre-A1-Memory-Certificate-${this.level}.pdf`);
+        } else {
+          // Fallback to print
+          window.print();
+        }
+      } catch (e) {
+        console.error('PDF generation error:', e);
+        window.print();
+      }
+    },
+
+    downloadCertificate() {
+      const canvas = document.getElementById('certificateCanvas');
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = `Pre-A1-Memory-Certificate-${this.level}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  };
+
+  // Launch on DOM ready
+  window.addEventListener('DOMContentLoaded', () => {
+    Game.init();
+    // Show instruction panel on initial open
+    setTimeout(() => {
+      Game.showInstructions(true);
+    }, 400);
+  });
+  </script>
+</body>
+</html>
