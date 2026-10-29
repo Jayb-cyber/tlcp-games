@@ -127,26 +127,10 @@
         <div>
           <h1 class="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-tight flex items-center gap-1.5">
             <span>Pre-A1 英語記憶大冒險</span>
-            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-300">CEFR Pre-A1</span>
           </h1>
           <p class="text-xs text-slate-500 font-semibold hidden sm:block">English Memory Game for Young Learners</p>
         </div>
       </div>
-
-      <!-- ROUND & LEVEL BADGE -->
-      <div class="flex items-center gap-2">
-        <!-- Level badge -->
-        <div id="levelDisplayBadge" class="bg-indigo-50 border border-indigo-200 text-indigo-700 font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm">
-          <span>🌟</span>
-          <span id="txtCurrentLevel">初級 Easy</span>
-        </div>
-
-        <!-- 3 Rounds Progress Pills -->
-        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-          <div id="pillRound1" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-amber-400 text-white shadow-sm transition-all duration-300">1</div>
-          <div id="pillRound2" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400 transition-all duration-300">2</div>
-          <div id="pillRound3" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400 transition-all duration-300">3</div>
-        </div>
       </div>
 
       <!-- AUDIO & UTILITY CONTROLS -->
@@ -573,23 +557,60 @@
       category: '動物 Animals',
       color: '#FFF9DB',
       svg: `<svg viewBox="0 0 100 100" class="w-full h-full">
-        <!-- Ears -->
-        <ellipse cx="22" cy="50" rx="9" ry="20" fill="#8C5B3F" transform="rotate(-15 22 50)"/>
-        <ellipse cx="78" cy="50" rx="9" ry="20" fill="#8C5B3F" transform="rotate(15 78 50)"/>
-        <!-- Head -->
-        <circle cx="50" cy="50" r="30" fill="#D4A373"/>
-        <!-- White blaze -->
-        <ellipse cx="50" cy="58" rx="14" ry="16" fill="#FAEDCD"/>
-        <!-- Eyes -->
-        <circle cx="38" cy="46" r="4.5" fill="#2B2D42"/>
-        <circle cx="39.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
-        <circle cx="62" cy="46" r="4.5" fill="#2B2D42"/>
-        <circle cx="63.5" cy="44.5" r="1.5" fill="#FFFFFF"/>
-        <!-- Nose -->
-        <ellipse cx="50" cy="54" rx="6" ry="4.5" fill="#2B2D42"/>
-        <!-- Tongue -->
-        <path d="M47,62 Q50,72 53,62 Z" fill="#FF6B6B"/>
-        <path d="M44,60 Q50,65 56,60" fill="none" stroke="#2B2D42" stroke-width="2" stroke-linecap="round"/>
+        <!-- Wagging Tail -->
+        <path d="M70,73 Q87,64 85,49 Q83,45 78,51 Q78,62 67,68 Z" fill="#B07D4F"/>
+        <!-- Sitting Body -->
+        <path d="M31,60 C27,73 27,87 34,90 L66,90 C73,87 73,73 69,60 Z" fill="#D49B6A"/>
+        <!-- Cream Chest Fur -->
+        <path d="M39,63 Q50,60 61,63 Q63,77 50,82 Q37,77 39,63 Z" fill="#FFF3D6"/>
+        <!-- Back Paws -->
+        <ellipse cx="31" cy="88" rx="6.5" ry="4" fill="#B07D4F"/>
+        <ellipse cx="69" cy="88" rx="6.5" ry="4" fill="#B07D4F"/>
+        <!-- Front Legs & Paws -->
+        <rect x="37" y="71" width="8.5" height="19" rx="4.2" fill="#D49B6A"/>
+        <rect x="54.5" y="71" width="8.5" height="19" rx="4.2" fill="#D49B6A"/>
+        <ellipse cx="41.2" cy="89.5" rx="5.8" ry="3.5" fill="#FFF3D6"/>
+        <ellipse cx="58.8" cy="89.5" rx="5.8" ry="3.5" fill="#FFF3D6"/>
+        <line x1="39.5" y1="88" x2="39.5" y2="91.5" stroke="#B07D4F" stroke-width="1" stroke-linecap="round"/>
+        <line x1="43" y1="88" x2="43" y2="91.5" stroke="#B07D4F" stroke-width="1" stroke-linecap="round"/>
+        <line x1="57" y1="88" x2="57" y2="91.5" stroke="#B07D4F" stroke-width="1" stroke-linecap="round"/>
+        <line x1="60.5" y1="88" x2="60.5" y2="91.5" stroke="#B07D4F" stroke-width="1" stroke-linecap="round"/>
+        <!-- Red Collar & Gold Bone/Bell Tag -->
+        <path d="M32,60 Q50,66 68,60" fill="none" stroke="#E03131" stroke-width="5.5" stroke-linecap="round"/>
+        <circle cx="50" cy="66.5" r="4.2" fill="#FFD43B" stroke="#E67700" stroke-width="1.2"/>
+        <!-- Floppy Dog Ears (drooping from top of head) -->
+        <path d="M30,19 C16,17 9,32 13,49 C15,56 23,55 25,46 C27,38 28,28 33,23 Z" fill="#6F4518"/>
+        <path d="M70,19 C84,17 91,32 87,49 C85,56 77,55 75,46 C73,38 72,28 67,23 Z" fill="#6F4518"/>
+        <!-- Dog Head -->
+        <path d="M25,37 C25,21 35,14 50,14 C65,14 75,21 75,37 C75,50 66,58 50,58 C34,58 25,50 25,37 Z" fill="#D49B6A"/>
+        <!-- Cute Brown Eye Patch -->
+        <ellipse cx="38" cy="33" rx="9.5" ry="8.5" fill="#8C5828" transform="rotate(-10 38 33)"/>
+        <!-- Cream Muzzle / Snout -->
+        <ellipse cx="50" cy="45" rx="16" ry="11.5" fill="#FFF3D6"/>
+        <ellipse cx="44" cy="46" rx="8" ry="6.5" fill="#FFF3D6"/>
+        <ellipse cx="56" cy="46" rx="8" ry="6.5" fill="#FFF3D6"/>
+        <!-- Happy Pink Tongue -->
+        <path d="M45.5,50 C45.5,60.5 54.5,60.5 54.5,50 Z" fill="#FF6B8B" stroke="#D6336C" stroke-width="1.2"/>
+        <line x1="50" y1="51" x2="50" y2="57" stroke="#D6336C" stroke-width="1.1" stroke-linecap="round"/>
+        <!-- Mouth / W-shaped Dog Smile -->
+        <path d="M41,48 Q45.5,53.5 50,48 Q54.5,53.5 59,48" fill="none" stroke="#2B2D42" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="50" y1="43.5" x2="50" y2="48" stroke="#2B2D42" stroke-width="2.2" stroke-linecap="round"/>
+        <!-- Shiny Dog Nose -->
+        <path d="M43.5,39.5 C43.5,36.8 56.5,36.8 56.5,39.5 C56.5,43.2 52.8,45.5 50,45.5 C47.2,45.5 43.5,43.2 43.5,39.5 Z" fill="#2B2D42"/>
+        <ellipse cx="48" cy="39" rx="2.4" ry="1.1" fill="#FFFFFF" opacity="0.75"/>
+        <!-- Expressive Eyes -->
+        <circle cx="38" cy="33" r="4.3" fill="#2B2D42"/>
+        <circle cx="39.3" cy="31.6" r="1.5" fill="#FFFFFF"/>
+        <circle cx="62" cy="33" r="4.3" fill="#2B2D42"/>
+        <circle cx="63.3" cy="31.6" r="1.5" fill="#FFFFFF"/>
+        <!-- Soft Eyebrows -->
+        <path d="M33.5,25.5 Q38,23.5 42,25.5" fill="none" stroke="#4A2C11" stroke-width="2" stroke-linecap="round"/>
+        <path d="M58,25.5 Q62,23.5 66.5,25.5" fill="none" stroke="#6F4518" stroke-width="2" stroke-linecap="round"/>
+        <!-- Whisker Dots on Muzzle -->
+        <circle cx="38.5" cy="45" r="1.1" fill="#B07D4F"/>
+        <circle cx="36.5" cy="47.5" r="1.1" fill="#B07D4F"/>
+        <circle cx="61.5" cy="45" r="1.1" fill="#B07D4F"/>
+        <circle cx="63.5" cy="47.5" r="1.1" fill="#B07D4F"/>
       </svg>`
     },
     {
@@ -1452,9 +1473,7 @@
         }
       });
 
-      // Update badge in top bar
-      const badgeTxt = { easy: '初級 Easy (6對)', medium: '中級 Medium (8對)', hard: '高級 Hard (10對)' };
-      document.getElementById('txtCurrentLevel').textContent = badgeTxt[this.level];
+
     },
 
     startPlaythrough(lvl) {
@@ -1480,20 +1499,7 @@
       this.isBusy = false;
       this.roundScore = 0;
 
-      // Update Round Progress Indicator pills
-      [1, 2, 3].forEach(r => {
-        const pill = document.getElementById(`pillRound${r}`);
-        if (r < this.round) {
-          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-emerald-500 text-white shadow-sm';
-          pill.textContent = '✓';
-        } else if (r === this.round) {
-          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-amber-400 text-white shadow-sm ring-2 ring-amber-200';
-          pill.textContent = r;
-        } else {
-          pill.className = 'w-6 h-6 rounded-lg flex items-center justify-center text-xs font-black bg-slate-200 text-slate-400';
-          pill.textContent = r;
-        }
-      });
+
 
       // Update UI Counters
       this.updateUI();
