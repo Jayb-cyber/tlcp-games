@@ -1,0 +1,4303 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Temple Run English — Pre-A1 Edition (神廟英語跑酷：幼兒初級版)</title>
+  <style>
+    :root {
+      --gold: #f1c40f;
+      --gold-dark: #d4af37;
+      --jade: #00b894;
+      --jade-bright: #2ecc71;
+      --cyan: #00cec9;
+      --coral: #ff7675;
+      --crimson: #d63031;
+      --dark-bg: #0f171e;
+      --card-bg: #1e272e;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at center, #1f2a36 0%, #0b0f15 100%);
+      font-family: "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    #app-wrapper {
+      position: relative;
+      width: 960px;
+      max-width: 98vw;
+      height: 580px;
+      max-height: 96vh;
+      background: #0f171e;
+      border: 3.5px solid var(--gold);
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 0 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      outline: none;
+    }
+
+    /* TOP HUD BAR */
+    #hud-bar {
+      position: absolute;
+      top: 10px;
+      left: 14px;
+      right: 14px;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .hud-pill {
+      background: linear-gradient(180deg, rgba(28, 38, 50, 0.92) 0%, rgba(15, 22, 30, 0.95) 100%);
+      border: 2px solid rgba(241, 196, 15, 0.85);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.55);
+      pointer-events: auto;
+    }
+
+    .hud-btn {
+      background: linear-gradient(135deg, #d63031, #b71540);
+      border: 2px solid #ffffff;
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transition: transform 0.12s ease;
+    }
+
+    .hud-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* LEVEL PROGRESS BAR */
+    #progress-container {
+      position: absolute;
+      top: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 440px;
+      max-width: 74%;
+      background: rgba(15, 22, 30, 0.9);
+      border: 2px solid rgba(0, 206, 201, 0.8);
+      border-radius: 999px;
+      padding: 4px 14px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 20;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    }
+
+    #progress-label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #ffeaa7;
+      white-space: nowrap;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 10px;
+      background: #222f3e;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    #progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00cec9, #2ecc71, #f1c40f);
+      border-radius: 999px;
+      transition: width 0.15s ease;
+    }
+
+    /* BILINGUAL TUTORIAL BANNER (LEVEL 1) */
+    #tutorial-banner {
+      position: absolute;
+      bottom: 52px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 720px;
+      max-width: 92%;
+      background: linear-gradient(180deg, rgba(20, 32, 46, 0.88) 0%, rgba(12, 20, 30, 0.90) 100%);
+      border: 2px solid #00cec9;
+      border-radius: 12px;
+      padding: 5px 14px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7);
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    #tutorial-banner .tut-zh {
+      font-size: 15.5px;
+      font-weight: 900;
+      color: #ffeaa7;
+      margin-bottom: 2px;
+    }
+
+    #tutorial-banner .tut-en {
+      font-size: 13px;
+      font-weight: 700;
+      color: #81ecec;
+    }
+
+    /* ON-SCREEN TOUCH / CLICK CONTROLS */
+    #touch-controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 10px;
+      z-index: 22;
+    }
+
+    .ctrl-btn {
+      background: linear-gradient(180deg, rgba(44, 62, 80, 0.92) 0%, rgba(26, 37, 47, 0.95) 100%);
+      border: 2px solid rgba(241, 196, 15, 0.75);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 7px 15px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      transition: transform 0.08s ease, background 0.12s ease;
+    }
+
+    .ctrl-btn:hover {
+      background: linear-gradient(180deg, #0984e3 0%, #0652dd 100%);
+      border-color: #ffffff;
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* OVERLAY SCREENS (MENU, QUIZ GATE, LEVEL COMPLETE, CERTIFICATE) */
+    .overlay-screen {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 13, 20, 0.84);
+      backdrop-filter: blur(5px);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-card {
+      background: linear-gradient(180deg, #243342 0%, #16202b 100%);
+      border: 3.5px solid var(--gold);
+      border-radius: 18px;
+      padding: 10px 20px;
+      width: 760px;
+      max-width: 95%;
+      max-height: 95%;
+      overflow-y: auto;
+      text-align: center;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.85);
+    }
+
+    .title-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #e67e22, #f1c40f);
+      color: #1e272e;
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+    }
+
+    h1.game-title {
+      margin: 3px 0 5px;
+      font-size: 25px;
+      font-weight: 900;
+      color: #f1c40f;
+      text-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
+    }
+
+    p.game-subtitle {
+      margin: 0 0 6px;
+      font-size: 13px;
+      color: #dfe6e9;
+      font-weight: 700;
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 900;
+      color: #81ecec;
+      margin: 5px 0 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 680px) {
+      .skill-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .skill-card {
+      background: #2b3846;
+      border: 2.5px solid #576574;
+      border-radius: 12px;
+      padding: 8px 6px;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      color: #ffffff;
+    }
+
+    .skill-card:hover {
+      transform: translateY(-2px);
+      border-color: #00cec9;
+    }
+
+    .skill-card.active {
+      background: linear-gradient(145deg, #00b894, #0984e3);
+      border-color: #f1c40f;
+      box-shadow: 0 0 14px rgba(0, 206, 201, 0.5);
+    }
+
+    .skill-card .sk-icon {
+      font-size: 21px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .skill-card .sk-en {
+      font-size: 12.5px;
+      font-weight: 900;
+      display: block;
+    }
+
+    .skill-card .sk-zh {
+      font-size: 11px;
+      color: #ffeaa7;
+      font-weight: 700;
+      display: block;
+    }
+
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 680px) {
+      .level-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .lvl-btn {
+      background: #23303d;
+      border: 2px solid #485460;
+      border-radius: 10px;
+      padding: 7px 4px;
+      cursor: pointer;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 11.5px;
+      transition: all 0.12s ease;
+      position: relative;
+    }
+
+    .lvl-btn.active {
+      background: linear-gradient(135deg, #e67e22, #d35400);
+      border-color: #f1c40f;
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(243, 156, 18, 0.65);
+    }
+
+    .lvl-btn.locked-preview {
+      background: rgba(26, 36, 47, 0.88);
+      border: 1.5px dashed rgba(129, 236, 236, 0.42);
+      color: #b2bec3;
+      cursor: default;
+    }
+
+    .lvl-btn.cleared {
+      border-color: #2ecc71;
+      background: linear-gradient(180deg, #1e3c34 0%, #162925 100%);
+    }
+
+    #level-roadmap-note {
+      font-size: 12px;
+      font-weight: 800;
+      color: #ffeaa7;
+      margin-bottom: 6px;
+      min-height: 16px;
+      transition: color 0.2s ease;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #00b894, #00cec9);
+      border: 2.5px solid #ffffff;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 17.5px;
+      font-weight: 900;
+      padding: 10px 28px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 184, 148, 0.45);
+      transition: transform 0.12s ease;
+    }
+
+    .primary-btn:hover {
+      transform: scale(1.04);
+    }
+
+    .secondary-btn {
+      background: linear-gradient(135deg, #0984e3, #6c5ce7);
+      border: 2px solid #ffffff;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 9px 20px;
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+
+    .secondary-btn:hover {
+      transform: scale(1.04);
+    }
+
+    /* QUIZ CUTOUT WALL MODAL */
+    #quiz-overlay {
+      background: rgba(8, 12, 20, 0.78);
+    }
+
+    .quiz-card {
+      background: linear-gradient(180deg, #1f2d3d 0%, #131b24 100%);
+      border: 4px solid #f1c40f;
+      border-radius: 18px;
+      padding: 16px 24px;
+      width: 650px;
+      max-width: 95%;
+      text-align: center;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.9);
+      position: relative;
+    }
+
+    .quiz-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .quiz-gate-tag {
+      background: linear-gradient(90deg, #e67e22, #d35400);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 1.5px solid #f1c40f;
+    }
+
+    .quiz-timer-pill {
+      background: #222f3e;
+      border: 2px solid #ff7675;
+      color: #ff7675;
+      font-weight: 900;
+      font-size: 15px;
+      padding: 4px 14px;
+      border-radius: 999px;
+    }
+
+    .timer-bar-wrap {
+      width: 100%;
+      height: 10px;
+      background: #222f3e;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    #quiz-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #2ecc71, #f1c40f, #e74c3c);
+      transition: width 0.08s linear;
+    }
+
+    .quiz-visual-box {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 136px;
+      height: 104px;
+      background: radial-gradient(circle, #ffffff 60%, #e8f8f5 100%);
+      border: 3.5px solid #00cec9;
+      border-radius: 16px;
+      margin-bottom: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      overflow: hidden;
+    }
+
+    #quiz-prompt-text {
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffffff;
+      margin: 4px 0 6px;
+      line-height: 1.38;
+    }
+
+    #quiz-hint-text {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #ffeaa7;
+      background: rgba(255, 234, 167, 0.14);
+      border: 1.5px solid rgba(255, 234, 167, 0.45);
+      border-radius: 10px;
+      padding: 5px 14px;
+      margin: 0 auto 10px;
+      display: inline-block;
+    }
+
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 6px 0;
+    }
+
+    @media (max-width: 580px) {
+      .choices-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .choice-btn {
+      background: linear-gradient(180deg, #34495e 0%, #2c3e50 100%);
+      border: 2.5px solid #00cec9;
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 800;
+      padding: 12px 10px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+    }
+
+    .choice-btn:hover {
+      background: linear-gradient(180deg, #0984e3 0%, #0652dd 100%);
+      border-color: #f1c40f;
+      transform: translateY(-2px);
+    }
+
+    .writing-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+      margin: 6px 0;
+    }
+
+    #writing-input {
+      width: 280px;
+      max-width: 90%;
+      padding: 9px 16px;
+      font-size: 20px;
+      font-weight: 900;
+      text-align: center;
+      border: 3px solid #00cec9;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #2d3436;
+      outline: none;
+    }
+
+    .letter-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .letter-chip {
+      background: #2f3640;
+      border: 2px solid #f1c40f;
+      border-radius: 8px;
+      color: #f1c40f;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 5px 11px;
+      cursor: pointer;
+    }
+
+    .letter-chip:hover {
+      background: #f1c40f;
+      color: #1e272e;
+    }
+
+    .speaking-box {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 8px 0;
+    }
+
+    #quiz-feedback {
+      min-height: 22px;
+      font-size: 15.5px;
+      font-weight: 900;
+      margin-top: 6px;
+    }
+
+    /* CERTIFICATE MODAL (Strictly unlocked after completing Level 7) */
+    #certificate-modal {
+      z-index: 90;
+    }
+
+    #certificate-preview-img {
+      max-width: 100%;
+      max-height: 410px;
+      border: 3px solid var(--gold);
+      border-radius: 8px;
+      background: #ffffff;
+      margin-top: 6px;
+    }
+
+    #certificate-print-area {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm;
+      }
+      html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
+      }
+      #app-wrapper {
+        display: none !important;
+      }
+      #certificate-print-area {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 92vh;
+        page-break-inside: avoid;
+      }
+      #certificate-print-area img {
+        width: auto;
+        height: auto;
+        max-width: 96%;
+        max-height: 90vh;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-wrapper">
+    <canvas id="game-canvas" width="960" height="580" tabindex="0"></canvas>
+
+    <!-- TOP HUD -->
+    <div id="hud-bar">
+      <div class="hud-pill" id="hud-level">🏛️ Level 1 / 7</div>
+      <div class="hud-pill" id="hud-gates">⛩️ 石門 Gates: 0 / 5</div>
+      <div class="hud-pill" id="hud-lives">❤️❤️❤️</div>
+      <div class="hud-pill" id="hud-score">🪙 0</div>
+      <div class="hud-pill" id="hud-time">⏱️ 00:00</div>
+      <button class="hud-btn" id="hud-menu-btn">🏠 主選單 Menu</button>
+    </div>
+
+    <!-- LEVEL PROGRESS BAR -->
+    <div id="progress-container">
+      <span id="progress-label">🏃 本關進度 Level 1: 0%</span>
+      <div class="progress-track">
+        <div id="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- BILINGUAL INSTRUCTION POPUP BANNER (LEVEL 1) -->
+    <div id="tutorial-banner">
+      <div class="tut-zh" id="tut-zh-text"></div>
+      <div class="tut-en" id="tut-en-text"></div>
+    </div>
+
+    <!-- ON-SCREEN CONTROLS FOR MOUSE / TOUCH -->
+    <div id="touch-controls">
+      <button class="ctrl-btn" id="btn-left">◀ 左移 Left (A / ←)</button>
+      <button class="ctrl-btn" id="btn-jump">▲ 跳躍 Jump (W / ↑)</button>
+      <button class="ctrl-btn" id="btn-slide">▼ 滑行 Slide (S / ↓)</button>
+      <button class="ctrl-btn" id="btn-right">右移 Right (D / →) ▶</button>
+    </div>
+
+    <!-- 1. MAIN MENU SCREEN (LEVEL ROADMAP PREVIEW — MUST START AT LEVEL 1) -->
+    <div class="overlay-screen" id="menu-screen" style="display: flex;">
+      <div class="modal-card">
+        <span class="title-badge">CEFR PRE-A1 EDITION • 幼兒與兒童初級英語跑酷</span>
+        <h1 class="game-title">🏛️ TEMPLE RUN ENGLISH • 神廟英語大冒險</h1>
+        <p class="game-subtitle">
+          左右切換跑道、跳過地面尖刺圓木、滑行鑽過雕刻石門！每 8 秒穿越「知識石門」，限時 10 秒作答！
+        </p>
+
+        <div class="section-label">1. 選擇英語練習技能 / Choose Language Skill</div>
+        <div class="skill-grid" id="skill-selector">
+          <div class="skill-card active" data-skill="Mixed">
+            <span class="sk-icon">🌟</span>
+            <span class="sk-en">All 4 Skills</span>
+            <span class="sk-zh">四技綜合</span>
+          </div>
+          <div class="skill-card" data-skill="Reading">
+            <span class="sk-icon">📖</span>
+            <span class="sk-en">Reading</span>
+            <span class="sk-zh">閱讀圖文</span>
+          </div>
+          <div class="skill-card" data-skill="Listening">
+            <span class="sk-icon">🔊</span>
+            <span class="sk-en">Listening</span>
+            <span class="sk-zh">聽力發音</span>
+          </div>
+          <div class="skill-card" data-skill="Writing">
+            <span class="sk-icon">⌨️</span>
+            <span class="sk-en">Writing</span>
+            <span class="sk-zh">拼字打字</span>
+          </div>
+          <div class="skill-card" data-skill="Speaking">
+            <span class="sk-icon">🎤</span>
+            <span class="sk-en">Speaking</span>
+            <span class="sk-zh">口說麥克風</span>
+          </div>
+        </div>
+
+        <div class="section-label">2. 闖關路線主題預覽 (統一由第 1 關出發挑戰全 7 關) / Level 1–7 Content Roadmap</div>
+        <div class="level-grid" id="level-selector"></div>
+        <div id="level-roadmap-note">
+          🏁 闖關規則：所有學習者皆從 <b>Level 1 (起點)</b> 開始，依序突破全部 7 大關卡完成挑戰！(上方顯示各關學習主題)
+        </div>
+
+        <div style="background: rgba(0, 206, 201, 0.12); border: 1.5px solid #00cec9; border-radius: 12px; padding: 6px 12px; margin-bottom: 8px; font-size: 12.5px; text-align: left; line-height: 1.5;">
+          <div>🎮 <b>操作方式 Controls：</b>使用 <b>WASD</b> 或 <b>方向鍵 (◀ ▶ ▲ ▼)</b> 切換左/中/右跑道、跳躍跨欄、滑行鑽過石樑。</div>
+          <div>⛩️ <b>石門問答 Cutout Wall：</b>每 7–10 秒出現知識石門並暫停畫面，限時 <b>10 秒</b>作答！從第 1 關一路闖到第 7 關終點即可領取完賽證書！</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+          <button class="primary-btn" id="start-game-btn">🏃 開始神廟跑酷 Start Temple Run!</button>
+          <a href="../../index.html" class="secondary-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #2f3640;">
+            <span>←</span>
+            <span>TLCP@Games</span>
+          </a>
+        </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. LEVEL 1 BILINGUAL INSTRUCTION INTRO POPUP -->
+    <div class="overlay-screen" id="intro-modal">
+      <div class="modal-card" style="max-width: 650px;">
+        <span class="title-badge">LEVEL 1 TUTORIAL • 第一關雙語新手教學</span>
+        <h2 style="margin: 6px 0 10px; color: #f1c40f; font-size: 25px;">🗺️ 如何遊玩 How to Play Temple Run English</h2>
+        <div style="text-align: left; background: rgba(0,0,0,0.38); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14.5px; line-height: 1.48;">
+          <div>
+            <b style="color: #00cec9;">1. ◀ ▶ 左右換道 Switch Lanes (A / D or Left / Right Arrows)：</b><br/>
+            在神廟石橋的左、中、右三條跑道間移動，收集 3D 太陽金幣 🪙 並閃避守護者圖騰石柱 (<b style="color:#ff7675;">◀▶ DODGE</b>)！
+          </div>
+          <div>
+            <b style="color: #2ecc71;">2. ▲ 跳躍 / ▼ 滑行 Jump & Slide (W / S or Up / Down Arrows)：</b><br/>
+            看到地面尖刺圓木 (<b style="color:#2ecc71;">▲ JUMP 跳躍</b>) 請按 <b>W / ▲</b> 跳過；看到上方雕刻石門 (<b style="color:#81ecec;">▼ SLIDE 滑行</b>) 請按 <b>S / ▼</b> 滑行鑽過下方空隙！
+          </div>
+          <div>
+            <b style="color: #ffeaa7;">3. ⛩️ 知識石門問答 Cutout Wall Quiz (Every 8 Seconds)：</b><br/>
+            每跑 7–10 秒會遇到「知識石門」，畫面會自動暫停！請在 <b>10 秒內</b>回答雙語問題。答對即可開啟石門加速通過，依序完成 1 到 7 關全程挑戰！
+          </div>
+        </div>
+        <button class="primary-btn" id="confirm-intro-btn">🚀 我準備好了！出發！ Let's Go!</button>
+      </div>
+    </div>
+
+    <!-- 3. CUTOUT WALL QUESTION PROMPT MODAL (FREEZES GAME) -->
+    <div class="overlay-screen" id="quiz-overlay">
+      <div class="quiz-card">
+        <div class="quiz-top-row">
+          <span class="quiz-gate-tag" id="quiz-gate-badge">⛩️ 知識石門 Cutout Gate 1 / 5</span>
+          <span class="quiz-timer-pill" id="quiz-timer-text">⏱️ 10.0s</span>
+        </div>
+        <div class="timer-bar-wrap">
+          <div id="quiz-timer-bar"></div>
+        </div>
+
+        <div class="quiz-visual-box">
+          <canvas id="quiz-illust-canvas" width="132" height="100"></canvas>
+        </div>
+        <div id="quiz-prompt-text">「蘋果」的英文是什麼？ (What is "蘋果" in English?)</div>
+        <div id="quiz-hint-text">💡 提示：紅紅的蘋果英文是 Apple 喔！</div>
+
+        <!-- Dynamic Answer Area (Choices, Writing Input, or Speaking Mic) -->
+        <div id="quiz-interaction-area"></div>
+
+        <div id="quiz-feedback"></div>
+      </div>
+    </div>
+
+    <!-- 4. LEVEL COMPLETE / GAME OVER MODAL -->
+    <div class="overlay-screen" id="result-modal">
+      <div class="modal-card" style="max-width: 580px;">
+        <div id="result-icon" style="font-size: 56px; margin-bottom: 6px;">🏆</div>
+        <h2 id="result-title" style="margin: 4px 0 8px; color: #f1c40f; font-size: 28px;">LEVEL COMPLETE!</h2>
+        <p id="result-subtitle" style="font-size: 16px; color: #dfe6e9; line-height: 1.5; margin-bottom: 16px;"></p>
+        <div id="result-stats" style="background: rgba(0,0,0,0.38); border-radius: 12px; padding: 12px; margin-bottom: 16px; font-size: 15px; font-weight: 800; color: #81ecec; line-height: 1.7;"></div>
+        <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;" id="result-buttons"></div>
+      </div>
+    </div>
+
+    <!-- 5. CERTIFICATE MODAL (PNG & PDF — ONLY AVAILABLE AT END OF PLAYTHROUGH) -->
+    <div class="overlay-screen" id="certificate-modal">
+      <div class="modal-card" style="width: 850px; max-width: 96%;">
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-bottom: 8px;">
+          <label for="cert-student-name" style="font-weight: 900; font-size: 14px; color: #ffeaa7;">學生姓名 Student Name:</label>
+          <input id="cert-student-name" type="text" value="Temple Explorer" maxlength="30" style="padding: 7px 12px; border-radius: 8px; border: 2px solid #00cec9; background: #2f3640; color: #fff; font-size: 15px; font-weight: 800; outline: none; width: 200px;" />
+          <button class="secondary-btn" id="cert-download-png" style="background: #00b894; padding: 8px 15px; font-size: 14px;">💾 下載 PNG 證書 (Save PNG)</button>
+          <button class="secondary-btn" id="cert-print-pdf" style="background: #0984e3; padding: 8px 15px; font-size: 14px;">🖨️ 列印 / 存成 PDF (Print PDF)</button>
+          <button class="secondary-btn" id="cert-close-btn" style="background: #d63031; padding: 8px 15px; font-size: 14px;">↩ 返回完賽畫面 Back</button>
+        </div>
+        <img id="certificate-preview-img" alt="Pre-A1 Temple Run Certificate" />
+      </div>
+    </div>
+  </div>
+
+  <div id="certificate-print-area"></div>
+
+  <script>
+    // =========================================================================
+    // 1. MODULAR CEFR QUESTION BANK (PRE-A1 ACTIVE; 7 SEQUENTIAL LEVELS)
+    // =========================================================================
+    const LEVEL_CONFIGS = [
+      {
+        level: 1,
+        nameEn: "Jungle Temple Gate",
+        nameZh: "第一關：叢林神廟入口",
+        topicZh: "水果與食物 (Fruits & Food)",
+        topicShortEn: "Fruits & Food",
+        questionsCount: 5,
+        wallIntervalSec: 8.2,
+        baseSpeed: 1.0,
+        skyTop: "#08202b",
+        skyMid: "#134e5e",
+        skyBot: "#71b280",
+        sunCol: "#fff3b0",
+        mountainFar: "#0f343d",
+        mountainNear: "#164a41",
+        foliageCol: "#1b6ca8",
+        jungleLeafDark: "#0f4c3a",
+        jungleLeafLight: "#2ecc71",
+        roadSlabLight: "#9e856c",
+        roadSlabDark: "#826952",
+        parapetCol: "#564332",
+        trimCol: "#2ecc71",
+        waterCol: "#00cec9",
+        particleCol: "rgba(163, 255, 172, 0.75)"
+      },
+      {
+        level: 2,
+        nameEn: "Ancient Sunset Bridge",
+        nameZh: "第二關：夕陽古老石橋",
+        topicZh: "可愛動物 (Animals & Pets)",
+        topicShortEn: "Animals & Pets",
+        questionsCount: 5,
+        wallIntervalSec: 8.5,
+        baseSpeed: 1.04,
+        skyTop: "#1f1135",
+        skyMid: "#8338ec",
+        skyBot: "#ff9e64",
+        sunCol: "#ffd166",
+        mountainFar: "#2d1646",
+        mountainNear: "#4a1f52",
+        foliageCol: "#3c1b43",
+        jungleLeafDark: "#2d1436",
+        jungleLeafLight: "#f39c12",
+        roadSlabLight: "#96857b",
+        roadSlabDark: "#7a6960",
+        parapetCol: "#4f4139",
+        trimCol: "#f39c12",
+        waterCol: "#ff9f43",
+        particleCol: "rgba(255, 214, 102, 0.75)"
+      },
+      {
+        level: 3,
+        nameEn: "Torchlight Corridor",
+        nameZh: "第三關：火把神殿長廊",
+        topicZh: "顏色與數字 (Colors & Numbers)",
+        topicShortEn: "Colors & Numbers",
+        questionsCount: 6,
+        wallIntervalSec: 8.0,
+        baseSpeed: 1.07,
+        skyTop: "#100c1c",
+        skyMid: "#4a154b",
+        skyBot: "#d63031",
+        sunCol: "#ffbe76",
+        mountainFar: "#1e112a",
+        mountainNear: "#38152e",
+        foliageCol: "#2c1124",
+        jungleLeafDark: "#240e1e",
+        jungleLeafLight: "#e17055",
+        roadSlabLight: "#87695d",
+        roadSlabDark: "#6e5246",
+        parapetCol: "#47322a",
+        trimCol: "#f1c40f",
+        waterCol: "#eb4d4b",
+        particleCol: "rgba(255, 159, 67, 0.8)"
+      },
+      {
+        level: 4,
+        nameEn: "Crystal Cavern Path",
+        nameZh: "第四關：神秘水晶洞穴",
+        topicZh: "身體與家人 (Body & Family)",
+        topicShortEn: "Body & Family",
+        questionsCount: 6,
+        wallIntervalSec: 8.2,
+        baseSpeed: 1.10,
+        skyTop: "#050d1a",
+        skyMid: "#113255",
+        skyBot: "#00cec9",
+        sunCol: "#81ecec",
+        mountainFar: "#0b1e36",
+        mountainNear: "#133354",
+        foliageCol: "#0e3b4c",
+        jungleLeafDark: "#092b38",
+        jungleLeafLight: "#00cec9",
+        roadSlabLight: "#718093",
+        roadSlabDark: "#576574",
+        parapetCol: "#353b48",
+        trimCol: "#00cec9",
+        waterCol: "#00d2d3",
+        particleCol: "rgba(129, 236, 236, 0.8)"
+      },
+      {
+        level: 5,
+        nameEn: "Waterfall Skyway",
+        nameZh: "第五關：飛瀑天空步道",
+        topicZh: "運動與動作 (Sports & Actions)",
+        topicShortEn: "Sports & Actions",
+        questionsCount: 6,
+        wallIntervalSec: 8.5,
+        baseSpeed: 1.13,
+        skyTop: "#072448",
+        skyMid: "#1868ae",
+        skyBot: "#82ccdd",
+        sunCol: "#ffffff",
+        mountainFar: "#0f3866",
+        mountainNear: "#19517d",
+        foliageCol: "#145369",
+        jungleLeafDark: "#0e4459",
+        jungleLeafLight: "#38ada9",
+        roadSlabLight: "#8898a8",
+        roadSlabDark: "#6f7f90",
+        parapetCol: "#485868",
+        trimCol: "#00d2d3",
+        waterCol: "#48dbfb",
+        particleCol: "rgba(223, 249, 251, 0.8)"
+      },
+      {
+        level: 6,
+        nameEn: "Sun Altar Courtyard",
+        nameZh: "第六關：太陽祭壇廣場",
+        topicZh: "天氣與大自然 (Weather & Nature)",
+        topicShortEn: "Weather & Nature",
+        questionsCount: 7,
+        wallIntervalSec: 8.0,
+        baseSpeed: 1.16,
+        skyTop: "#4a1009",
+        skyMid: "#b71540",
+        skyBot: "#f6b93b",
+        sunCol: "#fff200",
+        mountainFar: "#42110c",
+        mountainNear: "#691c14",
+        foliageCol: "#521810",
+        jungleLeafDark: "#3d110b",
+        jungleLeafLight: "#f39c12",
+        roadSlabLight: "#ab896c",
+        roadSlabDark: "#8f6f53",
+        parapetCol: "#5e442e",
+        trimCol: "#e55039",
+        waterCol: "#fa983a",
+        particleCol: "rgba(255, 234, 167, 0.85)"
+      },
+      {
+        level: 7,
+        nameEn: "Golden Temple Sanctum",
+        nameZh: "第七關：黃金神殿終點",
+        topicZh: "學校與日常總複習 (School & Daily Life)",
+        topicShortEn: "School & Review",
+        questionsCount: 7,
+        wallIntervalSec: 8.2,
+        baseSpeed: 1.20,
+        skyTop: "#1b0a24",
+        skyMid: "#6d214f",
+        skyBot: "#f1c40f",
+        sunCol: "#fff9c4",
+        mountainFar: "#2c0e37",
+        mountainNear: "#4a1942",
+        foliageCol: "#3d1438",
+        jungleLeafDark: "#2b0d28",
+        jungleLeafLight: "#f1c40f",
+        roadSlabLight: "#bd9352",
+        roadSlabDark: "#9e7638",
+        parapetCol: "#6b4c1b",
+        trimCol: "#f1c40f",
+        waterCol: "#feca57",
+        particleCol: "rgba(255, 249, 196, 0.9)"
+      }
+    ];
+
+    const PRE_A1_ITEMS_BY_LEVEL = {
+      1: [
+        { word: "Apple", zh: "蘋果", icon: "🍎", wrong: ["Banana (香蕉)", "Milk (牛奶)"], hint: "紅紅圓圓的「蘋果」英文是 Apple！" },
+        { word: "Banana", zh: "香蕉", icon: "🍌", wrong: ["Apple (蘋果)", "Cake (蛋糕)"], hint: "黃色彎彎的「香蕉」英文是 Banana！" },
+        { word: "Milk", zh: "牛奶", icon: "🥛", wrong: ["Water (水)", "Bread (麵包)"], hint: "營養好喝的「牛奶」英文是 Milk！" },
+        { word: "Bread", zh: "麵包", icon: "🍞", wrong: ["Egg (雞蛋)", "Juice (果汁)"], hint: "早餐常吃的「麵包」英文是 Bread！" },
+        { word: "Cake", zh: "蛋糕", icon: "🎂", wrong: ["Apple (蘋果)", "Fish (魚)"], hint: "生日慶祝吃的「蛋糕」英文是 Cake！" },
+        { word: "Egg", zh: "雞蛋", icon: "🥚", wrong: ["Milk (牛奶)", "Orange (橘子)"], hint: "母雞生的「雞蛋」英文是 Egg！" },
+        { word: "Water", zh: "水", icon: "💧", wrong: ["Cake (蛋糕)", "Banana (香蕉)"], hint: "口渴要喝的「水」英文是 Water！" },
+        { word: "Orange", zh: "橘子", icon: "🍊", wrong: ["Bread (麵包)", "Milk (牛奶)"], hint: "酸酸甜甜的「橘子」英文是 Orange！" }
+      ],
+      2: [
+        { word: "Cat", zh: "貓咪", icon: "🐱", wrong: ["Dog (小狗)", "Bird (小鳥)"], hint: "喵喵叫的「貓咪」英文是 Cat！" },
+        { word: "Dog", zh: "小狗", icon: "🐶", wrong: ["Cat (貓咪)", "Fish (魚)"], hint: "汪汪叫的「小狗」英文是 Dog！" },
+        { word: "Bird", zh: "小鳥", icon: "🐦", wrong: ["Pig (小豬)", "Duck (鴨子)"], hint: "在天空飛的「小鳥」英文是 Bird！" },
+        { word: "Fish", zh: "魚", icon: "🐟", wrong: ["Cat (貓咪)", "Bear (熊)"], hint: "在水裡游的「魚」英文是 Fish！" },
+        { word: "Duck", zh: "鴨子", icon: "🦆", wrong: ["Dog (小狗)", "Monkey (猴子)"], hint: "呱呱叫的「鴨子」英文是 Duck！" },
+        { word: "Pig", zh: "小豬", icon: "🐷", wrong: ["Bird (小鳥)", "Cat (貓咪)"], hint: "粉紅色的「小豬」英文是 Pig！" },
+        { word: "Bear", zh: "小熊", icon: "🐻", wrong: ["Fish (魚)", "Duck (鴨子)"], hint: "圓滾滾的「小熊」英文是 Bear！" },
+        { word: "Monkey", zh: "猴子", icon: "🐵", wrong: ["Pig (小豬)", "Dog (小狗)"], hint: "愛吃香蕉的「猴子」英文是 Monkey！" }
+      ],
+      3: [
+        { word: "Red", zh: "紅色", icon: "🔴", wrong: ["Blue (藍色)", "Green (綠色)"], hint: "像蘋果一樣的「紅色」英文是 Red！" },
+        { word: "Blue", zh: "藍色", icon: "🔵", wrong: ["Red (紅色)", "Yellow (黃色)"], hint: "像天空一樣的「藍色」英文是 Blue！" },
+        { word: "Yellow", zh: "黃色", icon: "🟡", wrong: ["Green (綠色)", "Blue (藍色)"], hint: "像香蕉一樣的「黃色」英文是 Yellow！" },
+        { word: "Green", zh: "綠色", icon: "🟢", wrong: ["Red (紅色)", "Yellow (黃色)"], hint: "像草地一樣的「綠色」英文是 Green！" },
+        { word: "One", zh: "數字 1 (一)", icon: "1️⃣", wrong: ["Two (二)", "Three (三)"], hint: "數字「1」的英文是 One！" },
+        { word: "Two", zh: "數字 2 (二)", icon: "2️⃣", wrong: ["One (一)", "Five (五)"], hint: "數字「2」的英文是 Two！" },
+        { word: "Three", zh: "數字 3 (三)", icon: "3️⃣", wrong: ["Two (二)", "Ten (十)"], hint: "數字「3」的英文是 Three！" },
+        { word: "Five", zh: "數字 5 (五)", icon: "5️⃣", wrong: ["One (一)", "Three (三)"], hint: "一隻手有 5 根手指，「5」的英文是 Five！" }
+      ],
+      4: [
+        { word: "Eye", zh: "眼睛", icon: "👀", wrong: ["Ear (耳朵)", "Nose (鼻子)"], hint: "看東西的「眼睛」英文是 Eye！" },
+        { word: "Ear", zh: "耳朵", icon: "👂", wrong: ["Eye (眼睛)", "Hand (手)"], hint: "聽聲音的「耳朵」英文是 Ear！" },
+        { word: "Nose", zh: "鼻子", icon: "👃", wrong: ["Mouth (嘴巴)", "Ear (耳朵)"], hint: "聞味道的「鼻子」英文是 Nose！" },
+        { word: "Hand", zh: "手", icon: "✋", wrong: ["Eye (眼睛)", "Nose (鼻子)"], hint: "拍拍手的「手」英文是 Hand！" },
+        { word: "Mom", zh: "媽媽", icon: "👩", wrong: ["Dad (爸爸)", "Baby (小寶寶)"], hint: "溫柔的「媽媽」英文是 Mom！" },
+        { word: "Dad", zh: "爸爸", icon: "👨", wrong: ["Mom (媽媽)", "Hand (手)"], hint: "照顧我們的「爸爸」英文是 Dad！" },
+        { word: "Baby", zh: "小寶寶", icon: "👶", wrong: ["Dad (爸爸)", "Eye (眼睛)"], hint: "可愛的「小寶寶」英文是 Baby！" },
+        { word: "Mouth", zh: "嘴巴", icon: "👄", wrong: ["Nose (鼻子)", "Ear (耳朵)"], hint: "吃東西說話的「嘴巴」英文是 Mouth！" }
+      ],
+      5: [
+        { word: "Run", zh: "跑步", icon: "🏃", wrong: ["Swim (游泳)", "Sleep (睡覺)"], hint: "在神廟裡快速「跑步」英文是 Run！" },
+        { word: "Jump", zh: "跳躍", icon: "🦘", wrong: ["Sit (坐下)", "Read (閱讀)"], hint: "往上「跳躍」英文是 Jump！" },
+        { word: "Swim", zh: "游泳", icon: "🏊", wrong: ["Run (跑步)", "Sing (唱歌)"], hint: "在水裡「游泳」英文是 Swim！" },
+        { word: "Ball", zh: "球", icon: "⚽", wrong: ["Bike (腳踏車)", "Book (書本)"], hint: "圓圓的「球」英文是 Ball！" },
+        { word: "Bike", zh: "腳踏車", icon: "🚴", wrong: ["Ball (球)", "Swim (游泳)"], hint: "去公園騎的「腳踏車」英文是 Bike！" },
+        { word: "Sing", zh: "唱歌", icon: "🎤", wrong: ["Jump (跳躍)", "Run (跑步)"], hint: "拿麥克風開心「唱歌」英文是 Sing！" },
+        { word: "Dance", zh: "跳舞", icon: "💃", wrong: ["Swim (游泳)", "Bike (腳踏車)"], hint: "跟著音樂「跳舞」英文是 Dance！" },
+        { word: "Walk", zh: "走路", icon: "🚶", wrong: ["Sing (唱歌)", "Ball (球)"], hint: "慢慢散步「走路」英文是 Walk！" }
+      ],
+      6: [
+        { word: "Sun", zh: "太陽 / 晴天", icon: "☀️", wrong: ["Rain (下雨)", "Snow (下雪)"], hint: "暖呼呼的「太陽」英文是 Sun！" },
+        { word: "Rain", zh: "下雨 / 雨水", icon: "🌧️", wrong: ["Sun (太陽)", "Star (星星)"], hint: "天空掉下小雨滴「下雨」英文是 Rain！" },
+        { word: "Snow", zh: "雪 / 下雪", icon: "⛄", wrong: ["Tree (大樹)", "Sun (太陽)"], hint: "白色冰冷的「雪」英文是 Snow！" },
+        { word: "Tree", zh: "樹 / 大樹", icon: "🌳", wrong: ["Flower (花朵)", "Rain (下雨)"], hint: "森林裡綠色的「大樹」英文是 Tree！" },
+        { word: "Star", zh: "星星", icon: "⭐", wrong: ["Sun (太陽)", "Snow (下雪)"], hint: "夜空中一閃一閃的「星星」英文是 Star！" },
+        { word: "Cloud", zh: "雲朵", icon: "☁️", wrong: ["Tree (大樹)", "Star (星星)"], hint: "天空上白白的「雲朵」英文是 Cloud！" },
+        { word: "Wind", zh: "風 / 刮風", icon: "💨", wrong: ["Rain (下雨)", "Flower (花朵)"], hint: "呼呼吹的「風」英文是 Wind！" },
+        { word: "Sky", zh: "天空", icon: "🌌", wrong: ["Tree (大樹)", "Snow (下雪)"], hint: "抬頭看到的整片「天空」英文是 Sky！" }
+      ],
+      7: [
+        { word: "Book", zh: "書本", icon: "📖", wrong: ["Pen (筆)", "Bag (書包)"], hint: "翻開來閱讀的「書本」英文是 Book！" },
+        { word: "Pen", zh: "筆 / 原子筆", icon: "🖊️", wrong: ["Book (書本)", "Desk (書桌)"], hint: "用來寫字的「筆」英文是 Pen！" },
+        { word: "Bag", zh: "書包 / 袋子", icon: "🎒", wrong: ["School (學校)", "Chair (椅子)"], hint: "背去上學的「書包」英文是 Bag！" },
+        { word: "School", zh: "學校", icon: "🏫", wrong: ["Home (家)", "Bag (書包)"], hint: "老師與同學在的「學校」英文是 School！" },
+        { word: "Desk", zh: "書桌", icon: "🪑", wrong: ["Pen (筆)", "Book (書本)"], hint: "教室裡放課本的「書桌」英文是 Desk！" },
+        { word: "Home", zh: "家", icon: "🏠", wrong: ["School (學校)", "Pen (筆)"], hint: "放學後回去溫暖的「家」英文是 Home！" },
+        { word: "Bus", zh: "公車 / 校車", icon: "🚌", wrong: ["Bag (書包)", "Book (書本)"], hint: "載大家去上學的「公車」英文是 Bus！" },
+        { word: "Happy", zh: "開心的 / 快樂", icon: "😊", wrong: ["Cold (冷的)", "Sad (難過)"], hint: "笑咪咪「開心的」英文是 Happy！" }
+      ]
+    };
+
+    // =========================================================================
+    // 2. CUSTOM VECTOR VOCABULARY ILLUSTRATION RENDERER (FOR QUIZ MODAL)
+    // =========================================================================
+    function drawVocabIllustration(item) {
+      const c = document.getElementById("quiz-illust-canvas");
+      if (!c) return;
+      const g = c.getContext("2d");
+      const w = c.width;
+      const h = c.height;
+      g.clearRect(0, 0, w, h);
+      g.save();
+      g.lineCap = "round";
+      g.lineJoin = "round";
+
+      // Soft decorative backdrop halo
+      const bgGrad = g.createRadialGradient(w / 2, h / 2, 8, w / 2, h / 2, 52);
+      bgGrad.addColorStop(0, "rgba(0, 206, 201, 0.18)");
+      bgGrad.addColorStop(1, "rgba(0, 206, 201, 0.0)");
+      g.fillStyle = bgGrad;
+      g.beginPath();
+      g.arc(w / 2, h / 2, 50, 0, Math.PI * 2);
+      g.fill();
+
+      const word = (item.word || "").toLowerCase();
+
+      if (word === "apple") {
+        g.strokeStyle = "#5d4037";
+        g.lineWidth = 4;
+        g.beginPath();
+        g.moveTo(66, 26);
+        g.quadraticCurveTo(64, 14, 58, 11);
+        g.stroke();
+
+        g.fillStyle = "#2ecc71";
+        g.strokeStyle = "#1e8449";
+        g.lineWidth = 2;
+        g.beginPath();
+        g.moveTo(67, 23);
+        g.quadraticCurveTo(80, 11, 90, 18);
+        g.quadraticCurveTo(80, 30, 67, 23);
+        g.fill();
+        g.stroke();
+
+        const ag = g.createRadialGradient(54, 42, 6, 66, 54, 34);
+        ag.addColorStop(0, "#ff7675");
+        ag.addColorStop(0.5, "#e74c3c");
+        ag.addColorStop(1, "#b03a2e");
+        g.fillStyle = ag;
+        g.strokeStyle = "#78281f";
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.moveTo(66, 26);
+        g.bezierCurveTo(48, 18, 32, 32, 35, 55);
+        g.bezierCurveTo(38, 76, 54, 84, 62, 79);
+        g.quadraticCurveTo(66, 77, 70, 79);
+        g.bezierCurveTo(78, 84, 94, 76, 97, 55);
+        g.bezierCurveTo(100, 32, 84, 18, 66, 26);
+        g.closePath();
+        g.fill();
+        g.stroke();
+
+        g.fillStyle = "rgba(255,255,255,0.65)";
+        g.beginPath();
+        g.ellipse(48, 44, 5, 11, -0.35, 0, Math.PI * 2);
+        g.fill();
+      } else if (word === "banana") {
+        const bg = g.createLinearGradient(32, 30, 96, 78);
+        bg.addColorStop(0, "#fff59d");
+        bg.addColorStop(0.4, "#ffeb3b");
+        bg.addColorStop(0.85, "#fbc02d");
+        bg.addColorStop(1, "#f57f17");
+        g.fillStyle = bg;
+        g.strokeStyle = "#9c640c";
+        g.lineWidth = 2.6;
+        g.beginPath();
+        g.moveTo(92, 22);
+        g.bezierCurveTo(94, 58, 66, 84, 32, 68);
+        g.quadraticCurveTo(27, 65, 30, 60);
+        g.bezierCurveTo(58, 66, 78, 48, 85, 20);
+        g.closePath();
+        g.fill();
+        g.stroke();
+
+        g.strokeStyle = "rgba(255,255,255,0.75)";
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.moveTo(82, 28);
+        g.bezierCurveTo(74, 50, 58, 62, 38, 61);
+        g.stroke();
+
+        g.fillStyle = "#5d4037";
+        g.beginPath();
+        g.arc(88, 19, 4, 0, Math.PI * 2);
+        g.arc(30, 63, 3, 0, Math.PI * 2);
+        g.fill();
+      } else if (word === "red" || word === "blue" || word === "yellow" || word === "green") {
+        const colMap = {
+          red: ["#ff7675", "#e74c3c", "#922b21"],
+          blue: ["#74b9ff", "#0984e3", "#1b4f72"],
+          yellow: ["#fff59d", "#f1c40f", "#9c640c"],
+          green: ["#55efc4", "#00b894", "#145a32"]
+        }[word];
+        const cg = g.createRadialGradient(56, 38, 6, 66, 50, 34);
+        cg.addColorStop(0, colMap[0]);
+        cg.addColorStop(0.6, colMap[1]);
+        cg.addColorStop(1, colMap[2]);
+        g.fillStyle = cg;
+        g.strokeStyle = colMap[2];
+        g.lineWidth = 3;
+        g.beginPath();
+        g.arc(66, 50, 32, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
+        g.fillStyle = "rgba(255,255,255,0.65)";
+        g.beginPath();
+        g.ellipse(53, 36, 5, 10, -0.45, 0, Math.PI * 2);
+        g.fill();
+      } else if (word === "sun") {
+        g.strokeStyle = "#f39c12";
+        g.lineWidth = 4;
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          g.beginPath();
+          g.moveTo(66 + Math.cos(a) * 26, 50 + Math.sin(a) * 26);
+          g.lineTo(66 + Math.cos(a) * 38, 50 + Math.sin(a) * 38);
+          g.stroke();
+        }
+        const sg = g.createRadialGradient(60, 44, 4, 66, 50, 23);
+        sg.addColorStop(0, "#fff59d");
+        sg.addColorStop(0.6, "#f1c40f");
+        sg.addColorStop(1, "#e67e22");
+        g.fillStyle = sg;
+        g.strokeStyle = "#d35400";
+        g.lineWidth = 2.5;
+        g.beginPath();
+        g.arc(66, 50, 22, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
+      } else {
+        g.fillStyle = "#ffffff";
+        g.strokeStyle = "#d4af37";
+        g.lineWidth = 3;
+        g.beginPath();
+        g.roundRect(22, 10, 88, 80, 14);
+        g.fill();
+        g.stroke();
+
+        g.font = '54px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.fillText(item.icon || "🌟", w / 2, h / 2 + 2);
+      }
+
+      g.restore();
+    }
+
+    // =========================================================================
+    // 3. WEB AUDIO SYNTHESIZER & SPEECH ENGINE
+    // =========================================================================
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.bgmInterval = null;
+        this.bgmStep = 0;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+      }
+
+      playTone(freq, endFreq, duration, type = "sine", gainVal = 0.14) {
+        this.init();
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (endFreq !== freq) {
+          osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), now + duration);
+        }
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+
+      playCoin() {
+        this.playTone(880, 1318.5, 0.11, "sine", 0.12);
+      }
+
+      playJump() {
+        this.playTone(240, 480, 0.14, "triangle", 0.16);
+      }
+
+      playSlide() {
+        this.playTone(420, 180, 0.13, "sine", 0.14);
+      }
+
+      playLaneSwitch() {
+        this.playTone(340, 420, 0.06, "sine", 0.08);
+      }
+
+      playGateSuccess() {
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+          setTimeout(() => this.playTone(f, f * 1.02, 0.14, "triangle", 0.15), idx * 55);
+        });
+      }
+
+      playCrash() {
+        this.playTone(160, 45, 0.3, "sawtooth", 0.24);
+      }
+
+      startBGM() {
+        this.init();
+        this.stopBGM();
+        const notes = [261.63, 329.63, 392.00, 329.63, 293.66, 349.23, 440.00, 349.23];
+        this.bgmStep = 0;
+        this.bgmInterval = setInterval(() => {
+          if (!this.ctx || game.state !== "RUNNING") return;
+          const f = notes[this.bgmStep % notes.length];
+          this.playTone(f, f, 0.12, "sine", 0.032);
+          if (this.bgmStep % 2 === 0) {
+            this.playTone(f / 2, f / 2, 0.15, "triangle", 0.038);
+          }
+          this.bgmStep++;
+        }, 230);
+      }
+
+      stopBGM() {
+        if (this.bgmInterval) {
+          clearInterval(this.bgmInterval);
+          this.bgmInterval = null;
+        }
+      }
+    }
+
+    const sfx = new SoundEngine();
+
+    function speakEnglish(text) {
+      if (!("speechSynthesis" in window) || !text) return;
+      try {
+        window.speechSynthesis.cancel();
+        const clean = String(text).replace(/\([^)]*\)/g, "").trim();
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = "en-US";
+        u.rate = 0.88;
+        u.pitch = 1.08;
+        window.speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // 4. TEMPLE RUN 3D PERSPECTIVE ENGINE & GAME STATE
+    // =========================================================================
+    const canvas = document.getElementById("game-canvas");
+    const ctx = canvas.getContext("2d");
+
+    const game = {
+      state: "MENU", // MENU, INTRO, RUNNING, QUIZ_FREEZE, QUIZ_RESOLVING, RESULT, CERTIFICATE
+      selectedSkill: "Mixed",
+      currentLevelIdx: 0, // Everyone starts at Level 1 (index 0) and plays through sequentially
+      clearedLevels: new Set(),
+      playthroughCompleted: false, // Certificate ONLY unlocks when Level 7 is completed!
+
+      // Session & Level metrics
+      score: 0,
+      totalCorrectAllLevels: 0,
+      totalQuestionsAskedAllLevels: 0,
+      totalRunSecondsAllLevels: 0,
+
+      // Per-level run state
+      lives: 3,
+      maxLives: 3,
+      levelRunTimeSec: 0,
+      gatesClearedInLevel: 0,
+      gatesSpawnedInLevel: 0,
+      timeUntilNextWall: 8.0,
+      obstacleSpawnTimer: 1.8,
+      coinSpawnTimer: 0.9,
+
+      // Runner 3D lane & physics state
+      targetLane: 0, // -1 (Left), 0 (Center), +1 (Right)
+      currentLaneX: 0, // Smoothly interpolated -1..+1
+      jumpY: 0,
+      jumpVy: 0,
+      isJumping: false,
+      slideTimer: 0,
+      runCycle: 0,
+      invulnTimer: 0,
+      speedBoostTimer: 0,
+      chaserWarningTimer: 0,
+      ambientClock: 0,
+
+      // 3D World Objects (z from 1.0 horizon down to 0.0 camera)
+      worldObjects: [],
+      particles: [],
+      floatingTexts: [],
+      clouds: [
+        { x: 110, y: 42, scale: 0.95, speed: 5.5 },
+        { x: 390, y: 28, scale: 1.2, speed: 4.0 },
+        { x: 670, y: 48, scale: 0.88, speed: 6.5 },
+        { x: 860, y: 34, scale: 1.0, speed: 4.8 }
+      ],
+      stars: Array.from({ length: 28 }, (_, i) => ({
+        x: (i * 137.5) % 960,
+        y: 8 + ((i * 43) % 92),
+        r: 1 + (i % 3) * 0.6,
+        phase: i * 0.7
+      })),
+      envMotes: Array.from({ length: 24 }, (_, i) => ({
+        x: (i * 89) % 960,
+        y: 120 + ((i * 67) % 420),
+        vx: -12 + (i % 5) * 6,
+        vy: -14 - (i % 4) * 5,
+        r: 2 + (i % 3) * 1.2,
+        phase: i * 0.9
+      })),
+
+      // Active Quiz Gate state
+      activeWallObj: null,
+      activeQuestion: null,
+      quizTimeRemaining: 10.0,
+      quizMaxTime: 10.0,
+      micActive: false,
+      usedItemIndices: new Set()
+    };
+
+    // =========================================================================
+    // 5. UI INITIALIZATION & MENU CONTROLS (MANDATORY LEVEL 1 START ROADMAP)
+    // =========================================================================
+    function renderLevelSelector() {
+      // Everyone starts at Level 1 on the main menu; levels 1-7 are displayed so learners know the content
+      game.currentLevelIdx = 0;
+      const container = document.getElementById("level-selector");
+      container.innerHTML = "";
+      const noteEl = document.getElementById("level-roadmap-note");
+
+      LEVEL_CONFIGS.forEach((cfg, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isCleared = game.clearedLevels.has(cfg.level);
+        const isStartLevel = idx === 0;
+        const shortZh = cfg.topicZh.split(" ")[0].replace("學校與日常總複習", "學校與日常");
+
+        btn.className =
+          "lvl-btn" +
+          (isStartLevel ? " active" : " locked-preview") +
+          (isCleared ? " cleared" : "");
+
+        const badgeIcon = isCleared ? "✅" : (isStartLevel ? "🏁" : "🔒");
+        const statusTag = isStartLevel ? "START 起點" : cfg.topicShortEn;
+
+        btn.innerHTML = `${badgeIcon} Lv.${cfg.level}<br/><span style="font-size:10.5px;color:#ffeaa7;display:block;margin-top:2px;">${shortZh}</span><span style="font-size:9px;color:#81ecec;display:block;">${statusTag}</span>`;
+
+        btn.onclick = () => {
+          // Always enforce starting at Level 1 while letting learners inspect the roadmap content
+          game.currentLevelIdx = 0;
+          if (noteEl) {
+            if (idx === 0) {
+              noteEl.style.color = "#55efc4";
+              noteEl.innerHTML = `🏁 準備就緒：將從 <b>第 1 關 (${cfg.topicZh})</b> 出發，依序挑戰全部 7 關！`;
+            } else {
+              noteEl.style.color = "#ffbe76";
+              noteEl.innerHTML = `🔒 <b>Lv.${cfg.level} 主題為「${cfg.topicZh}」</b> — 所有玩家皆須從 <b>Level 1</b> 開始依序闖關挑戰喔！`;
+            }
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    document.querySelectorAll("#skill-selector .skill-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll("#skill-selector .skill-card").forEach((c) => c.classList.remove("active"));
+        card.classList.add("active");
+        game.selectedSkill = card.getAttribute("data-skill") || "Mixed";
+      });
+    });
+
+    document.getElementById("start-game-btn").addEventListener("click", () => {
+      sfx.init();
+      // Reset playthrough metrics and start strictly at Level 1 (index 0)
+      game.score = 0;
+      game.totalCorrectAllLevels = 0;
+      game.totalQuestionsAskedAllLevels = 0;
+      game.totalRunSecondsAllLevels = 0;
+      game.clearedLevels.clear();
+      game.playthroughCompleted = false;
+      startLevel(0, true);
+    });
+
+    document.getElementById("confirm-intro-btn").addEventListener("click", () => {
+      document.getElementById("intro-modal").style.display = "none";
+      game.state = "RUNNING";
+      sfx.startBGM();
+      canvas.focus();
+    });
+
+    document.getElementById("hud-menu-btn").addEventListener("click", () => {
+      sfx.stopBGM();
+      hideAllOverlays();
+      document.getElementById("hud-bar").style.display = "none";
+      document.getElementById("progress-container").style.display = "none";
+      document.getElementById("touch-controls").style.display = "none";
+      document.getElementById("tutorial-banner").style.display = "none";
+      renderLevelSelector();
+      document.getElementById("menu-screen").style.display = "flex";
+      game.state = "MENU";
+    });
+
+    function hideAllOverlays() {
+      ["menu-screen", "intro-modal", "quiz-overlay", "result-modal", "certificate-modal"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      });
+    }
+
+    // =========================================================================
+    // 6. KEYBOARD (WASD + ARROW KEYS) & TOUCH CONTROLS
+    // =========================================================================
+    function moveRunnerLeft() {
+      if (game.state !== "RUNNING") return;
+      if (game.targetLane > -1) {
+        game.targetLane--;
+        sfx.playLaneSwitch();
+      }
+    }
+
+    function moveRunnerRight() {
+      if (game.state !== "RUNNING") return;
+      if (game.targetLane < 1) {
+        game.targetLane++;
+        sfx.playLaneSwitch();
+      }
+    }
+
+    function triggerRunnerJump() {
+      if (game.state !== "RUNNING") return;
+      if (!game.isJumping) {
+        game.isJumping = true;
+        game.jumpVy = 11.8;
+        game.slideTimer = 0;
+        sfx.playJump();
+      }
+    }
+
+    function triggerRunnerSlide() {
+      if (game.state !== "RUNNING") return;
+      if (game.isJumping) {
+        game.jumpVy = -14;
+      }
+      game.slideTimer = 0.65;
+      sfx.playSlide();
+    }
+
+    window.addEventListener("keydown", (e) => {
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+      if (isTyping) return;
+
+      const k = e.key;
+      const c = e.code;
+      if (k === "ArrowLeft" || c === "ArrowLeft" || k === "a" || k === "A" || c === "KeyA") {
+        e.preventDefault();
+        moveRunnerLeft();
+      } else if (k === "ArrowRight" || c === "ArrowRight" || k === "d" || k === "D" || c === "KeyD") {
+        e.preventDefault();
+        moveRunnerRight();
+      } else if (k === "ArrowUp" || c === "ArrowUp" || k === "w" || k === "W" || c === "KeyW" || k === " " || c === "Space") {
+        e.preventDefault();
+        triggerRunnerJump();
+      } else if (k === "ArrowDown" || c === "ArrowDown" || k === "s" || k === "S" || c === "KeyS") {
+        e.preventDefault();
+        triggerRunnerSlide();
+      }
+    }, { capture: true });
+
+    document.getElementById("btn-left").addEventListener("click", moveRunnerLeft);
+    document.getElementById("btn-right").addEventListener("click", moveRunnerRight);
+    document.getElementById("btn-jump").addEventListener("click", triggerRunnerJump);
+    document.getElementById("btn-slide").addEventListener("click", triggerRunnerSlide);
+
+    // =========================================================================
+    // 7. START LEVEL & SPAWN OBJECTS (TEMPLE OBSTACLES, COINS, CUTOUT WALLS)
+    // =========================================================================
+    function startLevel(levelIdx, showIntroIfLevel1 = false) {
+      game.currentLevelIdx = Math.max(0, Math.min(LEVEL_CONFIGS.length - 1, levelIdx));
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+
+      hideAllOverlays();
+      document.getElementById("hud-bar").style.display = "flex";
+      document.getElementById("progress-container").style.display = "flex";
+      document.getElementById("touch-controls").style.display = "flex";
+
+      game.lives = 3;
+      game.maxLives = 3;
+      game.levelRunTimeSec = 0;
+      game.gatesClearedInLevel = 0;
+      game.gatesSpawnedInLevel = 0;
+      game.timeUntilNextWall = cfg.wallIntervalSec;
+      game.obstacleSpawnTimer = 2.0;
+      game.coinSpawnTimer = 0.8;
+
+      game.targetLane = 0;
+      game.currentLaneX = 0;
+      game.jumpY = 0;
+      game.jumpVy = 0;
+      game.isJumping = false;
+      game.slideTimer = 0;
+      game.invulnTimer = 0;
+      game.speedBoostTimer = 0;
+      game.chaserWarningTimer = 0;
+
+      game.worldObjects = [];
+      game.particles = [];
+      game.floatingTexts = [];
+      game.activeWallObj = null;
+      game.usedItemIndices.clear();
+
+      // Pre-populate side temple torch braziers & carved jungle ruins along the bridge
+      let pillarIdx = 0;
+      for (let z = 0.10; z <= 0.98; z += 0.12) {
+        const variant = pillarIdx % 2 === 0 ? "BRAZIER" : "JUNGLE_TOTEM";
+        game.worldObjects.push({ type: "SCENERY_PILLAR", z, side: -1, variant });
+        game.worldObjects.push({ type: "SCENERY_PILLAR", z, side: 1, variant });
+        pillarIdx++;
+      }
+
+      updateHUD();
+
+      if (cfg.level === 1 && showIntroIfLevel1) {
+        game.state = "INTRO";
+        document.getElementById("intro-modal").style.display = "flex";
+      } else {
+        game.state = "RUNNING";
+        sfx.startBGM();
+        canvas.focus();
+      }
+    }
+
+    function updateHUD() {
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      document.getElementById("hud-level").textContent = `🏛️ Lv.${cfg.level}/7 (${cfg.topicZh.split(" ")[0]})`;
+      document.getElementById("hud-gates").textContent = `⛩️ 石門 Gates: ${game.gatesClearedInLevel} / ${cfg.questionsCount}`;
+      document.getElementById("hud-lives").textContent = "❤️".repeat(Math.max(0, game.lives)) + "🖤".repeat(Math.max(0, game.maxLives - game.lives));
+      document.getElementById("hud-score").textContent = `🪙 ${game.score}`;
+
+      const totalSec = Math.floor(game.totalRunSecondsAllLevels + game.levelRunTimeSec);
+      const mins = String(Math.floor(totalSec / 60)).padStart(2, "0");
+      const secs = String(totalSec % 60).padStart(2, "0");
+      document.getElementById("hud-time").textContent = `⏱️ ${mins}:${secs}`;
+
+      const pct = Math.min(100, Math.round(((game.gatesClearedInLevel + (1 - game.timeUntilNextWall / cfg.wallIntervalSec) * 0.85) / cfg.questionsCount) * 100));
+      document.getElementById("progress-label").textContent = `🏃 本關進度 Level ${cfg.level}: ${Math.max(0, pct)}%`;
+      document.getElementById("progress-fill").style.width = `${Math.max(0, pct)}%`;
+    }
+
+    function updateLevel1TutorialBanner() {
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      const banner = document.getElementById("tutorial-banner");
+      if (cfg.level !== 1 || game.state !== "RUNNING") {
+        banner.style.display = "none";
+        return;
+      }
+      banner.style.display = "flex";
+      const zhEl = document.getElementById("tut-zh-text");
+      const enEl = document.getElementById("tut-en-text");
+
+      if (game.gatesClearedInLevel === 0 && game.timeUntilNextWall > 3.2) {
+        if (game.levelRunTimeSec < 3.2) {
+          zhEl.textContent = "🏃 左右換道：按 A / D 或 ◀ ▶ 方向鍵切換左、中、右跑道收集金幣！";
+          enEl.textContent = "Use A / D or ◀ ▶ Arrow Keys to switch between Left, Center, and Right lanes!";
+        } else {
+          zhEl.textContent = "⬆️ 跳躍與滑行：按 W / ▲ 跳過地面圓木；按 S / ▼ 滑行鑽過上方石門！";
+          enEl.textContent = "Press W / ▲ Up to JUMP over logs, and S / ▼ Down to SLIDE under stone arches!";
+        }
+      } else if (game.timeUntilNextWall <= 3.2) {
+        zhEl.textContent = "⛩️ 注意前方「知識石門」！接近時畫面會暫停，請在 10 秒內答對問題穿過石門！";
+        enEl.textContent = "Cutout Wall ahead! The game will freeze—answer the prompt within 10s to pass through!";
+      } else {
+        zhEl.textContent = `🎉 太棒了！已突破 ${game.gatesClearedInLevel} / ${cfg.questionsCount} 道知識石門，繼續保持！`;
+        enEl.textContent = `Great job! ${game.gatesClearedInLevel} / ${cfg.questionsCount} Cutout Walls cleared—keep running!`;
+      }
+    }
+
+    // =========================================================================
+    // 8. QUESTION GENERATOR & CLEAN 10-SECOND CUTOUT WALL QUIZ MODAL
+    // =========================================================================
+    function generateQuestionForCurrentWall() {
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      const pool = PRE_A1_ITEMS_BY_LEVEL[cfg.level] || PRE_A1_ITEMS_BY_LEVEL[1];
+
+      let availableIndices = pool.map((_, i) => i).filter((i) => !game.usedItemIndices.has(i));
+      if (availableIndices.length === 0) {
+        game.usedItemIndices.clear();
+        availableIndices = pool.map((_, i) => i);
+      }
+      const chosenIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+      game.usedItemIndices.add(chosenIdx);
+      const item = pool[chosenIdx];
+
+      let skillMode = game.selectedSkill;
+      if (skillMode === "Mixed") {
+        const modes = ["Reading", "Listening", "Writing", "Speaking"];
+        skillMode = modes[game.gatesClearedInLevel % modes.length];
+      }
+
+      const correctChoiceLabel = `${item.word} (${item.zh})`;
+      const readingChoices = shuffleArray([item.word, item.wrong[0].split(" ")[0], item.wrong[1].split(" ")[0]]);
+      const listeningChoices = shuffleArray([correctChoiceLabel, item.wrong[0], item.wrong[1]]);
+
+      return {
+        skillMode,
+        item,
+        readingChoices,
+        listeningChoices
+      };
+    }
+
+    function shuffleArray(arr) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = tmp;
+      }
+      return copy;
+    }
+
+    function triggerCutoutWallQuiz(wallObj) {
+      game.state = "QUIZ_FREEZE";
+      game.activeWallObj = wallObj;
+      const q = generateQuestionForCurrentWall();
+      game.activeQuestion = q;
+      game.quizMaxTime = 10.0;
+      game.quizTimeRemaining = 10.0;
+      game.micActive = false;
+      game.totalQuestionsAskedAllLevels++;
+
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      document.getElementById("tutorial-banner").style.display = "none";
+      const overlay = document.getElementById("quiz-overlay");
+      overlay.style.display = "flex";
+
+      // Clean gate header without distracting skill label
+      document.getElementById("quiz-gate-badge").textContent = `⛩️ 知識石門 Cutout Wall ${game.gatesClearedInLevel + 1} / ${cfg.questionsCount}`;
+      drawVocabIllustration(q.item);
+      document.getElementById("quiz-hint-text").textContent = `💡 雙語輔助 Hint：${q.item.hint}`;
+      const feedbackEl = document.getElementById("quiz-feedback");
+      feedbackEl.textContent = "";
+
+      const promptEl = document.getElementById("quiz-prompt-text");
+      const areaEl = document.getElementById("quiz-interaction-area");
+      areaEl.innerHTML = "";
+
+      // Clean, direct question prompts (NO emoji + NO bracketed skill tag like [Reading])
+      if (q.skillMode === "Reading") {
+        promptEl.textContent = `「${q.item.zh}」的英文是什麼？ (What is "${q.item.zh}" in English?)`;
+        const grid = document.createElement("div");
+        grid.className = "choices-grid";
+        q.readingChoices.forEach((choiceWord) => {
+          const btn = document.createElement("button");
+          btn.className = "choice-btn";
+          btn.textContent = choiceWord;
+          btn.onclick = () => {
+            if (choiceWord.toLowerCase() === q.item.word.toLowerCase()) {
+              handleQuizSuccess(q.item.word);
+            } else {
+              handleQuizFailure(`答錯囉！正確答案是「${q.item.word} (${q.item.zh})」`);
+            }
+          };
+          grid.appendChild(btn);
+        });
+        areaEl.appendChild(grid);
+      } else if (q.skillMode === "Listening") {
+        promptEl.textContent = `仔細聽英語發音，選出正確的單字！ (Listen and choose the correct word!)`;
+        const replayBtn = document.createElement("button");
+        replayBtn.className = "secondary-btn";
+        replayBtn.style.marginBottom = "8px";
+        replayBtn.textContent = "🔊 再聽一次發音 Replay Audio";
+        replayBtn.onclick = () => speakEnglish(q.item.word);
+        areaEl.appendChild(replayBtn);
+
+        const grid = document.createElement("div");
+        grid.className = "choices-grid";
+        q.listeningChoices.forEach((choiceLabel) => {
+          const btn = document.createElement("button");
+          btn.className = "choice-btn";
+          btn.textContent = choiceLabel;
+          btn.onclick = () => {
+            if (choiceLabel.toLowerCase().startsWith(q.item.word.toLowerCase())) {
+              handleQuizSuccess(q.item.word);
+            } else {
+              handleQuizFailure(`答錯囉！剛剛唸的是「${q.item.word} (${q.item.zh})」`);
+            }
+          };
+          grid.appendChild(btn);
+        });
+        areaEl.appendChild(grid);
+        setTimeout(() => speakEnglish(q.item.word), 120);
+      } else if (q.skillMode === "Writing") {
+        const spelled = q.item.word.toUpperCase().split("").join(" ");
+        promptEl.textContent = `請輸入「${q.item.zh}」的英文單字 (提示: ${spelled})`;
+
+        const wrap = document.createElement("div");
+        wrap.className = "writing-box";
+
+        const input = document.createElement("input");
+        input.id = "writing-input";
+        input.type = "text";
+        input.placeholder = `輸入 ${q.item.word.toLowerCase()} ...`;
+        input.autocomplete = "off";
+
+        const bank = document.createElement("div");
+        bank.className = "letter-bank";
+        q.item.word.toLowerCase().split("").forEach((ch) => {
+          const chip = document.createElement("button");
+          chip.className = "letter-chip";
+          chip.textContent = ch.toUpperCase();
+          chip.onclick = () => {
+            input.value += ch;
+            input.focus();
+          };
+          bank.appendChild(chip);
+        });
+
+        const submitBtn = document.createElement("button");
+        submitBtn.className = "primary-btn";
+        submitBtn.style.padding = "8px 22px";
+        submitBtn.style.fontSize = "16px";
+        submitBtn.textContent = "✅ 送出答案 Submit (Enter)";
+
+        const verifyTyped = () => {
+          const val = (input.value || "").trim().toLowerCase();
+          if (!val) return;
+          if (val === q.item.word.toLowerCase()) {
+            handleQuizSuccess(q.item.word);
+          } else {
+            handleQuizFailure(`拼字不正確 (${val})！正確拼法是「${q.item.word}」`);
+          }
+        };
+
+        submitBtn.onclick = verifyTyped;
+        input.addEventListener("keydown", (e) => {
+          e.stopPropagation();
+          if (e.key === "Enter") verifyTyped();
+        });
+
+        wrap.appendChild(input);
+        wrap.appendChild(bank);
+        wrap.appendChild(submitBtn);
+        areaEl.appendChild(wrap);
+        setTimeout(() => input.focus(), 60);
+      } else if (q.skillMode === "Speaking") {
+        promptEl.textContent = `請對著麥克風唸出「${q.item.zh}」的英文：「${q.item.word}」！`;
+
+        const wrap = document.createElement("div");
+        wrap.className = "speaking-box";
+
+        const demoBtn = document.createElement("button");
+        demoBtn.className = "secondary-btn";
+        demoBtn.textContent = `🔊 先聽示範 (${q.item.word})`;
+        demoBtn.onclick = () => speakEnglish(q.item.word);
+
+        const micBtn = document.createElement("button");
+        micBtn.className = "primary-btn";
+        micBtn.style.fontSize = "16px";
+        micBtn.textContent = `🎤 點擊開口說 "${q.item.word}"`;
+
+        const fallbackBtn = document.createElement("button");
+        fallbackBtn.className = "secondary-btn";
+        fallbackBtn.style.background = "#00b894";
+        fallbackBtn.textContent = `✅ 我已開口唸出 "${q.item.word}" (通過)`;
+        fallbackBtn.onclick = () => {
+          speakEnglish(q.item.word);
+          handleQuizSuccess(q.item.word);
+        };
+
+        micBtn.onclick = () => {
+          const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRec) {
+            speakEnglish(q.item.word);
+            handleQuizSuccess(q.item.word);
+            return;
+          }
+          try {
+            const rec = new SpeechRec();
+            rec.lang = "en-US";
+            game.micActive = true;
+            feedbackEl.style.color = "#00cec9";
+            feedbackEl.textContent = `🎧 正在聆聽... 請大聲說出 "${q.item.word}"！`;
+            rec.onresult = (evt) => {
+              game.micActive = false;
+              const transcript = evt.results[0][0].transcript || "";
+              const cleanT = transcript.toLowerCase().replace(/[^a-z]/g, "");
+              const target = q.item.word.toLowerCase().replace(/[^a-z]/g, "");
+              if (cleanT.includes(target) || target.includes(cleanT)) {
+                handleQuizSuccess(q.item.word);
+              } else {
+                handleQuizFailure(`聽到 "${transcript}"，目標單字是「${q.item.word}」！`);
+              }
+            };
+            rec.onerror = () => {
+              game.micActive = false;
+              speakEnglish(q.item.word);
+              handleQuizSuccess(q.item.word);
+            };
+            rec.start();
+          } catch (err) {
+            game.micActive = false;
+            speakEnglish(q.item.word);
+            handleQuizSuccess(q.item.word);
+          }
+        };
+
+        wrap.appendChild(demoBtn);
+        wrap.appendChild(micBtn);
+        wrap.appendChild(fallbackBtn);
+        areaEl.appendChild(wrap);
+      }
+    }
+
+    function handleQuizSuccess(wordSpoken) {
+      if (game.state !== "QUIZ_FREEZE") return;
+      game.state = "QUIZ_RESOLVING";
+      sfx.playGateSuccess();
+      speakEnglish(wordSpoken);
+
+      const feedbackEl = document.getElementById("quiz-feedback");
+      feedbackEl.style.color = "#2ecc71";
+      feedbackEl.textContent = `🎉 答對了！石門開啟！衝刺通過！ (+100 PTS)`;
+
+      game.score += 100;
+      game.totalCorrectAllLevels++;
+      game.gatesClearedInLevel++;
+
+      if (game.activeWallObj) {
+        game.activeWallObj.resolved = true;
+        game.activeWallObj.opened = true;
+      }
+
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+
+      setTimeout(() => {
+        const writingInput = document.getElementById("writing-input");
+        if (writingInput) writingInput.blur();
+        document.getElementById("quiz-overlay").style.display = "none";
+
+        if (game.gatesClearedInLevel >= cfg.questionsCount) {
+          completeCurrentLevel();
+        } else {
+          game.timeUntilNextWall = cfg.wallIntervalSec;
+          game.speedBoostTimer = 1.25;
+          game.floatingTexts.push({
+            text: `⛩️ GATE OPEN! +100`,
+            x: canvas.width / 2,
+            y: 220,
+            color: "#2ecc71",
+            life: 1.1
+          });
+          game.state = "RUNNING";
+          updateHUD();
+          canvas.focus();
+        }
+      }, 650);
+    }
+
+    function handleQuizFailure(reasonMsg) {
+      if (game.state !== "QUIZ_FREEZE") return;
+      game.state = "QUIZ_RESOLVING";
+      sfx.playCrash();
+
+      game.lives--;
+      game.invulnTimer = 1.5;
+      game.chaserWarningTimer = 2.5;
+      updateHUD();
+
+      const feedbackEl = document.getElementById("quiz-feedback");
+      feedbackEl.style.color = "#ff7675";
+      feedbackEl.textContent = `💥 ${reasonMsg} (撞上石門 -1 ❤️)`;
+
+      if (game.activeWallObj) {
+        game.activeWallObj.resolved = true;
+        game.activeWallObj.crashed = true;
+      }
+
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+
+      setTimeout(() => {
+        const writingInput = document.getElementById("writing-input");
+        if (writingInput) writingInput.blur();
+        document.getElementById("quiz-overlay").style.display = "none";
+
+        if (game.lives <= 0) {
+          showLevelFailedModal();
+          return;
+        }
+
+        game.gatesClearedInLevel++;
+        if (game.gatesClearedInLevel >= cfg.questionsCount) {
+          completeCurrentLevel();
+        } else {
+          game.timeUntilNextWall = cfg.wallIntervalSec;
+          game.floatingTexts.push({
+            text: `💥 HIT WALL! -1 ❤️`,
+            x: canvas.width / 2,
+            y: 220,
+            color: "#ff7675",
+            life: 1.2
+          });
+          game.state = "RUNNING";
+          updateHUD();
+          canvas.focus();
+        }
+      }, 1150);
+    }
+
+    function completeCurrentLevel() {
+      sfx.stopBGM();
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      game.clearedLevels.add(cfg.level);
+      game.totalRunSecondsAllLevels += game.levelRunTimeSec;
+      updateHUD();
+
+      game.state = "RESULT";
+      const modal = document.getElementById("result-modal");
+      modal.style.display = "flex";
+
+      const isFinalLevel = cfg.level === 7;
+      if (isFinalLevel) {
+        game.playthroughCompleted = true;
+      }
+
+      document.getElementById("result-icon").textContent = isFinalLevel ? "👑" : "🏆";
+      document.getElementById("result-title").textContent = isFinalLevel
+        ? "🎉 ALL 7 LEVELS CONQUERED! 恭喜完成神廟跑酷全關卡！"
+        : `🏆 LEVEL ${cfg.level} COMPLETE! 第 ${cfg.level} 關過關！`;
+
+      document.getElementById("result-subtitle").textContent = isFinalLevel
+        ? "太厲害了！你已經從第 1 關一路成功突破全部 7 關 Pre-A1 神廟英語跑酷挑戰，現在可以領取並下載你的專屬完賽證書！"
+        : `成功穿越「${cfg.nameZh} (${cfg.topicZh})」的所有知識石門！準備前進第 ${cfg.level + 1} 關！`;
+
+      document.getElementById("result-stats").innerHTML = `
+        ⛩️ 本關突破石門 Gates Passed: ${cfg.questionsCount} / ${cfg.questionsCount}<br/>
+        ⏱️ 本關奔跑時間 Run Time: ${Math.round(game.levelRunTimeSec)} 秒 (Seconds)<br/>
+        🪙 累積總分 Total Score: ${game.score} PTS
+      `;
+
+      const btns = document.getElementById("result-buttons");
+      btns.innerHTML = "";
+
+      if (!isFinalLevel) {
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "primary-btn";
+        nextBtn.textContent = `⏭️ 下一關 Level ${cfg.level + 1}`;
+        nextBtn.onclick = () => startLevel(game.currentLevelIdx + 1, false);
+        btns.appendChild(nextBtn);
+      } else {
+        const certBtn = document.createElement("button");
+        certBtn.className = "primary-btn";
+        certBtn.style.background = "linear-gradient(135deg, #f39c12, #d35400)";
+        certBtn.textContent = "🏅 領取完賽證書 Claim Certificate (PNG / PDF)";
+        certBtn.onclick = () => openCertificateModal();
+        btns.appendChild(certBtn);
+      }
+
+      const replayBtn = document.createElement("button");
+      replayBtn.className = "secondary-btn";
+      replayBtn.textContent = "🔄 重玩本關 Replay Level";
+      replayBtn.onclick = () => startLevel(game.currentLevelIdx, false);
+      btns.appendChild(replayBtn);
+
+      const menuBtn = document.createElement("button");
+      menuBtn.className = "secondary-btn";
+      menuBtn.style.background = "#34495e";
+      menuBtn.textContent = "🏠 主選單 Menu";
+      menuBtn.onclick = () => {
+        hideAllOverlays();
+        document.getElementById("hud-bar").style.display = "none";
+        document.getElementById("progress-container").style.display = "none";
+        document.getElementById("touch-controls").style.display = "none";
+        renderLevelSelector();
+        document.getElementById("menu-screen").style.display = "flex";
+        game.state = "MENU";
+      };
+      btns.appendChild(menuBtn);
+    }
+
+    function showLevelFailedModal() {
+      sfx.stopBGM();
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      game.state = "RESULT";
+      const modal = document.getElementById("result-modal");
+      modal.style.display = "flex";
+
+      document.getElementById("result-icon").textContent = "💔";
+      document.getElementById("result-title").textContent = `第 ${cfg.level} 關挑戰失敗 (Out of Lives!)`;
+      document.getElementById("result-subtitle").textContent = "別氣餒！再試一次就能順利穿過知識石門，繼續往下一關邁進！";
+      document.getElementById("result-stats").innerHTML = `
+        ⛩️ 已突破石門 Gates Cleared: ${game.gatesClearedInLevel} / ${cfg.questionsCount}<br/>
+        🪙 目前分數 Score: ${game.score} PTS
+      `;
+
+      const btns = document.getElementById("result-buttons");
+      btns.innerHTML = "";
+      const retryBtn = document.createElement("button");
+      retryBtn.className = "primary-btn";
+      retryBtn.textContent = `🔄 重新挑戰第 ${cfg.level} 關 Retry Level ${cfg.level}`;
+      retryBtn.onclick = () => startLevel(game.currentLevelIdx, false);
+      btns.appendChild(retryBtn);
+    }
+
+    // =========================================================================
+    // 9. CERTIFICATE GENERATOR (STRICTLY UNLOCKED AFTER PLAYTHROUGH COMPLETION)
+    // =========================================================================
+    function renderCertificateToDataURL(studentName) {
+      const c = document.createElement("canvas");
+      c.width = 1200;
+      c.height = 850;
+      const g = c.getContext("2d");
+
+      // Helper that automatically shrinks font size if text exceeds maxWidth,
+      // and passes maxWidth to fillText so no text can ever bleed outside the border.
+      function drawFittedText(text, x, y, maxWidth, weightAndStyle, initialPx, fontFamily, color) {
+        g.save();
+        g.fillStyle = color;
+        g.textAlign = "center";
+        let px = initialPx;
+        while (px > 12) {
+          g.font = `${weightAndStyle} ${px}px ${fontFamily}`;
+          if (g.measureText(text).width <= maxWidth) break;
+          px -= 1;
+        }
+        g.fillText(text, x, y, maxWidth);
+        g.restore();
+      }
+
+      const cleanName = (studentName || "Temple Explorer").trim() || "Temple Explorer";
+      const safeMaxW = 960; // Generous margin inside the 1100px inner border (x=120..1080)
+
+      // Warm parchment background
+      const grad = g.createLinearGradient(0, 0, 1200, 850);
+      grad.addColorStop(0, "#fffdf6");
+      grad.addColorStop(0.5, "#f8f0dc");
+      grad.addColorStop(1, "#efe3c2");
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 1200, 850);
+
+      // Outer Jade & Inner Gold Borders
+      g.strokeStyle = "#00b894";
+      g.lineWidth = 14;
+      g.strokeRect(36, 36, 1128, 778);
+
+      g.strokeStyle = "#d4af37";
+      g.lineWidth = 5;
+      g.strokeRect(56, 56, 1088, 738);
+
+      // Decorative corner accents inside the frame
+      g.fillStyle = "#d4af37";
+      [[72, 72], [1128, 72], [72, 778], [1128, 778]].forEach(([cx, cy]) => {
+        g.beginPath();
+        g.arc(cx, cy, 7, 0, Math.PI * 2);
+        g.fill();
+      });
+
+      // Two-line balanced header so the title never bleeds past the border
+      drawFittedText(
+        "🏛️ TEMPLE RUN ENGLISH • CEFR PRE-A1 EDITION",
+        600,
+        118,
+        safeMaxW,
+        "bold",
+        21,
+        '"Segoe UI", "Georgia", serif',
+        "#b7791f"
+      );
+
+      drawFittedText(
+        "CERTIFICATE OF ACHIEVEMENT",
+        600,
+        166,
+        safeMaxW,
+        "bold",
+        40,
+        '"Georgia", "Times New Roman", serif',
+        "#1e272e"
+      );
+
+      drawFittedText(
+        "CEFR Pre-A1 初級英語神廟跑酷完賽證書",
+        600,
+        208,
+        safeMaxW,
+        "bold",
+        24,
+        '"Microsoft JhengHei", "PingFang TC", sans-serif',
+        "#00b894"
+      );
+
+      g.strokeStyle = "#d4af37";
+      g.lineWidth = 3;
+      g.beginPath();
+      g.moveTo(260, 228);
+      g.lineTo(940, 228);
+      g.stroke();
+
+      drawFittedText(
+        "This certificate is proudly awarded to / 茲證明英勇的小探險家",
+        600,
+        274,
+        safeMaxW,
+        "italic",
+        22,
+        '"Georgia", "Microsoft JhengHei", serif',
+        "#576574"
+      );
+
+      // Student Name (auto-scales if name is long)
+      drawFittedText(
+        cleanName,
+        600,
+        345,
+        820,
+        "bold",
+        50,
+        '"Microsoft JhengHei", "Georgia", serif',
+        "#d35400"
+      );
+
+      g.strokeStyle = "#2d3436";
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(320, 364);
+      g.lineTo(880, 364);
+      g.stroke();
+
+      drawFittedText(
+        "從第 1 關依序完成 CEFR Pre-A1 神廟跑酷全部 7 大關卡與英語知識石門挑戰！",
+        600,
+        414,
+        safeMaxW,
+        "bold",
+        22,
+        '"Microsoft JhengHei", "PingFang TC", sans-serif',
+        "#2d3436"
+      );
+
+      drawFittedText(
+        `Focus Skill Track: ${game.selectedSkill}  •  All 7 Temple Levels Conquered (Lv.1–Lv.7)`,
+        600,
+        450,
+        safeMaxW,
+        "bold",
+        19,
+        '"Segoe UI", sans-serif',
+        "#576574"
+      );
+
+      // Score & Time Summary Box
+      g.fillStyle = "#1e272e";
+      g.strokeStyle = "#d4af37";
+      g.lineWidth = 3;
+      g.beginPath();
+      g.roundRect(220, 480, 760, 112, 14);
+      g.fill();
+      g.stroke();
+
+      const totalSec = Math.max(1, Math.round(game.totalRunSecondsAllLevels));
+      const mins = Math.floor(totalSec / 60);
+      const secs = totalSec % 60;
+
+      drawFittedText(
+        `🪙 總得分 Score: ${game.score} PTS    |    ⏱️ 總時間 Time: ${mins}m ${secs}s`,
+        600,
+        526,
+        700,
+        "bold",
+        24,
+        '"Microsoft JhengHei", "Segoe UI", sans-serif',
+        "#f1c40f"
+      );
+
+      drawFittedText(
+        `⛩️ 答對知識石門 Gates Answered: ${game.totalCorrectAllLevels} Correct`,
+        600,
+        566,
+        700,
+        "bold",
+        20,
+        '"Microsoft JhengHei", "Segoe UI", sans-serif',
+        "#81ecec"
+      );
+
+      // Center Gold Medallion Seal
+      g.fillStyle = "#d4af37";
+      g.beginPath();
+      g.arc(600, 696, 54, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#f1c40f";
+      g.beginPath();
+      g.arc(600, 696, 44, 0, Math.PI * 2);
+      g.fill();
+      drawFittedText("PRE-A1", 600, 692, 76, "bold", 17, '"Segoe UI", sans-serif', "#1e272e");
+      drawFittedText("TEMPLE MASTER", 600, 711, 80, "bold", 11, '"Segoe UI", sans-serif', "#1e272e");
+
+      // Left Date & Right Academy Signature Blocks (safely inset within x=140..1060)
+      const dateStr = new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" });
+      g.strokeStyle = "#7f8c8d";
+      g.lineWidth = 1.5;
+      g.beginPath();
+      g.moveTo(160, 682);
+      g.lineTo(420, 682);
+      g.moveTo(780, 682);
+      g.lineTo(1040, 682);
+      g.stroke();
+
+      drawFittedText(dateStr, 290, 712, 260, "bold", 18, '"Microsoft JhengHei", sans-serif', "#2d3436");
+      drawFittedText("Date / 發證日期", 290, 736, 260, "normal", 14, '"Microsoft JhengHei", sans-serif', "#636e72");
+
+      drawFittedText("Temple Run English Academy", 910, 712, 260, "bold", 18, '"Georgia", "Segoe UI", serif', "#2d3436");
+      drawFittedText("Official Certification / 官方認證", 910, 736, 260, "normal", 14, '"Microsoft JhengHei", sans-serif', "#636e72");
+
+      return c.toDataURL("image/png");
+    }
+
+    function openCertificateModal() {
+      if (!game.playthroughCompleted) return;
+      hideAllOverlays();
+      game.state = "CERTIFICATE";
+      const modal = document.getElementById("certificate-modal");
+      modal.style.display = "flex";
+
+      const nameInput = document.getElementById("cert-student-name");
+      const previewImg = document.getElementById("certificate-preview-img");
+      const printArea = document.getElementById("certificate-print-area");
+
+      let dataUrl = "";
+      const updateCert = () => {
+        dataUrl = renderCertificateToDataURL(nameInput.value);
+        previewImg.src = dataUrl;
+        printArea.innerHTML = `<img src="${dataUrl}" alt="Certificate" />`;
+      };
+      updateCert();
+
+      nameInput.oninput = updateCert;
+      nameInput.onkeydown = (e) => e.stopPropagation();
+
+      document.getElementById("cert-download-png").onclick = () => {
+        updateCert();
+        const a = document.createElement("a");
+        a.download = `Temple_Run_PreA1_Certificate.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+      document.getElementById("cert-print-pdf").onclick = () => {
+        updateCert();
+        window.print();
+      };
+
+      document.getElementById("cert-close-btn").onclick = () => {
+        modal.style.display = "none";
+        document.getElementById("result-modal").style.display = "flex";
+        game.state = "RESULT";
+      };
+    }
+
+    // =========================================================================
+    // 10. 3D PERSPECTIVE PROJECTION & GAME LOOP PHYSICS
+    // =========================================================================
+    let lastFrameTime = performance.now();
+
+    function project3D(laneX, elevationY, z) {
+      const horizonY = 164;
+      const bottomY = 536;
+      const centerX = canvas.width / 2;
+      const roadHalfWidthBottom = 316;
+
+      const scale = 1 / (1 + z * 3.8);
+      const sx = centerX + laneX * roadHalfWidthBottom * scale;
+      const sy = horizonY + (bottomY - horizonY) * scale - elevationY * scale;
+      return { x: sx, y: sy, scale };
+    }
+
+    function updateGame(dt) {
+      game.ambientClock += dt;
+
+      // Drift background clouds gently
+      game.clouds.forEach((c) => {
+        c.x += c.speed * dt;
+        if (c.x > canvas.width + 130) c.x = -130;
+      });
+
+      // Drift ambient fireflies / magical temple motes
+      game.envMotes.forEach((m) => {
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        if (m.y < 80) m.y = canvas.height - 20;
+        if (m.x < 0) m.x = canvas.width;
+        if (m.x > canvas.width) m.x = 0;
+      });
+
+      // Update 10-second countdown when frozen at a Cutout Wall
+      if (game.state === "QUIZ_FREEZE") {
+        const rate = game.micActive ? 0.35 : 1.0;
+        game.quizTimeRemaining = Math.max(0, game.quizTimeRemaining - dt * rate);
+        document.getElementById("quiz-timer-text").textContent = `⏱️ ${game.quizTimeRemaining.toFixed(1)}s`;
+        const pct = (game.quizTimeRemaining / game.quizMaxTime) * 100;
+        document.getElementById("quiz-timer-bar").style.width = `${pct}%`;
+
+        if (game.quizTimeRemaining <= 0) {
+          const correctWord = game.activeQuestion ? `${game.activeQuestion.item.word} (${game.activeQuestion.item.zh})` : "";
+          handleQuizFailure(`時間到 Time's up！正確答案是「${correctWord}」`);
+        }
+        return;
+      }
+
+      if (game.state !== "RUNNING") return;
+
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
+      const speedMult = cfg.baseSpeed * (game.speedBoostTimer > 0 ? 1.35 : 1.0);
+      const dz = dt * 0.42 * speedMult;
+
+      game.levelRunTimeSec += dt;
+      game.runCycle += dt * 11.8 * speedMult;
+      if (game.invulnTimer > 0) game.invulnTimer = Math.max(0, game.invulnTimer - dt);
+      if (game.speedBoostTimer > 0) game.speedBoostTimer = Math.max(0, game.speedBoostTimer - dt);
+      if (game.chaserWarningTimer > 0) game.chaserWarningTimer = Math.max(0, game.chaserWarningTimer - dt);
+
+      // Smooth lane interpolation
+      game.currentLaneX += (game.targetLane - game.currentLaneX) * Math.min(1, dt * 14);
+
+      // Jump physics
+      if (game.isJumping) {
+        game.jumpY += game.jumpVy * dt * 28;
+        game.jumpVy -= 28 * dt;
+        if (game.jumpY <= 0) {
+          game.jumpY = 0;
+          game.jumpVy = 0;
+          game.isJumping = false;
+        }
+      }
+
+      // Slide timer
+      if (game.slideTimer > 0) {
+        game.slideTimer = Math.max(0, game.slideTimer - dt);
+      }
+
+      // Spawn footstep dust or slide sparks when running on stone
+      if (!game.isJumping && Math.random() < dt * 22) {
+        const runnerGround = project3D(game.currentLaneX, 0, 0.08);
+        const isSliding = game.slideTimer > 0;
+        game.particles.push({
+          x: runnerGround.x + (Math.random() - 0.5) * 22,
+          y: runnerGround.y + 4,
+          vx: (Math.random() - 0.5) * 36,
+          vy: 16 + Math.random() * 24,
+          r: isSliding ? 4 + Math.random() * 4 : 3 + Math.random() * 3.5,
+          color: isSliding ? "rgba(255, 218, 121, 0.72)" : "rgba(220, 205, 185, 0.58)",
+          life: 0.36,
+          maxLife: 0.36
+        });
+      }
+
+      // Spawn Cutout Wall every 7-10 seconds (if not one already on track)
+      const hasActiveWallOnTrack = game.worldObjects.some((o) => o.type === "CUTOUT_WALL" && !o.resolved);
+      if (!hasActiveWallOnTrack && game.gatesClearedInLevel < cfg.questionsCount) {
+        game.timeUntilNextWall -= dt;
+        if (game.timeUntilNextWall <= 0) {
+          game.gatesSpawnedInLevel++;
+          game.worldObjects.push({
+            type: "CUTOUT_WALL",
+            z: 1.0,
+            gateNumber: game.gatesClearedInLevel + 1,
+            resolved: false,
+            opened: false,
+            crashed: false
+          });
+        }
+      }
+
+      // Spawn temple obstacles & coins when no wall is imminently close
+      if (!hasActiveWallOnTrack && game.timeUntilNextWall > 1.8) {
+        game.obstacleSpawnTimer -= dt;
+        if (game.obstacleSpawnTimer <= 0) {
+          game.obstacleSpawnTimer = 1.65 / cfg.baseSpeed;
+          const lanes = [-1, 0, 1];
+          const chosenLane = lanes[Math.floor(Math.random() * lanes.length)];
+          const obsTypes = ["LOW_HURDLE", "HIGH_BEAM", "STONE_PILLAR"];
+          const chosenType = obsTypes[Math.floor(Math.random() * obsTypes.length)];
+          game.worldObjects.push({
+            type: chosenType,
+            lane: chosenLane,
+            z: 1.0,
+            hit: false
+          });
+        }
+
+        game.coinSpawnTimer -= dt;
+        if (game.coinSpawnTimer <= 0) {
+          game.coinSpawnTimer = 0.85;
+          const coinLane = [-1, 0, 1][Math.floor(Math.random() * 3)];
+          game.worldObjects.push({
+            type: "COIN",
+            lane: coinLane,
+            z: 1.0,
+            collected: false
+          });
+        }
+      }
+
+      // Move world objects toward camera (z = 1.0 -> 0.0)
+      for (let i = game.worldObjects.length - 1; i >= 0; i--) {
+        const obj = game.worldObjects[i];
+        obj.z -= dz;
+
+        if (obj.type === "SCENERY_PILLAR") {
+          if (obj.z < 0.01) obj.z += 0.96;
+          continue;
+        }
+
+        // Trigger Cutout Wall freeze when wall reaches z <= 0.17
+        if (obj.type === "CUTOUT_WALL" && !obj.resolved && obj.z <= 0.17) {
+          obj.z = 0.17;
+          triggerCutoutWallQuiz(obj);
+          return;
+        }
+
+        // Coin pickup check
+        if (obj.type === "COIN" && !obj.collected && obj.z <= 0.13 && obj.z >= 0.03) {
+          if (Math.abs(game.currentLaneX - obj.lane) < 0.45) {
+            obj.collected = true;
+            game.score += 15;
+            sfx.playCoin();
+            const p = project3D(obj.lane, 28, obj.z);
+            game.floatingTexts.push({ text: "+15 🪙", x: p.x, y: p.y, color: "#f1c40f", life: 0.7 });
+            for (let k = 0; k < 10; k++) {
+              const ang = (k / 10) * Math.PI * 2;
+              game.particles.push({
+                x: p.x,
+                y: p.y,
+                vx: Math.cos(ang) * 82,
+                vy: Math.sin(ang) * 82,
+                r: 3.8,
+                color: k % 2 === 0 ? "#f1c40f" : "#ffffff",
+                life: 0.4,
+                maxLife: 0.4
+              });
+            }
+          }
+        }
+
+        // Temple obstacle collision check
+        if (
+          (obj.type === "LOW_HURDLE" || obj.type === "HIGH_BEAM" || obj.type === "STONE_PILLAR") &&
+          !obj.hit &&
+          obj.z <= 0.11 &&
+          obj.z >= 0.04
+        ) {
+          if (Math.abs(game.currentLaneX - obj.lane) < 0.42) {
+            let avoided = false;
+            if (obj.type === "LOW_HURDLE" && game.jumpY > 28) avoided = true;
+            if (obj.type === "HIGH_BEAM" && game.slideTimer > 0) avoided = true;
+
+            if (!avoided && game.invulnTimer <= 0) {
+              obj.hit = true;
+              game.invulnTimer = 0.9;
+              game.chaserWarningTimer = 2.0;
+              game.score = Math.max(0, game.score - 10);
+              sfx.playSlide();
+              game.floatingTexts.push({
+                text: obj.type === "LOW_HURDLE" ? "⬆️ 請按 W/▲ 跳過尖刺圓木！" : (obj.type === "HIGH_BEAM" ? "⬇️ 請按 S/▼ 滑行鑽過石門！" : "◀ ▶ 請切換跑道閃避圖騰柱！"),
+                x: canvas.width / 2,
+                y: 245,
+                color: "#ffbe76",
+                life: 1.05
+              });
+            }
+          }
+        }
+
+        if (obj.z < -0.05 || obj.collected) {
+          game.worldObjects.splice(i, 1);
+        }
+      }
+
+      // Update particles
+      for (let i = game.particles.length - 1; i >= 0; i--) {
+        const pt = game.particles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.life -= dt;
+        if (pt.life <= 0) game.particles.splice(i, 1);
+      }
+
+      // Update floating texts
+      for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
+        const ft = game.floatingTexts[i];
+        ft.y -= dt * 45;
+        ft.life -= dt;
+        if (ft.life <= 0) game.floatingTexts.splice(i, 1);
+      }
+
+      updateHUD();
+      updateLevel1TutorialBanner();
+    }
+
+    // =========================================================================
+    // 11. UPGRADED 8/10 ARCADE SCENE RENDERER (ENVIRONMENT, OBSTACLES & AVATAR)
+    // =========================================================================
+    function renderScene() {
+      const cfg = LEVEL_CONFIGS[game.currentLevelIdx] || LEVEL_CONFIGS[0];
+      const w = canvas.width;
+      const h = canvas.height;
+      const horizonY = 164;
+
+      // -----------------------------------------------------------------------
+      // A. MULTI-LAYERED SKY, STARS, VOLUMETRIC GOD RAYS & PARALLAX MOUNTAINS
+      // -----------------------------------------------------------------------
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+      skyGrad.addColorStop(0, cfg.skyTop);
+      skyGrad.addColorStop(0.52, cfg.skyMid);
+      skyGrad.addColorStop(1, cfg.skyBot);
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, horizonY);
+
+      // Twinkling Upper-Atmosphere Stars / Celestial Dust
+      ctx.save();
+      game.stars.forEach((st) => {
+        const alpha = 0.25 + 0.55 * Math.abs(Math.sin(game.ambientClock * 1.8 + st.phase));
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // Rotating Volumetric Crepuscular God Rays Behind the Horizon Sanctuary
+      ctx.save();
+      ctx.translate(w / 2, horizonY - 38);
+      for (let r = 0; r < 9; r++) {
+        const baseAngle = -Math.PI + (r / 8) * Math.PI + Math.sin(game.ambientClock * 0.4 + r) * 0.04;
+        const rayGrad = ctx.createRadialGradient(0, 0, 12, 0, 0, 290);
+        rayGrad.addColorStop(0, "rgba(255, 249, 196, 0.28)");
+        rayGrad.addColorStop(0.6, "rgba(241, 196, 15, 0.08)");
+        rayGrad.addColorStop(1, "rgba(241, 196, 15, 0.0)");
+        ctx.fillStyle = rayGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 290, baseAngle - 0.065, baseAngle + 0.065);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Glowing Celestial Sun / Moon Disc with Double Halo
+      const sunHalo = ctx.createRadialGradient(w / 2, horizonY - 46, 10, w / 2, horizonY - 46, 118);
+      sunHalo.addColorStop(0, "rgba(255, 255, 230, 0.96)");
+      sunHalo.addColorStop(0.28, cfg.sunCol + "cc");
+      sunHalo.addColorStop(0.65, "rgba(241, 196, 15, 0.22)");
+      sunHalo.addColorStop(1, "rgba(241, 196, 15, 0.0)");
+      ctx.fillStyle = sunHalo;
+      ctx.beginPath();
+      ctx.arc(w / 2, horizonY - 46, 118, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Layered Shaded Clouds with Rim Lighting
+      game.clouds.forEach((c) => {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(c.scale, c.scale);
+        // Cloud under-shadow
+        ctx.fillStyle = "rgba(20, 30, 48, 0.18)";
+        ctx.beginPath();
+        ctx.arc(2, 4, 18, 0, Math.PI * 2);
+        ctx.arc(22, 0, 23, 0, Math.PI * 2);
+        ctx.arc(44, 4, 17, 0, Math.PI * 2);
+        ctx.fill();
+        // Cloud sunlit body
+        ctx.fillStyle = "rgba(255, 252, 240, 0.32)";
+        ctx.beginPath();
+        ctx.arc(0, 0, 18, 0, Math.PI * 2);
+        ctx.arc(20, -6, 23, 0, Math.PI * 2);
+        ctx.arc(42, 0, 17, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Layer 1: Far Misty Mountain Peaks
+      ctx.fillStyle = cfg.mountainFar;
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      ctx.lineTo(0, 112);
+      ctx.lineTo(75, 70);
+      ctx.lineTo(155, 115);
+      ctx.lineTo(255, 58);
+      ctx.lineTo(355, 118);
+      ctx.lineTo(480, 92);
+      ctx.lineTo(605, 118);
+      ctx.lineTo(705, 56);
+      ctx.lineTo(815, 114);
+      ctx.lineTo(895, 72);
+      ctx.lineTo(w, 110);
+      ctx.lineTo(w, horizonY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Layer 2: Mid-Ground Stepped Canyon Cliffs with Rim Highlights & Waterfalls
+      ctx.fillStyle = cfg.mountainNear;
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      ctx.lineTo(0, 128);
+      ctx.lineTo(60, 102);
+      ctx.lineTo(130, 102);
+      ctx.lineTo(168, 136);
+      ctx.lineTo(235, 88);
+      ctx.lineTo(295, 88);
+      ctx.lineTo(345, 138);
+      ctx.lineTo(615, 138);
+      ctx.lineTo(665, 88);
+      ctx.lineTo(725, 88);
+      ctx.lineTo(792, 136);
+      ctx.lineTo(830, 102);
+      ctx.lineTo(900, 102);
+      ctx.lineTo(w, 128);
+      ctx.lineTo(w, horizonY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Animated Distant Cliff Waterfalls (Left & Right plateaus)
+      const wfOffset = (game.ambientClock * 40) % 16;
+      [95, 265, 695, 865].forEach((wx, idx) => {
+        const topY = idx === 1 || idx === 2 ? 88 : 102;
+        const wfW = idx === 1 || idx === 2 ? 14 : 10;
+        const wfGrad = ctx.createLinearGradient(wx, topY, wx, horizonY);
+        wfGrad.addColorStop(0, "rgba(255, 255, 255, 0.75)");
+        wfGrad.addColorStop(0.5, cfg.waterCol);
+        wfGrad.addColorStop(1, "rgba(255, 255, 255, 0.15)");
+        ctx.fillStyle = wfGrad;
+        ctx.fillRect(wx - wfW / 2, topY, wfW, horizonY - topY);
+
+        // Cascading water foam streaks
+        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+        for (let fy = topY + (wfOffset % 12); fy < horizonY - 4; fy += 14) {
+          ctx.fillRect(wx - wfW * 0.35, fy, wfW * 0.7, 5);
+        }
+      });
+
+      // Grand Horizon Mayan/Aztec Stepped Pyramid Complex
+      drawHorizonSanctuary(w / 2, horizonY, cfg);
+
+      // Rich Layered Jungle Canopy Silhouettes & Swaying Palm Fronds on Horizon
+      drawHorizonJungleCanopy(w, horizonY, cfg);
+
+      // -----------------------------------------------------------------------
+      // B. DEEP 3D CANYON GORGE, CLIFF WALLS, RIVER & BRIDGE SUPPORT ARCHES
+      // -----------------------------------------------------------------------
+      const gorgeGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+      gorgeGrad.addColorStop(0, "#10222f");
+      gorgeGrad.addColorStop(0.45, "#091520");
+      gorgeGrad.addColorStop(1, "#04080e");
+      ctx.fillStyle = gorgeGrad;
+      ctx.fillRect(0, horizonY, w, h - horizonY);
+
+      // Animated Shimmering Canyon River / Magma / Crystal Stream in Gorge Center
+      for (let ry = horizonY + 18; ry < h; ry += 26) {
+        const depthRatio = (ry - horizonY) / (h - horizonY);
+        const waveShift = Math.sin(game.ambientClock * 2.4 + ry * 0.08) * 18 * depthRatio;
+        const riverW = (90 + depthRatio * 340);
+        const rGrad = ctx.createLinearGradient(w / 2 - riverW, ry, w / 2 + riverW, ry);
+        rGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
+        rGrad.addColorStop(0.5, cfg.waterCol + "33");
+        rGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = rGrad;
+        ctx.fillRect(w / 2 - riverW + waveShift, ry, riverW * 2, 10 + depthRatio * 8);
+      }
+
+      // Left & Right Multi-Tiered Terraced Canyon Cliffs, Gorge Waterfalls & Jungle Silhouettes
+      const cliffGradL = ctx.createLinearGradient(0, horizonY, 260, h);
+      cliffGradL.addColorStop(0, cfg.mountainNear);
+      cliffGradL.addColorStop(0.5, "#152534");
+      cliffGradL.addColorStop(1, "#09111a");
+      ctx.fillStyle = cliffGradL;
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      ctx.lineTo(275, horizonY);
+      ctx.lineTo(220, horizonY + 95);
+      ctx.lineTo(245, horizonY + 115);
+      ctx.lineTo(165, horizonY + 240);
+      ctx.lineTo(190, horizonY + 260);
+      ctx.lineTo(105, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+
+      const cliffGradR = ctx.createLinearGradient(w, horizonY, w - 260, h);
+      cliffGradR.addColorStop(0, cfg.mountainNear);
+      cliffGradR.addColorStop(0.5, "#152534");
+      cliffGradR.addColorStop(1, "#09111a");
+      ctx.fillStyle = cliffGradR;
+      ctx.beginPath();
+      ctx.moveTo(w, horizonY);
+      ctx.lineTo(w - 275, horizonY);
+      ctx.lineTo(w - 220, horizonY + 95);
+      ctx.lineTo(w - 245, horizonY + 115);
+      ctx.lineTo(w - 165, horizonY + 240);
+      ctx.lineTo(w - 190, horizonY + 260);
+      ctx.lineTo(w - 105, h);
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+
+      // Glowing Rim Highlights on Canyon Rock Terraces
+      ctx.strokeStyle = "rgba(129, 236, 236, 0.18)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(275, horizonY);
+      ctx.lineTo(220, horizonY + 95);
+      ctx.lineTo(245, horizonY + 115);
+      ctx.lineTo(165, horizonY + 240);
+      ctx.moveTo(w - 275, horizonY);
+      ctx.lineTo(w - 220, horizonY + 95);
+      ctx.lineTo(w - 245, horizonY + 115);
+      ctx.lineTo(w - 165, horizonY + 240);
+      ctx.stroke();
+
+      // Cascading Gorge Waterfalls Pouring from Horizon Plateaus into the Canyon Abyss
+      [95, w - 95].forEach((gwx) => {
+        const gwfGrad = ctx.createLinearGradient(gwx, horizonY, gwx, horizonY + 260);
+        gwfGrad.addColorStop(0, cfg.waterCol + "aa");
+        gwfGrad.addColorStop(0.6, cfg.waterCol + "44");
+        gwfGrad.addColorStop(1, "rgba(255, 255, 255, 0.0)");
+        ctx.fillStyle = gwfGrad;
+        ctx.beginPath();
+        ctx.moveTo(gwx - 7, horizonY);
+        ctx.lineTo(gwx + 7, horizonY);
+        ctx.lineTo(gwx + 22, horizonY + 260);
+        ctx.lineTo(gwx - 22, horizonY + 260);
+        ctx.closePath();
+        ctx.fill();
+
+        // Rising mist cloud at waterfall base
+        const mistGrad = ctx.createRadialGradient(gwx, horizonY + 220, 4, gwx, horizonY + 220, 52);
+        mistGrad.addColorStop(0, "rgba(255, 255, 255, 0.22)");
+        mistGrad.addColorStop(1, "rgba(255, 255, 255, 0.0)");
+        ctx.fillStyle = mistGrad;
+        ctx.beginPath();
+        ctx.arc(gwx, horizonY + 220, 52, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 3D Stone Viaduct Support Pillars & Under-Bridge Arches Dropping into the Mist
+      const leftBridgeFar = project3D(-1.74, 0, 1.0);
+      const leftBridgeNear = project3D(-1.74, 0, 0.0);
+      const rightBridgeFar = project3D(1.74, 0, 1.0);
+      const rightBridgeNear = project3D(1.74, 0, 0.0);
+
+      // Shaded stone viaduct side walls under the bridge
+      const viaGradL = ctx.createLinearGradient(leftBridgeNear.x - 60, 0, leftBridgeNear.x + 40, 0);
+      viaGradL.addColorStop(0, "#1c1510");
+      viaGradL.addColorStop(1, "#3b2d22");
+      ctx.fillStyle = viaGradL;
+      ctx.beginPath();
+      ctx.moveTo(leftBridgeFar.x, leftBridgeFar.y);
+      ctx.lineTo(leftBridgeNear.x, leftBridgeNear.y);
+      ctx.lineTo(leftBridgeNear.x - 52, h);
+      ctx.lineTo(leftBridgeFar.x - 10, h);
+      ctx.closePath();
+      ctx.fill();
+
+      const viaGradR = ctx.createLinearGradient(rightBridgeNear.x - 40, 0, rightBridgeNear.x + 60, 0);
+      viaGradR.addColorStop(0, "#3b2d22");
+      viaGradR.addColorStop(1, "#1c1510");
+      ctx.fillStyle = viaGradR;
+      ctx.beginPath();
+      ctx.moveTo(rightBridgeFar.x, rightBridgeFar.y);
+      ctx.lineTo(rightBridgeNear.x, rightBridgeNear.y);
+      ctx.lineTo(rightBridgeNear.x + 52, h);
+      ctx.lineTo(rightBridgeFar.x + 10, h);
+      ctx.closePath();
+      ctx.fill();
+
+      // -----------------------------------------------------------------------
+      // C. 3D BEVELED TEMPLE STONE TRACK, FLOOR RUNES & SCULPTED PARAPETS
+      // -----------------------------------------------------------------------
+      const strips = 32;
+      const scrollOffset = (game.runCycle * 0.036) % (1 / strips);
+      for (let i = strips - 1; i >= 0; i--) {
+        const z1 = Math.max(0, (i / strips) - scrollOffset);
+        const z2 = Math.min(1, ((i + 1) / strips) - scrollOffset);
+        if (z2 <= z1) continue;
+
+        const p1Left = project3D(-1.54, 0, z1);
+        const p1Right = project3D(1.54, 0, z1);
+        const p2Left = project3D(-1.54, 0, z2);
+        const p2Right = project3D(1.54, 0, z2);
+
+        const isEven = i % 2 === 0;
+        ctx.fillStyle = isEven ? cfg.roadSlabLight : cfg.roadSlabDark;
+        ctx.beginPath();
+        ctx.moveTo(p2Left.x, p2Left.y);
+        ctx.lineTo(p2Right.x, p2Right.y);
+        ctx.lineTo(p1Right.x, p1Right.y);
+        ctx.lineTo(p1Left.x, p1Left.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Chiseled flagstone bevel highlight along the leading edge of each slab
+        ctx.strokeStyle = isEven ? "rgba(255, 248, 225, 0.22)" : "rgba(255, 248, 225, 0.12)";
+        ctx.lineWidth = Math.max(1, 1.8 * p1Left.scale);
+        ctx.beginPath();
+        ctx.moveTo(p2Left.x, p2Left.y + 1);
+        ctx.lineTo(p2Right.x, p2Right.y + 1);
+        ctx.stroke();
+
+        // Deep stone mortar seam between strips
+        ctx.strokeStyle = "rgba(20, 14, 9, 0.55)";
+        ctx.lineWidth = Math.max(1, 2.5 * p1Left.scale);
+        ctx.beginPath();
+        ctx.moveTo(p1Left.x, p1Left.y);
+        ctx.lineTo(p1Right.x, p1Right.y);
+        ctx.stroke();
+
+        // Individual Flagstone Paver Insets & Ancient Temple Floor Runes in Each Lane (-1, 0, +1)
+        [-1, 0, 1].forEach((laneCenter, laneIdx) => {
+          const c1L = project3D(laneCenter - 0.38, 0, z1);
+          const c1R = project3D(laneCenter + 0.38, 0, z1);
+          const c2L = project3D(laneCenter - 0.38, 0, z2);
+          const c2R = project3D(laneCenter + 0.38, 0, z2);
+
+          ctx.fillStyle = (i + laneIdx) % 2 === 0 ? "rgba(255, 255, 255, 0.055)" : "rgba(0, 0, 0, 0.075)";
+          ctx.beginPath();
+          ctx.moveTo(c2L.x, c2L.y);
+          ctx.lineTo(c2R.x, c2R.y);
+          ctx.lineTo(c1R.x, c1R.y);
+          ctx.lineTo(c1L.x, c1L.y);
+          ctx.closePath();
+          ctx.fill();
+
+          // Glowing carved geometric diamond rune on every 3rd stone slab
+          if ((i + laneIdx) % 3 === 0) {
+            const zMid = (z1 + z2) * 0.5;
+            const rTop = project3D(laneCenter, 0, z2);
+            const rBot = project3D(laneCenter, 0, z1);
+            const rLeft = project3D(laneCenter - 0.14, 0, zMid);
+            const rRight = project3D(laneCenter + 0.14, 0, zMid);
+            ctx.fillStyle = "rgba(0, 206, 201, 0.16)";
+            ctx.beginPath();
+            ctx.moveTo(rTop.x, rTop.y);
+            ctx.lineTo(rRight.x, rRight.y);
+            ctx.lineTo(rBot.x, rBot.y);
+            ctx.lineTo(rLeft.x, rLeft.y);
+            ctx.closePath();
+            ctx.fill();
+          }
+        });
+
+        // Emerald Jungle Moss Patches Creeping Along the Outer Road Edges
+        if (i % 2 === 0) {
+          const m1L = project3D(-1.54, 0, z1);
+          const m2L = project3D(-1.38, 0, z2);
+          ctx.fillStyle = "rgba(39, 174, 96, 0.28)";
+          ctx.beginPath();
+          ctx.arc(m1L.x + 8 * m1L.scale, (m1L.y + m2L.y) * 0.5, 10 * m1L.scale, 0, Math.PI * 2);
+          ctx.fill();
+
+          const m1R = project3D(1.54, 0, z1);
+          const m2R = project3D(1.38, 0, z2);
+          ctx.beginPath();
+          ctx.arc(m1R.x - 8 * m1R.scale, (m1R.y + m2R.y) * 0.5, 10 * m1R.scale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Glowing Golden Inlaid Lane Divider Channels (-0.51 and +0.51)
+        [-0.51, 0.51].forEach((divX) => {
+          const d1 = project3D(divX, 0, z1);
+          const d2 = project3D(divX, 0, z2);
+          ctx.strokeStyle = isEven ? "rgba(241, 196, 15, 0.85)" : "rgba(212, 175, 55, 0.42)";
+          ctx.lineWidth = Math.max(1.8, 5.0 * d1.scale);
+          ctx.beginPath();
+          ctx.moveTo(d2.x, d2.y);
+          ctx.lineTo(d1.x, d1.y);
+          ctx.stroke();
+        });
+
+        // 3D Sculpted Side Parapet Balustrades (Inner Wall + Top Capstone + Outer Rim)
+        const p1OutL = project3D(-1.82, 22, z1);
+        const p2OutL = project3D(-1.82, 22, z2);
+        const p1InL = project3D(-1.54, 22, z1);
+        const p2InL = project3D(-1.54, 22, z2);
+
+        // Left parapet inner vertical stone face
+        ctx.fillStyle = isEven ? cfg.parapetCol : "#3d2f24";
+        ctx.beginPath();
+        ctx.moveTo(p2InL.x, p2InL.y);
+        ctx.lineTo(p1InL.x, p1InL.y);
+        ctx.lineTo(p1Left.x, p1Left.y);
+        ctx.lineTo(p2Left.x, p2Left.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Left parapet beveled top cap
+        ctx.fillStyle = isEven ? cfg.trimCol : "#d4af37";
+        ctx.beginPath();
+        ctx.moveTo(p2OutL.x, p2OutL.y);
+        ctx.lineTo(p2InL.x, p2InL.y);
+        ctx.lineTo(p1InL.x, p1InL.y);
+        ctx.lineTo(p1OutL.x, p1OutL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right parapet inner vertical stone face
+        const p1OutR = project3D(1.82, 22, z1);
+        const p2OutR = project3D(1.82, 22, z2);
+        const p1InR = project3D(1.54, 22, z1);
+        const p2InR = project3D(1.54, 22, z2);
+
+        ctx.fillStyle = isEven ? cfg.parapetCol : "#3d2f24";
+        ctx.beginPath();
+        ctx.moveTo(p2InR.x, p2InR.y);
+        ctx.lineTo(p1InR.x, p1InR.y);
+        ctx.lineTo(p1Right.x, p1Right.y);
+        ctx.lineTo(p2Right.x, p2Right.y);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right parapet beveled top cap
+        ctx.fillStyle = isEven ? cfg.trimCol : "#d4af37";
+        ctx.beginPath();
+        ctx.moveTo(p2InR.x, p2InR.y);
+        ctx.lineTo(p2OutR.x, p2OutR.y);
+        ctx.lineTo(p1OutR.x, p1OutR.y);
+        ctx.lineTo(p1InR.x, p1InR.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // -----------------------------------------------------------------------
+      // D. WORLD OBJECTS SORTED BACK-TO-FRONT (HIGHEST Z TO CAMERA)
+      // -----------------------------------------------------------------------
+      const sorted = game.worldObjects.slice().sort((a, b) => b.z - a.z);
+      sorted.forEach((obj) => {
+        if (obj.z <= 0.01 || obj.z > 1.02) return;
+
+        if (obj.type === "SCENERY_PILLAR") {
+          drawSideTempleScenery(obj, cfg);
+        } else if (obj.type === "COIN" && !obj.collected) {
+          drawSpinning3DCoin(obj);
+        } else if (obj.type === "LOW_HURDLE") {
+          drawLowHurdleObstacle(obj);
+        } else if (obj.type === "HIGH_BEAM") {
+          drawHighBeamObstacle(obj);
+        } else if (obj.type === "STONE_PILLAR") {
+          drawStonePillarObstacle(obj);
+        } else if (obj.type === "CUTOUT_WALL") {
+          drawCutoutWallGate(obj);
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // E. DUST, SPARKS & AMBIENT FIREFLY PARTICLES
+      // -----------------------------------------------------------------------
+      game.particles.forEach((pt) => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, pt.life / pt.maxLife);
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      // Ambient glowing temple fireflies / motes drifting in foreground
+      ctx.save();
+      game.envMotes.forEach((m) => {
+        const pulse = 0.35 + 0.65 * Math.abs(Math.sin(game.ambientClock * 2.5 + m.phase));
+        ctx.fillStyle = cfg.particleCol;
+        ctx.globalAlpha = pulse * 0.7;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // -----------------------------------------------------------------------
+      // F. UPGRADED ARTICULATED 2.5D TEMPLE EXPLORER AVATAR (Z = 0.08)
+      // -----------------------------------------------------------------------
+      drawRunnerCharacter();
+
+      // -----------------------------------------------------------------------
+      // G. FOREGROUND JUNGLE VINE CANOPY CORNERS & CHASER GUARDIAN VIGNETTE
+      // -----------------------------------------------------------------------
+      drawForegroundJungleFrame(w, h, cfg);
+
+      if (game.chaserWarningTimer > 0) {
+        const warnGrad = ctx.createRadialGradient(w / 2, h / 2, 160, w / 2, h / 2, 520);
+        warnGrad.addColorStop(0, "rgba(231, 76, 60, 0.0)");
+        warnGrad.addColorStop(1, "rgba(214, 48, 49, 0.42)");
+        ctx.fillStyle = warnGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = "#ff7675";
+        ctx.font = 'bold 16px "Microsoft JhengHei", sans-serif';
+        ctx.textAlign = "center";
+        ctx.shadowColor = "rgba(0,0,0,0.9)";
+        ctx.shadowBlur = 6;
+        ctx.fillText("🦍 神廟守衛逼近中！小心閃避障礙物與回答石門問題！", w / 2, h - 102);
+        ctx.shadowBlur = 0;
+      }
+
+      // Floating Score / Status Texts
+      game.floatingTexts.forEach((ft) => {
+        ctx.save();
+        ctx.fillStyle = ft.color;
+        ctx.font = 'bold 22px "Microsoft JhengHei", sans-serif';
+        ctx.textAlign = "center";
+        ctx.shadowColor = "rgba(0,0,0,0.85)";
+        ctx.shadowBlur = 6;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      });
+    }
+
+    // GRAND STEPPED MAYAN / AZTEC PYRAMID COMPLEX AT HORIZON
+    function drawHorizonSanctuary(cx, horizonY, cfg) {
+      ctx.save();
+
+      // Vertical Mystic Light Pillar Ascending from the Pyramid Apex
+      const beamGrad = ctx.createLinearGradient(cx, horizonY - 155, cx, horizonY - 65);
+      beamGrad.addColorStop(0, "rgba(255, 255, 255, 0.0)");
+      beamGrad.addColorStop(1, cfg.trimCol + "66");
+      ctx.fillStyle = beamGrad;
+      ctx.fillRect(cx - 14, horizonY - 155, 28, 90);
+
+      // 5 Stepped Pyramid Tiers with 3D Stone Shading & Golden Cornices
+      const tiers = [
+        { w: 220, h: 18, y: horizonY - 18 },
+        { w: 176, h: 17, y: horizonY - 35 },
+        { w: 136, h: 16, y: horizonY - 51 },
+        { w: 98,  h: 15, y: horizonY - 66 },
+        { w: 64,  h: 22, y: horizonY - 88 }
+      ];
+      tiers.forEach((t, idx) => {
+        const tGrad = ctx.createLinearGradient(cx - t.w / 2, t.y, cx + t.w / 2, t.y);
+        tGrad.addColorStop(0, "#1e1815");
+        tGrad.addColorStop(0.5, "#3d312a");
+        tGrad.addColorStop(1, "#181311");
+        ctx.fillStyle = tGrad;
+        ctx.strokeStyle = "#d4af37";
+        ctx.lineWidth = 1.4;
+        ctx.fillRect(cx - t.w / 2, t.y, t.w, t.h);
+        ctx.strokeRect(cx - t.w / 2, t.y, t.w, t.h);
+
+        // Decorative carved recesses on each terrace
+        if (idx < 4) {
+          ctx.fillStyle = "rgba(241, 196, 15, 0.25)";
+          for (let rx = -t.w * 0.38; rx <= t.w * 0.38; rx += 22) {
+            if (Math.abs(rx) > 20) {
+              ctx.fillRect(cx + rx - 4, t.y + 4, 8, t.h - 8);
+            }
+          }
+        }
+      });
+
+      // Twin Flanking Temple Watchtowers with Burning Ceremonial Braziers
+      [-126, 126].forEach((offsetX) => {
+        const tx = cx + offsetX;
+        ctx.fillStyle = "#2b211c";
+        ctx.strokeStyle = "#d4af37";
+        ctx.lineWidth = 1.3;
+        ctx.fillRect(tx - 16, horizonY - 46, 32, 46);
+        ctx.strokeRect(tx - 16, horizonY - 46, 32, 46);
+
+        // Watchtower roof cap
+        ctx.fillStyle = "#d4af37";
+        ctx.beginPath();
+        ctx.moveTo(tx - 21, horizonY - 46);
+        ctx.lineTo(tx, horizonY - 60);
+        ctx.lineTo(tx + 21, horizonY - 46);
+        ctx.closePath();
+        ctx.fill();
+
+        // Watchtower flame glow
+        const fg = ctx.createRadialGradient(tx, horizonY - 64, 2, tx, horizonY - 64, 16);
+        fg.addColorStop(0, "#fff59d");
+        fg.addColorStop(0.5, "#f39c12");
+        fg.addColorStop(1, "rgba(243, 156, 18, 0)");
+        ctx.fillStyle = fg;
+        ctx.beginPath();
+        ctx.arc(tx, horizonY - 64, 16, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Grand Golden Stepped Stairway with Serpent Balustrades
+      ctx.fillStyle = "#d4af37";
+      ctx.beginPath();
+      ctx.moveTo(cx - 24, horizonY);
+      ctx.lineTo(cx + 24, horizonY);
+      ctx.lineTo(cx + 13, horizonY - 66);
+      ctx.lineTo(cx - 13, horizonY - 66);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#5c3d1e";
+      ctx.lineWidth = 1;
+      for (let sy = horizonY - 4; sy > horizonY - 66; sy -= 5) {
+        ctx.beginPath();
+        ctx.moveTo(cx - 16, sy);
+        ctx.lineTo(cx + 16, sy);
+        ctx.stroke();
+      }
+
+      // Glowing Jade/Gold Sanctum Portal Inside Top Shrine
+      const portalGrad = ctx.createRadialGradient(cx, horizonY - 75, 2, cx, horizonY - 75, 14);
+      portalGrad.addColorStop(0, "#ffffff");
+      portalGrad.addColorStop(0.5, cfg.trimCol);
+      portalGrad.addColorStop(1, "#006266");
+      ctx.fillStyle = portalGrad;
+      ctx.beginPath();
+      ctx.roundRect(cx - 11, horizonY - 84, 22, 18, [10, 10, 0, 0]);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawHorizonJungleCanopy(w, horizonY, cfg) {
+      ctx.save();
+      // Back dark foliage layer
+      ctx.fillStyle = cfg.jungleLeafDark;
+      [25, 75, 130, 190, 245, 305, w - 305, w - 245, w - 190, w - 130, w - 75, w - 25].forEach((tx, idx) => {
+        const r = 22 + (idx % 3) * 8;
+        ctx.beginPath();
+        ctx.arc(tx, horizonY - 2, r, Math.PI, 0);
+        ctx.fill();
+      });
+
+      // Front sunlit tropical palm silhouettes
+      ctx.fillStyle = cfg.foliageCol;
+      [50, 155, 265, w - 265, w - 155, w - 50].forEach((px, idx) => {
+        const trunkH = 34 + (idx % 2) * 12;
+        ctx.strokeStyle = "#2d1e16";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(px, horizonY);
+        ctx.quadraticCurveTo(px + (idx < 3 ? 6 : -6), horizonY - trunkH * 0.5, px, horizonY - trunkH);
+        ctx.stroke();
+
+        // Palm fronds
+        ctx.strokeStyle = cfg.jungleLeafLight;
+        ctx.lineWidth = 3;
+        for (let a = -2.4; a <= 0.4; a += 0.55) {
+          const sway = Math.sin(game.ambientClock * 1.6 + idx + a) * 2.5;
+          ctx.beginPath();
+          ctx.moveTo(px, horizonY - trunkH);
+          ctx.quadraticCurveTo(
+            px + Math.cos(a) * 18,
+            horizonY - trunkH - 12 + sway,
+            px + Math.cos(a) * 28,
+            horizonY - trunkH + 4 + sway
+          );
+          ctx.stroke();
+        }
+      });
+      ctx.restore();
+    }
+
+    function drawForegroundJungleFrame(w, h, cfg) {
+      ctx.save();
+      const sway = Math.sin(game.ambientClock * 1.5) * 6;
+
+      // Top-left & Top-right hanging temple vines & tropical leaves
+      [-1, 1].forEach((dir) => {
+        const cornerX = dir === -1 ? 0 : w;
+        ctx.strokeStyle = "#145a32";
+        ctx.lineWidth = 3.5;
+
+        [38, 86, 138].forEach((offsetX, vIdx) => {
+          const vx = cornerX - dir * offsetX;
+          const vLen = 58 + (vIdx % 2) * 32;
+          ctx.beginPath();
+          ctx.moveTo(vx, 0);
+          ctx.quadraticCurveTo(vx + sway * (vIdx + 1) * 0.35, vLen * 0.5, vx - dir * 8 + sway * 0.5, vLen);
+          ctx.stroke();
+
+          // Hanging vine leaves
+          ctx.fillStyle = cfg.jungleLeafLight;
+          for (let ly = 16; ly < vLen; ly += 18) {
+            ctx.beginPath();
+            ctx.ellipse(vx + sway * 0.25, ly, 7, 3.5, dir * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      });
+      ctx.restore();
+    }
+
+    // SIDE BRIDGE SCENERY: CARVED DRAGON BRAZIERS & MOSSY JUNGLE OBELISKS
+    function drawSideTempleScenery(obj, cfg) {
+      const p = project3D(obj.side * 1.68, 22, obj.z);
+      const roadP = project3D(obj.side * 1.25, 0, obj.z);
+      const s = p.scale;
+      const pw = 32 * s;
+      const ph = 126 * s;
+
+      ctx.save();
+
+      // Warm torchlight pool cast onto the stone roadway from braziers
+      if (obj.variant !== "JUNGLE_TOTEM") {
+        const poolGrad = ctx.createRadialGradient(roadP.x, roadP.y, 4 * s, roadP.x, roadP.y, 78 * s);
+        poolGrad.addColorStop(0, "rgba(255, 200, 87, 0.25)");
+        poolGrad.addColorStop(1, "rgba(255, 159, 67, 0.0)");
+        ctx.fillStyle = poolGrad;
+        ctx.beginPath();
+        ctx.ellipse(roadP.x, roadP.y, 78 * s, 22 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3D Carved Stone Column Shaft with Beveled Sides
+      const colGrad = ctx.createLinearGradient(p.x - pw / 2, 0, p.x + pw / 2, 0);
+      colGrad.addColorStop(0, "#2c1e16");
+      colGrad.addColorStop(0.35, "#785846");
+      colGrad.addColorStop(0.7, "#593e30");
+      colGrad.addColorStop(1, "#221610");
+      ctx.fillStyle = colGrad;
+      ctx.strokeStyle = "#1c120c";
+      ctx.lineWidth = Math.max(1, 1.8 * s);
+      ctx.fillRect(p.x - pw / 2, p.y - ph, pw, ph);
+      ctx.strokeRect(p.x - pw / 2, p.y - ph, pw, ph);
+
+      // Carved Mayan glyph rings along the column shaft
+      ctx.fillStyle = "rgba(241, 196, 15, 0.65)";
+      ctx.fillRect(p.x - pw * 0.48, p.y - ph * 0.35, pw * 0.96, 4.5 * s);
+      ctx.fillRect(p.x - pw * 0.48, p.y - ph * 0.7, pw * 0.96, 4.5 * s);
+
+      // Stepped Gold Plinth Base & Ornate Capital
+      ctx.fillStyle = "#d4af37";
+      ctx.fillRect(p.x - pw * 0.72, p.y - 10 * s, pw * 1.44, 10 * s);
+      ctx.fillRect(p.x - pw * 0.78, p.y - ph, pw * 1.56, 12 * s);
+
+      if (obj.variant === "JUNGLE_TOTEM") {
+        // Carved Jade Serpent Sphere & Tropical Fern Crown on Alternating Pillars
+        const orbGrad = ctx.createRadialGradient(p.x - 4 * s, p.y - ph - 14 * s, 2 * s, p.x, p.y - ph - 12 * s, 14 * s);
+        orbGrad.addColorStop(0, "#a3ffac");
+        orbGrad.addColorStop(0.5, cfg.trimCol);
+        orbGrad.addColorStop(1, "#006266");
+        ctx.fillStyle = orbGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y - ph - 12 * s, 13 * s, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Bronze Dragon-Claw Fire Cauldron
+        ctx.fillStyle = "#2d3436";
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = Math.max(1, 1.5 * s);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y - ph - 3 * s, 13 * s, 0, Math.PI);
+        ctx.fill();
+        ctx.stroke();
+
+        // Multi-Layer Animated Torch Flame & Halo
+        const flicker = Math.sin(game.runCycle * 2.4 + obj.z * 14) * 3.2 * s;
+        const glow = ctx.createRadialGradient(p.x, p.y - ph - 16 * s, 2 * s, p.x, p.y - ph - 16 * s, 34 * s);
+        glow.addColorStop(0, "rgba(255, 245, 157, 0.92)");
+        glow.addColorStop(0.45, "rgba(243, 156, 18, 0.5)");
+        glow.addColorStop(1, "rgba(230, 126, 34, 0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y - ph - 16 * s, 34 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outer crimson/orange flame tongue
+        ctx.fillStyle = "#e67e22";
+        ctx.beginPath();
+        ctx.moveTo(p.x - 11 * s, p.y - ph - 5 * s);
+        ctx.quadraticCurveTo(p.x + flicker, p.y - ph - 38 * s, p.x + 11 * s, p.y - ph - 5 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        // Inner white-gold flame core
+        ctx.fillStyle = "#fff9c4";
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5.5 * s, p.y - ph - 5 * s);
+        ctx.quadraticCurveTo(p.x - flicker * 0.5, p.y - ph - 25 * s, p.x + 5.5 * s, p.y - ph - 5 * s);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // 3D FACETED TEMPLE GOLD SUN-MEDALLION COIN
+    function drawSpinning3DCoin(obj) {
+      const groundP = project3D(obj.lane, 0, obj.z);
+      const bob = Math.sin(game.runCycle * 1.5 + obj.z * 10) * 7.5;
+      const p = project3D(obj.lane, 36 + bob, obj.z);
+      const s = p.scale;
+
+      ctx.save();
+      // Ground shadow + golden floor reflection under coin
+      ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+      ctx.beginPath();
+      ctx.ellipse(groundP.x, groundP.y, 17 * s, 6 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Radiant outer coin glow halo
+      const halo = ctx.createRadialGradient(p.x, p.y, 3 * s, p.x, p.y, 28 * s);
+      halo.addColorStop(0, "rgba(255, 249, 196, 0.55)");
+      halo.addColorStop(1, "rgba(241, 196, 15, 0.0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 28 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      const spinPhase = game.runCycle * 0.9 + obj.z * 6;
+      const widthFactor = Math.max(0.24, Math.abs(Math.cos(spinPhase)));
+      const rx = 22 * s * widthFactor;
+      const ry = 22 * s;
+
+      // 3D Metallic Rim Extrusion
+      ctx.fillStyle = "#9c640c";
+      ctx.beginPath();
+      ctx.ellipse(p.x + 3.5 * s, p.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Coin Gold Face Gradient
+      const cGrad = ctx.createRadialGradient(p.x - 5 * s, p.y - 6 * s, 2 * s, p.x, p.y, ry);
+      cGrad.addColorStop(0, "#ffffff");
+      cGrad.addColorStop(0.25, "#fff59d");
+      cGrad.addColorStop(0.65, "#f1c40f");
+      cGrad.addColorStop(1, "#b7791f");
+      ctx.fillStyle = cGrad;
+      ctx.strokeStyle = "#7e5109";
+      ctx.lineWidth = Math.max(1.3, 2.4 * s);
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Inner Beveled Ring & Sunburst Temple Emblem
+      if (widthFactor > 0.42) {
+        ctx.strokeStyle = "rgba(126, 81, 9, 0.65)";
+        ctx.lineWidth = Math.max(1, 1.6 * s);
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, rx * 0.68, ry * 0.68, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const sq = 7.5 * s * widthFactor;
+        ctx.fillStyle = "#7e5109";
+        ctx.fillRect(p.x - sq / 2, p.y - 3.8 * s, sq, 7.6 * s);
+      }
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // UPGRADED OBSTACLE 1: 3D SPIKED & VINE-BOUND TIMBER ROLLER (▲ JUMP 跳躍)
+    // =========================================================================
+    function drawLowHurdleObstacle(obj) {
+      const p = project3D(obj.lane, 0, obj.z);
+      const s = p.scale;
+      const logW = 154 * s;
+      const logH = 40 * s;
+      const logY = p.y - logH - 5 * s;
+
+      ctx.save();
+      // 1. Deep Ground Shadow + Green Jump Guide Glow
+      ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 3 * s, logW * 0.54, 10 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Sculpted Stone Dragon-Clamp End Pedestals (Left & Right)
+      [-0.45, 0.45].forEach((sideFactor) => {
+        const px = p.x + sideFactor * logW;
+        const pedGrad = ctx.createLinearGradient(px - 10 * s, logY - 6 * s, px + 10 * s, p.y);
+        pedGrad.addColorStop(0, "#635147");
+        pedGrad.addColorStop(1, "#2e241f");
+        ctx.fillStyle = pedGrad;
+        ctx.strokeStyle = "#d4af37";
+        ctx.lineWidth = Math.max(1, 1.8 * s);
+        ctx.beginPath();
+        ctx.roundRect(px - 9 * s, logY - 4 * s, 18 * s, logH + 9 * s, 4 * s);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // 3. 3D Cylindrical Hardwood Timber Log Body with Bark Shading
+      const logGrad = ctx.createLinearGradient(0, logY, 0, logY + logH);
+      logGrad.addColorStop(0, "#b87333");
+      logGrad.addColorStop(0.22, "#9c5a25");
+      logGrad.addColorStop(0.65, "#6e3b14");
+      logGrad.addColorStop(1, "#3b1e08");
+      ctx.fillStyle = logGrad;
+      ctx.strokeStyle = "#261204";
+      ctx.lineWidth = Math.max(1.5, 2.8 * s);
+      ctx.beginPath();
+      ctx.roundRect(p.x - logW / 2, logY, logW, logH, 16 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Wood grain horizontal bark grooves
+      ctx.strokeStyle = "rgba(40, 18, 5, 0.45)";
+      ctx.lineWidth = Math.max(1, 1.6 * s);
+      [0.32, 0.68].forEach((ry) => {
+        ctx.beginPath();
+        ctx.moveTo(p.x - logW * 0.44, logY + logH * ry);
+        ctx.lineTo(p.x + logW * 0.44, logY + logH * ry);
+        ctx.stroke();
+      });
+
+      // 4. Forged Iron Reinforcement Bands & Golden Hazard Stripes
+      [-0.28, 0, 0.28].forEach((offset) => {
+        const bx = p.x + offset * logW;
+        ctx.fillStyle = "#2d3436";
+        ctx.fillRect(bx - 7 * s, logY + 1 * s, 14 * s, logH - 2 * s);
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillRect(bx - 3.5 * s, logY + 2 * s, 7 * s, logH - 4 * s);
+      });
+
+      // 5. 3D Metallic Conical Spikes Along Top Ridge of the Log
+      [-0.34, -0.17, 0, 0.17, 0.34].forEach((spFactor) => {
+        const sx = p.x + spFactor * logW;
+        const spGrad = ctx.createLinearGradient(sx - 5 * s, logY - 12 * s, sx + 5 * s, logY);
+        spGrad.addColorStop(0, "#ffffff");
+        spGrad.addColorStop(0.5, "#dfe6e9");
+        spGrad.addColorStop(1, "#636e72");
+        ctx.fillStyle = spGrad;
+        ctx.strokeStyle = "#2d3436";
+        ctx.lineWidth = Math.max(1, 1.4 * s);
+        ctx.beginPath();
+        ctx.moveTo(sx - 5.5 * s, logY + 3 * s);
+        ctx.lineTo(sx, logY - 11 * s);
+        ctx.lineTo(sx + 5.5 * s, logY + 3 * s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // 6. Cut Wood End-Grain Rings on Both Ends
+      ctx.fillStyle = "#e6be8a";
+      ctx.strokeStyle = "#5c3317";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.beginPath();
+      ctx.ellipse(p.x - logW / 2 + 5 * s, logY + logH / 2, 5.5 * s, logH * 0.44, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x + logW / 2 - 5 * s, logY + logH / 2, 5.5 * s, logH * 0.44, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Action Callout Badge ("▲ JUMP 跳躍")
+      if (obj.z < 0.74) {
+        const bob = Math.sin(game.ambientClock * 6) * 3 * s;
+        drawActionCalloutBadge(p.x, logY - 22 * s + bob, s, "▲ JUMP 跳躍", "#00b894", "#ffffff");
+      }
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // UPGRADED OBSTACLE 2: 3D CARVED TEMPLE LINTEL ARCHWAY (▼ SLIDE 滑行)
+    // =========================================================================
+    function drawHighBeamObstacle(obj) {
+      const p = project3D(obj.lane, 0, obj.z);
+      const s = p.scale;
+      const archW = 166 * s;
+      const totalH = 152 * s;
+      const clearanceH = 68 * s; // Open lower tunnel for sliding underneath
+      const beamH = totalH - clearanceH;
+      const topY = p.y - totalH;
+      const postW = 22 * s;
+
+      ctx.save();
+      // 1. Ground Shadows Under Left & Right Stone Columns
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.beginPath();
+      ctx.ellipse(p.x - archW / 2 + postW / 2, p.y + 2 * s, 16 * s, 7 * s, 0, 0, Math.PI * 2);
+      ctx.ellipse(p.x + archW / 2 - postW / 2, p.y + 2 * s, 16 * s, 7 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Glowing Cyan Floor Slide-Tunnel Guide Arrows Underneath the Open Arch
+      const floorGrad = ctx.createLinearGradient(p.x - archW * 0.38, 0, p.x + archW * 0.38, 0);
+      floorGrad.addColorStop(0, "rgba(0, 206, 201, 0.05)");
+      floorGrad.addColorStop(0.5, "rgba(0, 206, 201, 0.35)");
+      floorGrad.addColorStop(1, "rgba(0, 206, 201, 0.05)");
+      ctx.fillStyle = floorGrad;
+      ctx.fillRect(p.x - archW * 0.38, p.y - 14 * s, archW * 0.76, 14 * s);
+
+      // 3. Twin 3D Stepped Stone Support Columns with Glowing Jade Runes
+      [-archW / 2, archW / 2 - postW].forEach((offsetX) => {
+        const colX = p.x + offsetX;
+        const cGrad = ctx.createLinearGradient(colX, 0, colX + postW, 0);
+        cGrad.addColorStop(0, "#3b4b59");
+        cGrad.addColorStop(0.45, "#607385");
+        cGrad.addColorStop(1, "#25303b");
+        ctx.fillStyle = cGrad;
+        ctx.strokeStyle = "#1a222b";
+        ctx.lineWidth = Math.max(1.2, 2.2 * s);
+        ctx.fillRect(colX, topY, postW, totalH);
+        ctx.strokeRect(colX, topY, postW, totalH);
+
+        // Golden stone base plinth
+        ctx.fillStyle = "#d4af37";
+        ctx.fillRect(colX - 3 * s, p.y - 10 * s, postW + 6 * s, 10 * s);
+
+        // Glowing cyan rune strip on column
+        ctx.fillStyle = "#00cec9";
+        ctx.fillRect(colX + postW * 0.35, p.y - clearanceH * 0.82, postW * 0.3, clearanceH * 0.62);
+      });
+
+      // 4. Heavy Overhanging 3D Carved Stone Lintel Crossbeam
+      const beamGrad = ctx.createLinearGradient(0, topY, 0, topY + beamH);
+      beamGrad.addColorStop(0, "#2c3e50");
+      beamGrad.addColorStop(0.45, "#1e3799");
+      beamGrad.addColorStop(1, "#0c2461");
+      ctx.fillStyle = beamGrad;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(1.6, 3.2 * s);
+      ctx.beginPath();
+      ctx.roundRect(p.x - archW * 0.56, topY, archW * 1.12, beamH, 8 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Stepped Temple Roof Cornice on Top of the Beam
+      ctx.fillStyle = "#d4af37";
+      ctx.beginPath();
+      ctx.moveTo(p.x - archW * 0.6, topY);
+      ctx.lineTo(p.x - archW * 0.52, topY - 10 * s);
+      ctx.lineTo(p.x + archW * 0.52, topY - 10 * s);
+      ctx.lineTo(p.x + archW * 0.6, topY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Hanging Crimson & Gold Temple Banners + Vines Under the Crossbeam
+      [-0.28, 0.28].forEach((bf) => {
+        const bx = p.x + bf * archW;
+        ctx.fillStyle = "#c0392b";
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = Math.max(1, 1.5 * s);
+        ctx.beginPath();
+        ctx.moveTo(bx - 9 * s, topY + beamH);
+        ctx.lineTo(bx + 9 * s, topY + beamH);
+        ctx.lineTo(bx + 6 * s, topY + beamH + 14 * s);
+        ctx.lineTo(bx, topY + beamH + 10 * s);
+        ctx.lineTo(bx - 6 * s, topY + beamH + 14 * s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // Central Sculpted Golden Sun Medallion on the Beam
+      ctx.fillStyle = "#f1c40f";
+      ctx.strokeStyle = "#9c640c";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.arc(p.x, topY + beamH * 0.5, 16 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Action Callout Badge ("▼ SLIDE 滑行")
+      if (obj.z < 0.74) {
+        const bob = Math.sin(game.ambientClock * 6) * 3 * s;
+        drawActionCalloutBadge(p.x, topY + beamH * 0.48 + bob, s, "▼ SLIDE 滑行", "#0984e3", "#ffffff");
+      }
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // UPGRADED OBSTACLE 3: 3D SCULPTED AZTEC/TIKI GUARDIAN TOTEM (◀▶ DODGE 閃避)
+    // =========================================================================
+    function drawStonePillarObstacle(obj) {
+      const p = project3D(obj.lane, 0, obj.z);
+      const s = p.scale;
+      const colW = 88 * s;
+      const colH = 152 * s;
+      const topY = p.y - colH;
+
+      ctx.save();
+      // 1. Pulsing Crimson Hazard Floor Aura & Drop Shadow
+      ctx.fillStyle = "rgba(214, 48, 49, 0.32)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 3 * s, colW * 0.74, 13 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+      ctx.beginPath();
+      ctx.ellipse(p.x, p.y + 3 * s, colW * 0.58, 9.5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 3D Perspective Side Extrusion (Gives true 3D block volume)
+      const sideOffset = (p.x - canvas.width / 2) * -0.06;
+      ctx.fillStyle = "#4a1410";
+      ctx.beginPath();
+      ctx.moveTo(p.x + (sideOffset > 0 ? colW / 2 : -colW / 2), topY);
+      ctx.lineTo(p.x + (sideOffset > 0 ? colW / 2 : -colW / 2) + sideOffset, topY + 6 * s);
+      ctx.lineTo(p.x + (sideOffset > 0 ? colW / 2 : -colW / 2) + sideOffset, p.y - 4 * s);
+      ctx.lineTo(p.x + (sideOffset > 0 ? colW / 2 : -colW / 2), p.y);
+      ctx.closePath();
+      ctx.fill();
+
+      // 3. Sculpted Totem Front Stone Face
+      const pGrad = ctx.createLinearGradient(p.x - colW / 2, topY, p.x + colW / 2, p.y);
+      pGrad.addColorStop(0, "#b33939");
+      pGrad.addColorStop(0.35, "#8c2626");
+      pGrad.addColorStop(0.75, "#6b1919");
+      pGrad.addColorStop(1, "#420d0d");
+      ctx.fillStyle = pGrad;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(1.6, 2.8 * s);
+      ctx.beginPath();
+      ctx.roundRect(p.x - colW / 2, topY, colW, colH, 7 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // 4. Stepped Golden Pedestal Base & Feathered Aztec Headdress Crown
+      ctx.fillStyle = "#d4af37";
+      ctx.strokeStyle = "#5c3d08";
+      ctx.lineWidth = Math.max(1, 1.6 * s);
+      ctx.fillRect(p.x - colW * 0.58, p.y - 15 * s, colW * 1.16, 15 * s);
+      ctx.strokeRect(p.x - colW * 0.58, p.y - 15 * s, colW * 1.16, 15 * s);
+
+      // Feathered Headdress Plumes on Top of Totem
+      [-0.36, -0.18, 0, 0.18, 0.36].forEach((pf, idx) => {
+        const fx = p.x + pf * colW;
+        const fh = (idx === 2 ? 22 : 16) * s;
+        ctx.fillStyle = idx % 2 === 0 ? "#00cec9" : "#f1c40f";
+        ctx.beginPath();
+        ctx.ellipse(fx, topY - fh * 0.4, 6 * s, fh * 0.55, pf * 0.45, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#d4af37";
+      ctx.fillRect(p.x - colW * 0.58, topY, colW * 1.16, 13 * s);
+
+      // 5. Fierce Carved Guardian Tiki Mask Relief (Brow, Glowing Eyes, Nose & Fangs)
+      // Furrowed stone brow ridge
+      ctx.fillStyle = "#d4af37";
+      ctx.beginPath();
+      ctx.moveTo(p.x - 32 * s, topY + 34 * s);
+      ctx.lineTo(p.x, topY + 43 * s);
+      ctx.lineTo(p.x + 32 * s, topY + 34 * s);
+      ctx.lineTo(p.x + 28 * s, topY + 27 * s);
+      ctx.lineTo(p.x, topY + 35 * s);
+      ctx.lineTo(p.x - 28 * s, topY + 27 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      // Glowing fiery amber eyes
+      ctx.fillStyle = "#fff200";
+      ctx.shadowColor = "#ff793f";
+      ctx.shadowBlur = 8 * s;
+      ctx.beginPath();
+      ctx.ellipse(p.x - 16 * s, topY + 48 * s, 9 * s, 6.5 * s, 0.2, 0, Math.PI * 2);
+      ctx.ellipse(p.x + 16 * s, topY + 48 * s, 9 * s, 6.5 * s, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Sculpted stone nose & tribal jade cheek warpaint
+      ctx.fillStyle = "#b8860b";
+      ctx.beginPath();
+      ctx.moveTo(p.x, topY + 46 * s);
+      ctx.lineTo(p.x - 9 * s, topY + 68 * s);
+      ctx.lineTo(p.x + 9 * s, topY + 68 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = "#00cec9";
+      ctx.lineWidth = Math.max(1.2, 2.5 * s);
+      ctx.beginPath();
+      ctx.moveTo(p.x - 34 * s, topY + 62 * s);
+      ctx.lineTo(p.x - 18 * s, topY + 68 * s);
+      ctx.moveTo(p.x + 34 * s, topY + 62 * s);
+      ctx.lineTo(p.x + 18 * s, topY + 68 * s);
+      ctx.stroke();
+
+      // Carved Open Jaws & Interlocking Stone Fangs
+      ctx.fillStyle = "#1a0908";
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.roundRect(p.x - 26 * s, topY + 76 * s, 52 * s, 26 * s, 5 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fff9c4";
+      [-18, -6, 6, 18].forEach((tx) => {
+        // Upper fang
+        ctx.beginPath();
+        ctx.moveTo(p.x + (tx - 4) * s, topY + 77 * s);
+        ctx.lineTo(p.x + tx * s, topY + 87 * s);
+        ctx.lineTo(p.x + (tx + 4) * s, topY + 77 * s);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      if (obj.z < 0.74) {
+        const bob = Math.sin(game.ambientClock * 6) * 3 * s;
+        drawActionCalloutBadge(p.x, topY - 26 * s + bob, s, "◀▶ DODGE 閃避", "#d63031", "#ffffff");
+      }
+      ctx.restore();
+    }
+
+    function drawActionCalloutBadge(x, y, scale, text, bgHex, textHex) {
+      const fontSize = Math.max(11, Math.round(15.5 * scale));
+      ctx.save();
+      ctx.font = `900 ${fontSize}px "Microsoft JhengHei", "Segoe UI", sans-serif`;
+      const tw = ctx.measureText(text).width;
+      const padX = 11 * scale;
+      const bh = fontSize + 10 * scale;
+      const bw = tw + padX * 2;
+
+      ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
+      ctx.shadowBlur = 8 * scale;
+      ctx.fillStyle = bgHex;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(1.4, 2.2 * scale);
+      ctx.beginPath();
+      ctx.roundRect(x - bw / 2, y - bh / 2, bw, bh, 999);
+      ctx.fill();
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.fillStyle = textHex;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x, y + 1 * scale);
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // UPGRADED MONUMENTAL 3D ANCIENT TEMPLE KNOWLEDGE GATEHOUSE (CUTOUT WALL)
+    // =========================================================================
+    function drawCutoutWallGate(obj) {
+      const pLeft = project3D(-1.58, 0, obj.z);
+      const pRight = project3D(1.58, 0, obj.z);
+      const pCenter = project3D(0, 0, obj.z);
+      const s = pCenter.scale;
+      const wallW = pRight.x - pLeft.x;
+      const wallH = 252 * s;
+      const wallTop = pCenter.y - wallH;
+
+      ctx.save();
+      // 1. Deep Ground Shadow Across All 3 Lanes
+      ctx.fillStyle = "rgba(0, 0, 0, 0.62)";
+      ctx.fillRect(pLeft.x, pCenter.y - 6 * s, wallW, 18 * s);
+
+      // 2. Monumental Carved Stone Gatehouse Body
+      const wGrad = ctx.createLinearGradient(pLeft.x, wallTop, pRight.x, pCenter.y);
+      if (obj.opened) {
+        wGrad.addColorStop(0, "rgba(39, 174, 96, 0.55)");
+        wGrad.addColorStop(1, "rgba(46, 204, 113, 0.35)");
+      } else if (obj.crashed) {
+        wGrad.addColorStop(0, "rgba(192, 57, 43, 0.88)");
+        wGrad.addColorStop(1, "rgba(146, 43, 33, 0.88)");
+      } else {
+        wGrad.addColorStop(0, "#1e293b");
+        wGrad.addColorStop(0.5, "#334155");
+        wGrad.addColorStop(1, "#0f172a");
+      }
+
+      ctx.fillStyle = wGrad;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(2, 4.5 * s);
+      ctx.beginPath();
+      ctx.roundRect(pLeft.x, wallTop, wallW, wallH, 8 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // 3. Flanking Carved Dragon Pillars on Left & Right Edges of Gatehouse
+      const sideColW = wallW * 0.12;
+      [pLeft.x, pRight.x - sideColW].forEach((cx) => {
+        ctx.fillStyle = "rgba(212, 175, 55, 0.22)";
+        ctx.fillRect(cx, wallTop, sideColW, wallH);
+        // Glowing jade rune medallions on gate pillars
+        ctx.fillStyle = "#00cec9";
+        for (let ry = 0.25; ry <= 0.75; ry += 0.25) {
+          ctx.beginPath();
+          ctx.arc(cx + sideColW / 2, wallTop + wallH * ry, 6 * s, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // 4. Double-Tiered Imperial Golden Temple Roof Eaves with Upturned Corners
+      ctx.fillStyle = "#d4af37";
+      ctx.strokeStyle = "#7e5109";
+      ctx.lineWidth = Math.max(1.5, 2.5 * s);
+      // Lower roof eave
+      ctx.beginPath();
+      ctx.moveTo(pLeft.x - 24 * s, wallTop + 6 * s);
+      ctx.quadraticCurveTo(pLeft.x - 6 * s, wallTop - 16 * s, pLeft.x + 18 * s, wallTop - 14 * s);
+      ctx.lineTo(pRight.x - 18 * s, wallTop - 14 * s);
+      ctx.quadraticCurveTo(pRight.x + 6 * s, wallTop - 16 * s, pRight.x + 24 * s, wallTop + 6 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Upper roof crest
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.moveTo(pCenter.x - wallW * 0.32, wallTop - 14 * s);
+      ctx.lineTo(pCenter.x - wallW * 0.24, wallTop - 28 * s);
+      ctx.lineTo(pCenter.x + wallW * 0.24, wallTop - 28 * s);
+      ctx.lineTo(pCenter.x + wallW * 0.32, wallTop - 14 * s);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Ashlar stone masonry mortar lines
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.14)";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      for (let row = 1; row <= 3; row++) {
+        const ry = wallTop + (wallH * row) / 4;
+        ctx.beginPath();
+        ctx.moveTo(pLeft.x, ry);
+        ctx.lineTo(pRight.x, ry);
+        ctx.stroke();
+      }
+
+      // 5. Glowing Cutout Silhouette Portal Archway in Center
+      const archW = wallW * 0.33;
+      const archH = wallH * 0.74;
+      const archGrad = ctx.createRadialGradient(pCenter.x, pCenter.y - archH * 0.5, 6 * s, pCenter.x, pCenter.y - archH * 0.5, archH * 0.72);
+      if (obj.opened) {
+        archGrad.addColorStop(0, "#ffffff");
+        archGrad.addColorStop(0.4, "#a3ffac");
+        archGrad.addColorStop(1, "#00b894");
+      } else {
+        archGrad.addColorStop(0, "#dff9fb");
+        archGrad.addColorStop(0.5, "#00cec9");
+        archGrad.addColorStop(1, "#0984e3");
+      }
+      ctx.fillStyle = archGrad;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = Math.max(2.2, 4 * s);
+      ctx.beginPath();
+      ctx.roundRect(pCenter.x - archW / 2, pCenter.y - archH, archW, archH, [archW / 2, archW / 2, 0, 0]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Swirling Energy Rings Inside the Portal
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.42)";
+      ctx.lineWidth = Math.max(1.2, 2.2 * s);
+      const swirlR = (18 + Math.sin(game.ambientClock * 4) * 5) * s;
+      ctx.beginPath();
+      ctx.arc(pCenter.x, pCenter.y - archH * 0.45, swirlR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Human Explorer Cutout Silhouette Inside the Archway
+      if (!obj.opened) {
+        ctx.fillStyle = "rgba(15, 23, 30, 0.58)";
+        ctx.beginPath();
+        ctx.arc(pCenter.x, pCenter.y - archH * 0.68, 16 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(pCenter.x - 24 * s, pCenter.y - archH * 0.52, 48 * s, 46 * s, 8 * s);
+        ctx.fill();
+      }
+
+      // Question mark or Checkmark on the Cutout Gate
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `900 ${Math.max(14, Math.round(36 * s))}px "Segoe UI", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(obj.opened ? "✓" : "?", pCenter.x, pCenter.y - archH * 0.30);
+
+      // Gate Header Signboard
+      drawActionCalloutBadge(
+        pCenter.x,
+        wallTop - 38 * s,
+        s,
+        `⛩️ 知識石門 KNOWLEDGE GATE #${obj.gateNumber}`,
+        "#d35400",
+        "#ffeaa7"
+      );
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 12. UPGRADED 8/10 ARTICULATED 2.5D TEMPLE EXPLORER AVATAR
+    // =========================================================================
+    function drawRunnerCharacter() {
+      const p = project3D(game.currentLaneX, game.jumpY, 0.08);
+      const groundP = project3D(game.currentLaneX, 0, 0.08);
+
+      ctx.save();
+      // 1. Dynamic Ground Shadow & Glowing Footwork Target Ring
+      const shadowScale = Math.max(0.38, 1 - game.jumpY / 145);
+      const ringGrad = ctx.createRadialGradient(groundP.x, groundP.y + 4, 6, groundP.x, groundP.y + 4, 42 * shadowScale);
+      ringGrad.addColorStop(0, "rgba(0, 0, 0, 0.58)");
+      ringGrad.addColorStop(0.7, "rgba(0, 206, 201, 0.25)");
+      ringGrad.addColorStop(1, "rgba(0, 206, 201, 0.0)");
+      ctx.fillStyle = ringGrad;
+      ctx.beginPath();
+      ctx.ellipse(groundP.x, groundP.y + 4, 40 * shadowScale, 13 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = game.speedBoostTimer > 0 ? "#2ecc71" : "rgba(0, 206, 201, 0.78)";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.ellipse(groundP.x, groundP.y + 4, 33 * shadowScale, 10.5 * shadowScale, 0, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Blink if invulnerable after a stumble
+      if (game.invulnTimer > 0 && Math.floor(game.invulnTimer * 12) % 2 === 0) {
+        ctx.globalAlpha = 0.55;
+      }
+
+      const isSliding = game.slideTimer > 0;
+      const isJumping = game.isJumping;
+      const stride = Math.sin(game.runCycle);
+      const strideCos = Math.cos(game.runCycle);
+      const bounce = isJumping ? 0 : Math.abs(strideCos) * 7.5;
+      const rx = p.x;
+      const ry = p.y - bounce + (isSliding ? 34 : 0);
+      const leanX = (game.targetLane - game.currentLaneX) * 0.22 + (isSliding ? -0.18 : 0);
+
+      ctx.translate(rx, ry);
+      ctx.rotate(leanX);
+      if (isSliding) {
+        ctx.scale(1.06, 0.58);
+      }
+
+      // 2. Speed Boost Golden Wind Aura & Upward Jump Wind Ring
+      if (game.speedBoostTimer > 0) {
+        const auraGrad = ctx.createRadialGradient(0, -48, 8, 0, -48, 62);
+        auraGrad.addColorStop(0, "rgba(46, 204, 113, 0.52)");
+        auraGrad.addColorStop(0.6, "rgba(241, 196, 15, 0.25)");
+        auraGrad.addColorStop(1, "rgba(46, 204, 113, 0.0)");
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(0, -48, 62, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (isJumping) {
+        ctx.strokeStyle = "rgba(129, 236, 236, 0.55)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, -6, 26, 7, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // 3. ARTICULATED 2-SEGMENT LEGS (Thigh + Knee + Calf + Sculpted Explorer Boots)
+      const leftLegPhase = isJumping ? 0.85 : (isSliding ? -0.7 : stride);
+      const rightLegPhase = isJumping ? -0.65 : (isSliding ? 0.9 : -stride);
+
+      [
+        { hipX: -11, phase: leftLegPhase },
+        { hipX: 11, phase: rightLegPhase }
+      ].forEach((leg) => {
+        const kneeX = leg.hipX + leg.phase * 3;
+        const kneeY = -20 + leg.phase * 6;
+        const footX = leg.hipX + leg.phase * 5;
+        const footY = -4 + leg.phase * 13;
+
+        // Khaki explorer trousers (thigh + calf)
+        ctx.strokeStyle = "#5c4b37";
+        ctx.lineWidth = 11;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(leg.hipX, -31);
+        ctx.lineTo(kneeX, kneeY);
+        ctx.lineTo(footX, footY);
+        ctx.stroke();
+
+        // Knee pad highlight
+        ctx.fillStyle = "#826a4f";
+        ctx.beginPath();
+        ctx.arc(kneeX, kneeY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Sculpted 3D Leather Expedition Boot
+        const bootLift = leg.phase < 0; // Foot kicked up toward camera shows gold sole tread!
+        ctx.fillStyle = "#6e2c00";
+        ctx.strokeStyle = "#2c1100";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(footX - 8, footY - 6, 16, 12, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        // Gold treaded sole visible when foot kicks backward in running cycle
+        ctx.fillStyle = bootLift ? "#f1c40f" : "#d35400";
+        ctx.fillRect(footX - 7, footY + 2, 14, 4);
+      });
+
+      // 4. ARTICULATED 2-SEGMENT SWINGING ARMS (Shoulder -> Elbow -> Gloved Hand)
+      const leftArmSwing = isJumping ? -14 : -stride * 13;
+      const rightArmSwing = isJumping ? -14 : stride * 13;
+
+      [
+        { dir: -1, swing: leftArmSwing },
+        { dir: 1, swing: rightArmSwing }
+      ].forEach((arm) => {
+        const shX = arm.dir * 22;
+        const shY = -62;
+        const elX = arm.dir * 29;
+        const elY = -46 + arm.swing * 0.45;
+        const handX = arm.dir * 26;
+        const handY = -32 + arm.swing;
+
+        // Teal sleeve upper arm
+        ctx.strokeStyle = "#0984e3";
+        ctx.lineWidth = 9.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(shX, shY);
+        ctx.lineTo(elX, elY);
+        ctx.stroke();
+
+        // Forearm skin + leather wrist bracer
+        ctx.strokeStyle = "#f5cba7";
+        ctx.lineWidth = 7.5;
+        ctx.beginPath();
+        ctx.moveTo(elX, elY);
+        ctx.lineTo(handX, handY);
+        ctx.stroke();
+
+        // Leather fingerless explorer glove
+        ctx.fillStyle = "#6e2c00";
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(handX, handY, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      });
+
+      // 5. SCULPTED ADVENTURER TORSO, SAFARI VEST & UTILITY BELT
+      const torsoGrad = ctx.createLinearGradient(-24, -70, 24, -26);
+      torsoGrad.addColorStop(0, "#00a8ff");
+      torsoGrad.addColorStop(0.5, "#0984e3");
+      torsoGrad.addColorStop(1, "#0652dd");
+      ctx.fillStyle = torsoGrad;
+      ctx.strokeStyle = "#1e272e";
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.roundRect(-23, -68, 46, 42, 11);
+      ctx.fill();
+      ctx.stroke();
+
+      // Khaki Safari Expedition Vest Panels on Left & Right of Torso
+      ctx.fillStyle = "#b88b58";
+      ctx.fillRect(-21, -66, 9, 36);
+      ctx.fillRect(12, -66, 9, 36);
+
+      // Leather Utility Belt & Brass Buckle Around Waist
+      ctx.fillStyle = "#4a2508";
+      ctx.fillRect(-23, -33, 46, 7);
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillRect(-6, -34, 12, 9);
+
+      // 6. DETAILED 3D EXPEDITION BACKPACK, SLEEPING ROLL, CANTEEN & GOLDEN ROPE
+      // Coiled golden climbing rope strapped to right side of backpack
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.ellipse(18, -44, 5, 9, 0.2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Blue water canteen clipped to left side of backpack
+      ctx.fillStyle = "#00cec9";
+      ctx.strokeStyle = "#006266";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.roundRect(-23, -50, 7, 13, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      // Rolled emerald sleeping mat on top of pack with twin leather straps
+      const matGrad = ctx.createLinearGradient(-17, -70, 17, -60);
+      matGrad.addColorStop(0, "#2ecc71");
+      matGrad.addColorStop(1, "#1e8449");
+      ctx.fillStyle = matGrad;
+      ctx.strokeStyle = "#145a32";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(-17, -70, 34, 10, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#5c3208";
+      ctx.fillRect(-10, -70, 3.5, 10);
+      ctx.fillRect(6.5, -70, 3.5, 10);
+
+      // Main 3D Leather Rucksack Body
+      const packGrad = ctx.createLinearGradient(-17, -61, 17, -28);
+      packGrad.addColorStop(0, "#e58e26");
+      packGrad.addColorStop(0.6, "#b86b19");
+      packGrad.addColorStop(1, "#784209");
+      ctx.fillStyle = packGrad;
+      ctx.strokeStyle = "#4a2508";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.roundRect(-17, -61, 34, 33, 7);
+      ctx.fill();
+      ctx.stroke();
+
+      // Upper leather flap + glowing golden compass badge
+      ctx.fillStyle = "#c87619";
+      ctx.beginPath();
+      ctx.roundRect(-15, -60, 30, 14, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#f1c40f";
+      ctx.beginPath();
+      ctx.arc(0, -47, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. FLOWING SINE-WAVE HEROIC CRIMSON EXPLORER SCARF
+      const scarfWave1 = Math.sin(game.runCycle * 1.6) * 5;
+      const scarfWave2 = Math.cos(game.runCycle * 1.6) * 7;
+      const scarfGrad = ctx.createLinearGradient(0, -76, 36, -66);
+      scarfGrad.addColorStop(0, "#ff7675");
+      scarfGrad.addColorStop(0.4, "#d63031");
+      scarfGrad.addColorStop(1, "#922b21");
+      ctx.fillStyle = scarfGrad;
+      ctx.strokeStyle = "#641e16";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-10, -74);
+      ctx.quadraticCurveTo(14, -77 + scarfWave1, 34, -70 + scarfWave2);
+      ctx.lineTo(29, -60 + scarfWave2);
+      ctx.quadraticCurveTo(10, -68 + scarfWave1, -10, -68);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // 8. HEAD, HAIR & 3D SCULPTED SAFARI FEDORA HAT WITH FEATHER
+      // Head & Ears
+      ctx.fillStyle = "#f5cba7";
+      ctx.strokeStyle = "#784212";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(-15, -81, 4, 0, Math.PI * 2);
+      ctx.arc(15, -81, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(0, -82, 15.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Dark brown explorer hair locks at back of neck
+      ctx.fillStyle = "#3b2212";
+      ctx.beginPath();
+      ctx.arc(0, -84, 15.2, 0.15, Math.PI - 0.15);
+      ctx.fill();
+
+      // 3D Safari Fedora Brim
+      const brimGrad = ctx.createLinearGradient(-28, -90, 28, -84);
+      brimGrad.addColorStop(0, "#a04000");
+      brimGrad.addColorStop(0.5, "#d35400");
+      brimGrad.addColorStop(1, "#6e2c00");
+      ctx.fillStyle = brimGrad;
+      ctx.strokeStyle = "#3b1700";
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.ellipse(0, -88, 27, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Fedora Crown with Pinched Top Crease
+      const crownGrad = ctx.createLinearGradient(-16, -106, 16, -88);
+      crownGrad.addColorStop(0, "#f39c12");
+      crownGrad.addColorStop(0.5, "#e67e22");
+      crownGrad.addColorStop(1, "#a04000");
+      ctx.fillStyle = crownGrad;
+      ctx.beginPath();
+      ctx.moveTo(-15, -89);
+      ctx.quadraticCurveTo(-16, -104, -6, -105);
+      ctx.quadraticCurveTo(0, -102, 6, -105);
+      ctx.quadraticCurveTo(16, -104, 15, -89);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Golden Ribbon Hatband
+      ctx.fillStyle = "#f1c40f";
+      ctx.fillRect(-14.5, -93, 29, 4.5);
+
+      // Jaunty Turquoise-and-Gold Explorer Feather Tucked into Hatband
+      const featherBob = Math.sin(game.runCycle * 2) * 0.08;
+      ctx.save();
+      ctx.translate(12, -93);
+      ctx.rotate(0.35 + featherBob);
+      ctx.fillStyle = "#00cec9";
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(0, -9, 4, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function mainLoop(now) {
+      const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+      lastFrameTime = now;
+
+      updateGame(dt);
+      renderScene();
+      requestAnimationFrame(mainLoop);
+    }
+
+    renderLevelSelector();
+    requestAnimationFrame(mainLoop);
+  </script>
+</body>
+</html>
