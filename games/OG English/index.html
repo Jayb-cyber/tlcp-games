@@ -13,17 +13,47 @@
       height: 100vh;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow: hidden;
+      position: relative;
     }
-    
-    <a href="../../index.html" id="back-hub-btn">
-    <span>←</span>
-    <span>TLCP@Games</span>
-  </a>
 
+    /* Fixed Exit Button */
+    #back-hub-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #ffffff;
+      color: #1a1a1a;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 980px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #back-hub-btn:hover {
+      transform: scale(1.04);
+      background: #f1f2f6;
+    }
+
+    #back-hub-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Certificate Modal Overlay */
     #certificate-modal {
       display: none;
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0, 0, 0, 0.85);
       z-index: 9999;
       flex-direction: column;
@@ -90,17 +120,9 @@
       opacity: 0.95;
     }
 
-    .cert-btn-png {
-      background: #00b894;
-    }
-
-    .cert-btn-print {
-      background: #0984e3;
-    }
-
-    .cert-btn-close {
-      background: #d63031;
-    }
+    .cert-btn-png { background: #00b894; }
+    .cert-btn-print { background: #0984e3; }
+    .cert-btn-close { background: #d63031; }
 
     #certificate-preview-img {
       max-width: 100%;
@@ -126,7 +148,8 @@
         overflow: visible;
       }
       canvas,
-      #certificate-modal {
+      #certificate-modal,
+      #back-hub-btn {
         display: none !important;
       }
       #certificate-print-area {
@@ -143,10 +166,19 @@
       }
     }
   </style>
-  <!-- 1. Load Phaser library first -->
+
+  <!-- Load Phaser Library -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 </head>
 <body>
+
+  <!-- Floating Exit Button -->
+  <a href="../../index.html" id="back-hub-btn">
+    <span>←</span>
+    <span>TLCP@Games</span>
+  </a>
+
+  <!-- Certificate Modal -->
   <div id="certificate-modal">
     <div class="cert-modal-card">
       <div class="cert-controls">
@@ -162,7 +194,7 @@
 
   <div id="certificate-print-area"></div>
 
-  <!-- 2. Load your game script at the bottom of body -->
+  <!-- Game Engine Script -->
   <script src="game.js"></script>
 </body>
 </html>
