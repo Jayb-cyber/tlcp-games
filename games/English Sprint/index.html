@@ -5,7 +5,7 @@
         async src="//gc.zgo.at/count.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Temple Run English — Pre-A1 Edition (神廟英語跑酷：幼兒初級版)</title>
+  <title>English Sprint — Pre-A1 Edition (英語跑酷</title>
   <style>
     :root {
       --gold: #f1c40f;
@@ -699,7 +699,7 @@
     <div class="overlay-screen" id="menu-screen" style="display: flex;">
       <div class="modal-card">
         <span class="title-badge">CEFR PRE-A1 EDITION • 幼兒與兒童初級英語跑酷</span>
-        <h1 class="game-title">🏛️ TEMPLE RUN ENGLISH • 神廟英語大冒險</h1>
+        <h1 class="game-title">🏛️ ENGLISH Sprint• 英語大冒險</h1>
         <p class="game-subtitle">
           左右切換跑道、跳過地面尖刺圓木、滑行鑽過雕刻石門！每 8 秒穿越「知識石門」，限時 10 秒作答！
         </p>
@@ -745,7 +745,7 @@
         </div>
 
         <div style="display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
-          <button class="primary-btn" id="start-game-btn">🏃 開始神廟跑酷 Start Temple Run!</button>
+          <button class="primary-btn" id="start-game-btn">🏃 開始跑酷 Start Sprint!</button>
           <a href="../../index.html" class="secondary-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #2f3640;">
             <span>←</span>
             <span>TLCP@Games</span>
@@ -759,11 +759,11 @@
     <div class="overlay-screen" id="intro-modal">
       <div class="modal-card" style="max-width: 650px;">
         <span class="title-badge">LEVEL 1 TUTORIAL • 第一關雙語新手教學</span>
-        <h2 style="margin: 6px 0 10px; color: #f1c40f; font-size: 25px;">🗺️ 如何遊玩 How to Play Temple Run English</h2>
+        <h2 style="margin: 6px 0 10px; color: #f1c40f; font-size: 25px;">🗺️ 如何遊玩 How to Play English Sprint</h2>
         <div style="text-align: left; background: rgba(0,0,0,0.38); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; font-size: 14.5px; line-height: 1.48;">
           <div>
             <b style="color: #00cec9;">1. ◀ ▶ 左右換道 Switch Lanes (A / D or Left / Right Arrows)：</b><br/>
-            在神廟石橋的左、中、右三條跑道間移動，收集 3D 太陽金幣 🪙 並閃避守護者圖騰石柱 (<b style="color:#ff7675;">◀▶ DODGE</b>)！
+            在石橋的左、中、右三條跑道間移動，收集 3D 太陽金幣 🪙 並閃避守護者圖騰石柱 (<b style="color:#ff7675;">◀▶ DODGE</b>)！
           </div>
           <div>
             <b style="color: #2ecc71;">2. ▲ 跳躍 / ▼ 滑行 Jump & Slide (W / S or Up / Down Arrows)：</b><br/>
@@ -818,12 +818,12 @@
       <div class="modal-card" style="width: 850px; max-width: 96%;">
         <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; margin-bottom: 8px;">
           <label for="cert-student-name" style="font-weight: 900; font-size: 14px; color: #ffeaa7;">學生姓名 Student Name:</label>
-          <input id="cert-student-name" type="text" value="Temple Explorer" maxlength="30" style="padding: 7px 12px; border-radius: 8px; border: 2px solid #00cec9; background: #2f3640; color: #fff; font-size: 15px; font-weight: 800; outline: none; width: 200px;" />
+          <input id="cert-student-name" type="text" value="Explorer" maxlength="30" style="padding: 7px 12px; border-radius: 8px; border: 2px solid #00cec9; background: #2f3640; color: #fff; font-size: 15px; font-weight: 800; outline: none; width: 200px;" />
           <button class="secondary-btn" id="cert-download-png" style="background: #00b894; padding: 8px 15px; font-size: 14px;">💾 下載 PNG 證書 (Save PNG)</button>
           <button class="secondary-btn" id="cert-print-pdf" style="background: #0984e3; padding: 8px 15px; font-size: 14px;">🖨️ 列印 / 存成 PDF (Print PDF)</button>
           <button class="secondary-btn" id="cert-close-btn" style="background: #d63031; padding: 8px 15px; font-size: 14px;">↩ 返回完賽畫面 Back</button>
         </div>
-        <img id="certificate-preview-img" alt="Pre-A1 Temple Run Certificate" />
+        <img id="certificate-preview-img" alt="Pre-A1 English Sprint Certificate" />
       </div>
     </div>
   </div>
@@ -837,7 +837,7 @@
     const LEVEL_CONFIGS = [
       {
         level: 1,
-        nameEn: "Jungle Temple Gate",
+        nameEn: "Jungle Gate",
         nameZh: "第一關：叢林神廟入口",
         topicZh: "水果與食物 (Fruits & Food)",
         topicShortEn: "Fruits & Food",
@@ -987,7 +987,7 @@
       },
       {
         level: 7,
-        nameEn: "Golden Temple Sanctum",
+        nameEn: "Golden Sanctum",
         nameZh: "第七關：黃金神殿終點",
         topicZh: "學校與日常總複習 (School & Daily Life)",
         topicShortEn: "School & Review",
@@ -1346,7 +1346,7 @@
     }
 
     // =========================================================================
-    // 4. TEMPLE RUN 3D PERSPECTIVE ENGINE & GAME STATE
+    // 4. English Sprint 3D PERSPECTIVE ENGINE & GAME STATE
     // =========================================================================
     const canvas = document.getElementById("game-canvas");
     const ctx = canvas.getContext("2d");
@@ -1577,7 +1577,7 @@
     document.getElementById("btn-slide").addEventListener("click", triggerRunnerSlide);
 
     // =========================================================================
-    // 7. START LEVEL & SPAWN OBJECTS (TEMPLE OBSTACLES, COINS, CUTOUT WALLS)
+    // 7. START LEVEL & SPAWN OBJECTS (OBSTACLES, COINS, CUTOUT WALLS)
     // =========================================================================
     function startLevel(levelIdx, showIntroIfLevel1 = false) {
       game.currentLevelIdx = Math.max(0, Math.min(LEVEL_CONFIGS.length - 1, levelIdx));
@@ -1613,7 +1613,7 @@
       game.activeWallObj = null;
       game.usedItemIndices.clear();
 
-      // Pre-populate side temple torch braziers & carved jungle ruins along the bridge
+      // Pre-populate side torch braziers & carved jungle ruins along the bridge
       let pillarIdx = 0;
       for (let z = 0.10; z <= 0.98; z += 0.12) {
         const variant = pillarIdx % 2 === 0 ? "BRAZIER" : "JUNGLE_TOTEM";
@@ -2132,7 +2132,7 @@
         g.restore();
       }
 
-      const cleanName = (studentName || "Temple Explorer").trim() || "Temple Explorer";
+      const cleanName = (studentName || "Explorer").trim() || "Explorer";
       const safeMaxW = 960; // Generous margin inside the 1100px inner border (x=120..1080)
 
       // Warm parchment background
@@ -2162,7 +2162,7 @@
 
       // Two-line balanced header so the title never bleeds past the border
       drawFittedText(
-        "🏛️ TEMPLE RUN ENGLISH • CEFR PRE-A1 EDITION",
+        "🏛️ ENGLISH SPRINT • CEFR PRE-A1 EDITION",
         600,
         118,
         safeMaxW,
@@ -2243,7 +2243,7 @@
       );
 
       drawFittedText(
-        `Focus Skill Track: ${game.selectedSkill}  •  All 7 Temple Levels Conquered (Lv.1–Lv.7)`,
+        `Focus Skill Track: ${game.selectedSkill}  •  All 7 Levels Conquered (Lv.1–Lv.7)`,
         600,
         450,
         safeMaxW,
@@ -2298,7 +2298,7 @@
       g.arc(600, 696, 44, 0, Math.PI * 2);
       g.fill();
       drawFittedText("PRE-A1", 600, 692, 76, "bold", 17, '"Segoe UI", sans-serif', "#1e272e");
-      drawFittedText("TEMPLE MASTER", 600, 711, 80, "bold", 11, '"Segoe UI", sans-serif', "#1e272e");
+      drawFittedText("MASTER", 600, 711, 80, "bold", 11, '"Segoe UI", sans-serif', "#1e272e");
 
       // Left Date & Right Academy Signature Blocks (safely inset within x=140..1060)
       const dateStr = new Date().toLocaleDateString("zh-TW", { year: "numeric", month: "long", day: "numeric" });
@@ -2314,7 +2314,7 @@
       drawFittedText(dateStr, 290, 712, 260, "bold", 18, '"Microsoft JhengHei", sans-serif', "#2d3436");
       drawFittedText("Date / 發證日期", 290, 736, 260, "normal", 14, '"Microsoft JhengHei", sans-serif', "#636e72");
 
-      drawFittedText("Temple Run English Academy", 910, 712, 260, "bold", 18, '"Georgia", "Segoe UI", serif', "#2d3436");
+      drawFittedText("English Sprint Academy", 910, 712, 260, "bold", 18, '"Georgia", "Segoe UI", serif', "#2d3436");
       drawFittedText("Official Certification / 官方認證", 910, 736, 260, "normal", 14, '"Microsoft JhengHei", sans-serif', "#636e72");
 
       return c.toDataURL("image/png");
@@ -2345,7 +2345,7 @@
       document.getElementById("cert-download-png").onclick = () => {
         updateCert();
         const a = document.createElement("a");
-        a.download = `Temple_Run_PreA1_Certificate.png`;
+        a.download = `English_Sprint_PreA1_Certificate.png`;
         a.href = dataUrl;
         document.body.appendChild(a);
         a.click();
@@ -2390,7 +2390,7 @@
         if (c.x > canvas.width + 130) c.x = -130;
       });
 
-      // Drift ambient fireflies / magical temple motes
+      // Drift ambient fireflies / magical motes
       game.envMotes.forEach((m) => {
         m.x += m.vx * dt;
         m.y += m.vy * dt;
@@ -2478,7 +2478,7 @@
         }
       }
 
-      // Spawn temple obstacles & coins when no wall is imminently close
+      // Spawn obstacles & coins when no wall is imminently close
       if (!hasActiveWallOnTrack && game.timeUntilNextWall > 1.8) {
         game.obstacleSpawnTimer -= dt;
         if (game.obstacleSpawnTimer <= 0) {
@@ -2549,7 +2549,7 @@
           }
         }
 
-        // Temple obstacle collision check
+        // obstacle collision check
         if (
           (obj.type === "LOW_HURDLE" || obj.type === "HIGH_BEAM" || obj.type === "STONE_PILLAR") &&
           !obj.hit &&
@@ -2880,7 +2880,7 @@
       ctx.fill();
 
       // -----------------------------------------------------------------------
-      // C. 3D BEVELED TEMPLE STONE TRACK, FLOOR RUNES & SCULPTED PARAPETS
+      // C. 3D BEVELED STONE TRACK, FLOOR RUNES & SCULPTED PARAPETS
       // -----------------------------------------------------------------------
       const strips = 32;
       const scrollOffset = (game.runCycle * 0.036) % (1 / strips);
@@ -2920,7 +2920,7 @@
         ctx.lineTo(p1Right.x, p1Right.y);
         ctx.stroke();
 
-        // Individual Flagstone Paver Insets & Ancient Temple Floor Runes in Each Lane (-1, 0, +1)
+        // Individual Flagstone Paver Insets & Ancient  Floor Runes in Each Lane (-1, 0, +1)
         [-1, 0, 1].forEach((laneCenter, laneIdx) => {
           const c1L = project3D(laneCenter - 0.38, 0, z1);
           const c1R = project3D(laneCenter + 0.38, 0, z1);
@@ -3042,7 +3042,7 @@
         if (obj.z <= 0.01 || obj.z > 1.02) return;
 
         if (obj.type === "SCENERY_PILLAR") {
-          drawSideTempleScenery(obj, cfg);
+          drawSideScenery(obj, cfg);
         } else if (obj.type === "COIN" && !obj.collected) {
           drawSpinning3DCoin(obj);
         } else if (obj.type === "LOW_HURDLE") {
@@ -3069,7 +3069,7 @@
         ctx.restore();
       });
 
-      // Ambient glowing temple fireflies / motes drifting in foreground
+      // Ambient glowing  fireflies / motes drifting in foreground
       ctx.save();
       game.envMotes.forEach((m) => {
         const pulse = 0.35 + 0.65 * Math.abs(Math.sin(game.ambientClock * 2.5 + m.phase));
@@ -3082,7 +3082,7 @@
       ctx.restore();
 
       // -----------------------------------------------------------------------
-      // F. UPGRADED ARTICULATED 2.5D TEMPLE EXPLORER AVATAR (Z = 0.08)
+      // F. UPGRADED ARTICULATED 2.5D  EXPLORER AVATAR (Z = 0.08)
       // -----------------------------------------------------------------------
       drawRunnerCharacter();
 
@@ -3161,7 +3161,7 @@
         }
       });
 
-      // Twin Flanking Temple Watchtowers with Burning Ceremonial Braziers
+      // Twin Flanking  Watchtowers with Burning Ceremonial Braziers
       [-126, 126].forEach((offsetX) => {
         const tx = cx + offsetX;
         ctx.fillStyle = "#2b211c";
@@ -3267,7 +3267,7 @@
       ctx.save();
       const sway = Math.sin(game.ambientClock * 1.5) * 6;
 
-      // Top-left & Top-right hanging temple vines & tropical leaves
+      // Top-left & Top-right hanging  vines & tropical leaves
       [-1, 1].forEach((dir) => {
         const cornerX = dir === -1 ? 0 : w;
         ctx.strokeStyle = "#145a32";
@@ -3294,7 +3294,7 @@
     }
 
     // SIDE BRIDGE SCENERY: CARVED DRAGON BRAZIERS & MOSSY JUNGLE OBELISKS
-    function drawSideTempleScenery(obj, cfg) {
+    function drawSideScenery(obj, cfg) {
       const p = project3D(obj.side * 1.68, 22, obj.z);
       const roadP = project3D(obj.side * 1.25, 0, obj.z);
       const s = p.scale;
@@ -3387,7 +3387,7 @@
       ctx.restore();
     }
 
-    // 3D FACETED TEMPLE GOLD SUN-MEDALLION COIN
+    // 3D FACETED  GOLD SUN-MEDALLION COIN
     function drawSpinning3DCoin(obj) {
       const groundP = project3D(obj.lane, 0, obj.z);
       const bob = Math.sin(game.runCycle * 1.5 + obj.z * 10) * 7.5;
@@ -3435,7 +3435,7 @@
       ctx.fill();
       ctx.stroke();
 
-      // Inner Beveled Ring & Sunburst Temple Emblem
+      // Inner Beveled Ring & Sunburst  Emblem
       if (widthFactor > 0.42) {
         ctx.strokeStyle = "rgba(126, 81, 9, 0.65)";
         ctx.lineWidth = Math.max(1, 1.6 * s);
@@ -3553,7 +3553,7 @@
     }
 
     // =========================================================================
-    // UPGRADED OBSTACLE 2: 3D CARVED TEMPLE LINTEL ARCHWAY (▼ SLIDE 滑行)
+    // UPGRADED OBSTACLE 2: 3D CARVED  LINTEL ARCHWAY (▼ SLIDE 滑行)
     // =========================================================================
     function drawHighBeamObstacle(obj) {
       const p = project3D(obj.lane, 0, obj.z);
@@ -3616,7 +3616,7 @@
       ctx.fill();
       ctx.stroke();
 
-      // Stepped Temple Roof Cornice on Top of the Beam
+      // Stepped  Roof Cornice on Top of the Beam
       ctx.fillStyle = "#d4af37";
       ctx.beginPath();
       ctx.moveTo(p.x - archW * 0.6, topY);
@@ -3626,7 +3626,7 @@
       ctx.closePath();
       ctx.fill();
 
-      // Hanging Crimson & Gold Temple Banners + Vines Under the Crossbeam
+      // Hanging Crimson & Gold  Banners + Vines Under the Crossbeam
       [-0.28, 0.28].forEach((bf) => {
         const bx = p.x + bf * archW;
         ctx.fillStyle = "#c0392b";
@@ -3822,7 +3822,7 @@
     }
 
     // =========================================================================
-    // UPGRADED MONUMENTAL 3D ANCIENT TEMPLE KNOWLEDGE GATEHOUSE (CUTOUT WALL)
+    // UPGRADED MONUMENTAL 3D ANCIENT  KNOWLEDGE GATEHOUSE (CUTOUT WALL)
     // =========================================================================
     function drawCutoutWallGate(obj) {
       const pLeft = project3D(-1.58, 0, obj.z);
@@ -3874,7 +3874,7 @@
         }
       });
 
-      // 4. Double-Tiered Imperial Golden Temple Roof Eaves with Upturned Corners
+      // 4. Double-Tiered Imperial Golden  Roof Eaves with Upturned Corners
       ctx.fillStyle = "#d4af37";
       ctx.strokeStyle = "#7e5109";
       ctx.lineWidth = Math.max(1.5, 2.5 * s);
@@ -3969,7 +3969,7 @@
     }
 
     // =========================================================================
-    // 12. UPGRADED 8/10 ARTICULATED 2.5D TEMPLE EXPLORER AVATAR
+    // 12. UPGRADED 8/10 ARTICULATED 2.5D  EXPLORER AVATAR
     // =========================================================================
     function drawRunnerCharacter() {
       const p = project3D(game.currentLaneX, game.jumpY, 0.08);
