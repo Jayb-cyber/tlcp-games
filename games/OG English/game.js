@@ -4473,7 +4473,11 @@ const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 450,
-  parent: document.body,
+  parent: document.getElementById('game-container') || document.body,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -4484,4 +4488,4 @@ const config = {
   scene: [MenuScene, GameScene]
 };
 
-new Phaser.Game(config);
+window.ogGame = new Phaser.Game(config);
