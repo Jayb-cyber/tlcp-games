@@ -7,20 +7,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OG English — Pre-A1 Edition (初級英語冒險)</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       background: #1a1a1a;
+      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', 'Segoe UI', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Game Container reserves top strip so floating buttons never overlap the game */
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      padding: 56px 12px 12px 12px;
+      box-sizing: border-box;
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      font-family: 'Microsoft JhengHei', 'PingFang TC', 'Noto Sans TC', 'Segoe UI', sans-serif;
-      overflow: hidden;
     }
-/* Floating Back to Hub Button */
+
+    #game-container canvas {
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+      image-rendering: auto;
+    }
+
+    /* Floating Back to Hub Button */
     #back-hub-btn {
       position: fixed;
-      top: 16px;
+      top: 12px;
       left: 16px;
       z-index: 1000;
       display: inline-flex;
@@ -44,6 +62,37 @@
     }
 
     #back-hub-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Fixed Fullscreen Toggle Button */
+    #fullscreen-btn {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #ffffff;
+      color: #1a1a1a;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 980px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #fullscreen-btn:hover {
+      transform: scale(1.04);
+      background: #f1f2f6;
+    }
+
+    #fullscreen-btn:active {
       transform: scale(0.96);
     }
     
@@ -153,8 +202,10 @@
         overflow: visible;
       }
       canvas,
+      #game-container,
       #certificate-modal,
-      #back-hub-btn {
+      #back-hub-btn,
+      #fullscreen-btn {
         display: none !important;
       }
       #certificate-print-area {
@@ -175,11 +226,31 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
-  <!-- ADD THIS BUTTON LINK HERE -->
+  <!-- Floating Back to Hub Button -->
   <a href="../../index.html" id="back-hub-btn">
     <span>←</span>
     <span>TLCP@Games</span>
   </a>
+
+  <!-- Floating Fullscreen Toggle Button -->
+  <button id="fullscreen-btn" type="button" aria-label="Toggle Full Screen" aria-pressed="false" title="Full Screen">
+    <svg id="fs-icon-enter" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <polyline points="9 21 3 21 3 15"></polyline>
+      <line x1="21" y1="3" x2="14" y2="10"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    <svg id="fs-icon-exit" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;">
+      <polyline points="4 14 10 14 10 20"></polyline>
+      <polyline points="20 10 14 10 14 4"></polyline>
+      <line x1="14" y1="10" x2="21" y2="3"></line>
+      <line x1="3" y1="21" x2="10" y2="14"></line>
+    </svg>
+    <span id="fs-label">Full Screen</span>
+  </button>
+
+  <!-- Phaser Game Mount Container -->
+  <div id="game-container"></div>
   
   <div id="certificate-modal">
     <div class="cert-modal-card">
@@ -201,6 +272,7 @@
 // ===================================================
 // 0.0 GLOBAL CJK TEXT PADDING FIX & KEYBOARD INPUT TRACKER
 //     - Prevents Traditional Chinese (繁體中文) & Emoji top clipping in Phaser 3
+//     - Renders text at HiDPI resolution so enlarged screens stay crisp
 //     - Guarantees BOTH Arrow Keys (↑↓←→) and WASD work reliably at all times
 // ===================================================
 (function installGlobalPhaserTextAndInputFixes() {
@@ -215,6 +287,9 @@
         safeStyle.fontFamily = CJK_FONT_FAMILY;
       }
       safeStyle.testString = CJK_TEST_STRING;
+      if (!safeStyle.resolution) {
+        safeStyle.resolution = Math.min(Math.max(window.devicePixelRatio || 1, 2), 3);
+      }
 
       // Ensure generous top & bottom padding so CJK ascenders and emojis are never clipped
       const p = safeStyle.padding;
@@ -6353,7 +6428,17 @@ const config = {
   type: Phaser.AUTO,
   width: 800,
   height: 450,
-  parent: document.body,
+  parent: document.getElementById('game-container') || document.body,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  render: {
+    antialias: true,
+    antialiasGL: true,
+    roundPixels: false,
+    mipmapFilter: 'LINEAR_MIPMAP_LINEAR'
+  },
   physics: {
     default: 'arcade',
     arcade: {
@@ -6364,8 +6449,82 @@ const config = {
   scene: [MenuScene, GameScene]
 };
 
-new Phaser.Game(config);
+window.ogGame = new Phaser.Game(config);
 
+  </script>
+
+  <script>
+    (function () {
+      const fsBtn = document.getElementById('fullscreen-btn');
+      const enterIcon = document.getElementById('fs-icon-enter');
+      const exitIcon = document.getElementById('fs-icon-exit');
+      const fsLabel = document.getElementById('fs-label');
+
+      function getFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+      }
+
+      async function enterFullscreen() {
+        const target = document.documentElement;
+        try {
+          if (target.requestFullscreen) {
+            await target.requestFullscreen();
+          } else if (target.webkitRequestFullscreen) {
+            target.webkitRequestFullscreen();
+          }
+        } catch (err) {
+          console.warn('Unable to enter full screen:', err);
+        }
+      }
+
+      async function exitFullscreen() {
+        try {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        } catch (err) {
+          console.warn('Unable to exit full screen:', err);
+        }
+      }
+
+      function refreshGameScale() {
+        if (window.ogGame && window.ogGame.scale) {
+          setTimeout(function () {
+            window.ogGame.scale.refresh();
+          }, 50);
+        }
+      }
+
+      function syncFullscreenUI() {
+        const isFullscreen = Boolean(getFullscreenElement());
+        enterIcon.style.display = isFullscreen ? 'none' : 'block';
+        exitIcon.style.display = isFullscreen ? 'block' : 'none';
+        fsLabel.textContent = isFullscreen ? 'Exit Full Screen' : 'Full Screen';
+        fsBtn.title = isFullscreen ? 'Exit Full Screen (Esc)' : 'Full Screen';
+        fsBtn.setAttribute('aria-pressed', String(isFullscreen));
+        refreshGameScale();
+      }
+
+      fsBtn.addEventListener('click', function () {
+        if (getFullscreenElement()) {
+          exitFullscreen();
+        } else {
+          enterFullscreen();
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && getFullscreenElement()) {
+          exitFullscreen();
+        }
+      });
+
+      document.addEventListener('fullscreenchange', syncFullscreenUI);
+      document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
+      window.addEventListener('resize', refreshGameScale);
+    })();
   </script>
 </body>
 </html>
