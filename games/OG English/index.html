@@ -6,22 +6,32 @@
   <meta charset="UTF-8" />
   <title>OG English</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       background: #1a1a1a;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow: hidden;
       position: relative;
     }
 
+    /* Game Container reserves top strip so floating buttons never overlap the game */
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      padding: 56px 12px 12px 12px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
     /* Fixed Exit Button */
     #back-hub-btn {
       position: fixed;
-      top: 16px;
+      top: 12px;
       left: 16px;
       z-index: 1000;
       display: inline-flex;
@@ -51,7 +61,7 @@
     /* Fixed Fullscreen Toggle Button */
     #fullscreen-btn {
       position: fixed;
-      top: 16px;
+      top: 12px;
       right: 16px;
       z-index: 1000;
       display: inline-flex;
@@ -181,6 +191,7 @@
         overflow: visible;
       }
       canvas,
+      #game-container,
       #certificate-modal,
       #back-hub-btn,
       #fullscreen-btn {
@@ -228,6 +239,9 @@
     </svg>
     <span id="fs-label">Full Screen</span>
   </button>
+
+  <!-- Phaser Game Mount Container -->
+  <div id="game-container"></div>
 
   <!-- Certificate Modal -->
   <div id="certificate-modal">
@@ -284,6 +298,14 @@
         }
       }
 
+      function refreshGameScale() {
+        if (window.ogGame && window.ogGame.scale) {
+          setTimeout(function () {
+            window.ogGame.scale.refresh();
+          }, 50);
+        }
+      }
+
       function syncFullscreenUI() {
         const isFullscreen = Boolean(getFullscreenElement());
         enterIcon.style.display = isFullscreen ? 'none' : 'block';
@@ -291,6 +313,7 @@
         fsLabel.textContent = isFullscreen ? 'Exit Full Screen' : 'Full Screen';
         fsBtn.title = isFullscreen ? 'Exit Full Screen (Esc)' : 'Full Screen';
         fsBtn.setAttribute('aria-pressed', String(isFullscreen));
+        refreshGameScale();
       }
 
       fsBtn.addEventListener('click', function () {
@@ -309,6 +332,7 @@
 
       document.addEventListener('fullscreenchange', syncFullscreenUI);
       document.addEventListener('webkitfullscreenchange', syncFullscreenUI);
+      window.addEventListener('resize', refreshGameScale);
     })();
   </script>
 </body>
