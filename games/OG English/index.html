@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <script data-goatcounter="https://tlcp-games.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+        async src="https://gc.zgo.at/count.js"></script>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OG English</title>
   <style>
     html, body {
@@ -86,6 +87,36 @@
     }
 
     #fullscreen-btn:active {
+      transform: scale(0.96);
+    }
+
+    #audio-mute-btn {
+      position: fixed;
+      top: 12px;
+      right: 146px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 13px;
+      background: #ffffff;
+      color: #1a1a1a;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 980px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    #audio-mute-btn:hover {
+      transform: scale(1.04);
+      background: #f1f2f6;
+    }
+
+    #audio-mute-btn:active {
       transform: scale(0.96);
     }
 
@@ -194,6 +225,7 @@
       #game-container,
       #certificate-modal,
       #back-hub-btn,
+      #audio-mute-btn,
       #fullscreen-btn {
         display: none !important;
       }
@@ -213,7 +245,7 @@
   </style>
 
   <!-- Load Phaser Library -->
-  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
 </head>
 <body>
 
@@ -222,6 +254,9 @@
     <span>←</span>
     <span>TLCP@Games</span>
   </a>
+
+  <!-- Floating Audio Mute Toggle Button -->
+  <button id="audio-mute-btn" type="button" aria-label="Toggle Sound" title="Toggle Sound / 切換音效">🔊 Sound</button>
 
   <!-- Floating Fullscreen Toggle Button -->
   <button id="fullscreen-btn" type="button" aria-label="Toggle Full Screen" aria-pressed="false" title="Full Screen">
@@ -264,6 +299,14 @@
 
   <script>
     (function () {
+      const muteBtn = document.getElementById('audio-mute-btn');
+      if (muteBtn) {
+        muteBtn.addEventListener('click', function () {
+          if (typeof sfx !== 'undefined') sfx.toggleMute();
+          muteBtn.blur();
+        });
+      }
+
       const fsBtn = document.getElementById('fullscreen-btn');
       const enterIcon = document.getElementById('fs-icon-enter');
       const exitIcon = document.getElementById('fs-icon-exit');
