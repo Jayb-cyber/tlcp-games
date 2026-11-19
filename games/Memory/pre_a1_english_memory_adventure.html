@@ -2,7 +2,7 @@
 <html lang="zh-Hant-TW">
 <head>
   <script data-goatcounter="https://tlcp-games.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+        async src="https://gc.zgo.at/count.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pre-A1 English Memory Adventure | 英語記憶大冒險</title>
@@ -115,7 +115,7 @@
   <header class="bg-white/95 backdrop-blur-md sticky top-0 z-30 shadow-sm border-b border-sky-100 px-4 py-2.5">
     <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
       <div class="flex items-center gap-3">
-      <a href="../../index.html" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs flex items-center gap-1 shadow-sm transition active:scale-95 text-decoration-none">
+      <a href="../../index.html" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-extrabold text-xs flex items-center gap-1 shadow-sm transition active:scale-95 no-underline">
         <span>←</span>
         <span>TLCP@Games</span>
       </a>
@@ -290,7 +290,7 @@
   <!-- ==================== MODALS & POPUPS ==================== -->
 
   <!-- 1. CORRECT MATCH FLOATING CARD POPUP (pops up briefly on matching) -->
-  <div id="modalCorrectMatch" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+  <div id="modalCorrectMatch" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
     <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-emerald-400 max-w-sm w-full text-center transform scale-90 transition-all duration-300" id="modalCorrectBox">
       
       <!-- Sparkle Header -->
@@ -1249,45 +1249,91 @@
    */
   const AudioEngine = {
     ctx: null,
-    bgmOscs: [],
+    masterGain: null,
+    compressor: null,
+    sfxBus: null,
+    bgmBus: null,
     bgmTimer: null,
+    duckTimer: null,
     isBGMPlaying: false,
     sfxEnabled: true,
     bgmEnabled: true,
     speechEnabled: true,
+    BGM_NORMAL_GAIN: 0.78,
+    BGM_DUCKED_GAIN: 0.30,
 
     init() {
       if (!this.ctx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
+
+        // Dynamics compressor prevents clipping while keeping audio loud & clear at 20-30% system volume
+        this.compressor = this.ctx.createDynamicsCompressor();
+        this.compressor.threshold.setValueAtTime(-12, this.ctx.currentTime);
+        this.compressor.knee.setValueAtTime(18, this.ctx.currentTime);
+        this.compressor.ratio.setValueAtTime(6, this.ctx.currentTime);
+        this.compressor.attack.setValueAtTime(0.005, this.ctx.currentTime);
+        this.compressor.release.setValueAtTime(0.15, this.ctx.currentTime);
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+
+        this.sfxBus = this.ctx.createGain();
+        this.sfxBus.gain.setValueAtTime(0.95, this.ctx.currentTime);
+
+        this.bgmBus = this.ctx.createGain();
+        this.bgmBus.gain.setValueAtTime(this.BGM_NORMAL_GAIN, this.ctx.currentTime);
+
+        this.sfxBus.connect(this.compressor);
+        this.bgmBus.connect(this.compressor);
+        this.compressor.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
       }
       if (this.ctx.state === 'suspended') {
-        this.ctx.resume();
+        return this.ctx.resume().catch(() => {});
+      }
+      return Promise.resolve();
+    },
+
+    duckBGM(isDucked) {
+      if (!this.ctx || !this.bgmBus || !this.isBGMPlaying) return;
+      if (this.duckTimer) {
+        clearTimeout(this.duckTimer);
+        this.duckTimer = null;
+      }
+      const now = this.ctx.currentTime;
+      const target = isDucked ? this.BGM_DUCKED_GAIN : this.BGM_NORMAL_GAIN;
+      this.bgmBus.gain.cancelScheduledValues(now);
+      this.bgmBus.gain.setTargetAtTime(target, now, 0.06);
+      if (isDucked) {
+        // Safety fallback in case speechSynthesis onend does not fire
+        this.duckTimer = setTimeout(() => this.duckBGM(false), 2500);
       }
     },
 
-    playTone(freq, type, duration, gain = 0.15) {
+    playTone(freq, type, duration, gain = 0.42) {
       if (!this.sfxEnabled) return;
       this.init();
       try {
+        const now = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const g = this.ctx.createGain();
         osc.type = type;
-        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        g.gain.setValueAtTime(gain, this.ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+        osc.frequency.setValueAtTime(freq, now);
+        g.gain.setValueAtTime(gain, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
         osc.connect(g);
-        g.connect(this.ctx.destination);
-        osc.start();
-        osc.stop(this.ctx.currentTime + duration);
+        g.connect(this.sfxBus);
+        osc.start(now);
+        osc.stop(now + duration);
       } catch (e) {
         console.warn('Audio tone error', e);
       }
     },
 
     playFlip() {
-      // Gentle wooden card flip sound
-      this.playTone(320, 'triangle', 0.12, 0.12);
+      // Crisp wooden card flip sound
+      this.playTone(320, 'triangle', 0.12, 0.42);
     },
 
     playMatch() {
@@ -1297,7 +1343,7 @@
       const notes = [523.25, 659.25, 783.99, 1046.50];
       notes.forEach((freq, idx) => {
         setTimeout(() => {
-          this.playTone(freq, 'sine', 0.35, 0.18);
+          this.playTone(freq, 'sine', 0.35, 0.45);
         }, idx * 75);
       });
     },
@@ -1305,9 +1351,9 @@
     playMismatch() {
       // Gentle low double-tap (G3 -> E3)
       if (!this.sfxEnabled) return;
-      this.playTone(196, 'sine', 0.18, 0.1);
+      this.playTone(196, 'sine', 0.18, 0.38);
       setTimeout(() => {
-        this.playTone(164.8, 'sine', 0.22, 0.08);
+        this.playTone(164.8, 'sine', 0.22, 0.34);
       }, 100);
     },
 
@@ -1317,7 +1363,7 @@
       const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
       notes.forEach((freq, idx) => {
         setTimeout(() => {
-          this.playTone(freq, 'triangle', 0.25, 0.12);
+          this.playTone(freq, 'triangle', 0.25, 0.38);
         }, idx * 60);
       });
     },
@@ -1333,7 +1379,7 @@
       ];
       let delay = 0;
       melody.forEach(note => {
-        setTimeout(() => this.playTone(note.f, 'triangle', note.d, 0.25), delay);
+        setTimeout(() => this.playTone(note.f, 'triangle', note.d, 0.50), delay);
         delay += note.d * 1000 * 0.9;
       });
     },
@@ -1342,69 +1388,74 @@
       if (!this.sfxEnabled) return;
       const chords = [523.25, 659.25, 783.99, 1046.50, 1318.51];
       chords.forEach((freq, i) => {
-        setTimeout(() => this.playTone(freq, 'sine', 0.6, 0.2), i * 90);
+        setTimeout(() => this.playTone(freq, 'sine', 0.6, 0.42), i * 90);
       });
     },
 
     startBGM() {
       if (!this.bgmEnabled || this.isBGMPlaying) return;
-      this.init();
       this.isBGMPlaying = true;
-      
-      // Gentle ambient lofi synth loop: Cmaj7 - Am7 - Fmaj7 - G
-      const chords = [
-        [261.63, 329.63, 392.00, 493.88], // Cmaj7
-        [220.00, 261.63, 329.63, 392.00], // Am7
-        [174.61, 220.00, 261.63, 329.63], // Fmaj7
-        [196.00, 246.94, 293.66, 392.00]  // G7
-      ];
-      const melodyNotes = [523.25, 659.25, 783.99, 880.00, 659.25, 587.33, 523.25];
-      let chordStep = 0;
-      let melodyStep = 0;
+      this.init().then(() => {
+        if (!this.isBGMPlaying || !this.bgmEnabled) return;
+        const startNow = this.ctx.currentTime;
+        this.bgmBus.gain.cancelScheduledValues(startNow);
+        this.bgmBus.gain.setTargetAtTime(this.BGM_NORMAL_GAIN, startNow, 0.05);
 
-      const loop = () => {
-        if (!this.isBGMPlaying) return;
-        const now = this.ctx.currentTime;
-        const curChord = chords[chordStep % chords.length];
-        
-        // Soft pad chord
-        curChord.forEach(freq => {
+        // Gentle ambient lofi synth loop: Cmaj7 - Am7 - Fmaj7 - G7
+        const chords = [
+          [261.63, 329.63, 392.00, 493.88], // Cmaj7
+          [220.00, 261.63, 329.63, 392.00], // Am7
+          [174.61, 220.00, 261.63, 329.63], // Fmaj7
+          [196.00, 246.94, 293.66, 392.00]  // G7
+        ];
+        const melodyNotes = [523.25, 659.25, 783.99, 880.00, 659.25, 587.33, 523.25];
+        let chordStep = 0;
+        let melodyStep = 0;
+
+        const loop = () => {
+          if (!this.isBGMPlaying) return;
+          const now = this.ctx.currentTime;
+          const curChord = chords[chordStep % chords.length];
+
+          // Warm pad chord (clearly audible at 20-30% system volume)
+          curChord.forEach(freq => {
+            try {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(freq, now);
+              g.gain.setValueAtTime(0.08, now);
+              g.gain.linearRampToValueAtTime(0.15, now + 0.6);
+              g.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
+              osc.connect(g);
+              g.connect(this.bgmBus);
+              osc.start(now);
+              osc.stop(now + 2.8);
+            } catch(e) {}
+          });
+
+          // Plucky marimba melody note
+          const mFreq = melodyNotes[melodyStep % melodyNotes.length];
           try {
-            const osc = this.ctx.createOscillator();
-            const g = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now);
-            g.gain.setValueAtTime(0.012, now);
-            g.gain.linearRampToValueAtTime(0.025, now + 0.6);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + 2.8);
-            osc.connect(g);
-            g.connect(this.ctx.destination);
-            osc.start(now);
-            osc.stop(now + 2.8);
+            const mOsc = this.ctx.createOscillator();
+            const mGain = this.ctx.createGain();
+            mOsc.type = 'triangle';
+            mOsc.frequency.setValueAtTime(mFreq, now + 0.1);
+            mGain.gain.setValueAtTime(0.18, now + 0.1);
+            mGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+            mOsc.connect(mGain);
+            mGain.connect(this.bgmBus);
+            mOsc.start(now + 0.1);
+            mOsc.stop(now + 0.9);
           } catch(e) {}
-        });
 
-        // Plucky marimba melody note
-        const mFreq = melodyNotes[melodyStep % melodyNotes.length];
-        try {
-          const mOsc = this.ctx.createOscillator();
-          const mGain = this.ctx.createGain();
-          mOsc.type = 'triangle';
-          mOsc.frequency.setValueAtTime(mFreq, now + 0.1);
-          mGain.gain.setValueAtTime(0.02, now + 0.1);
-          mGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-          mOsc.connect(mGain);
-          mGain.connect(this.ctx.destination);
-          mOsc.start(now + 0.1);
-          mOsc.stop(now + 0.9);
-        } catch(e) {}
+          chordStep++;
+          melodyStep++;
+          this.bgmTimer = setTimeout(loop, 2400);
+        };
 
-        chordStep++;
-        melodyStep++;
-        this.bgmTimer = setTimeout(loop, 2400);
-      };
-
-      loop();
+        loop();
+      });
     },
 
     stopBGM() {
@@ -1413,6 +1464,15 @@
         clearTimeout(this.bgmTimer);
         this.bgmTimer = null;
       }
+      if (this.duckTimer) {
+        clearTimeout(this.duckTimer);
+        this.duckTimer = null;
+      }
+      if (this.ctx && this.bgmBus) {
+        const now = this.ctx.currentTime;
+        this.bgmBus.gain.cancelScheduledValues(now);
+        this.bgmBus.gain.setTargetAtTime(0.0001, now, 0.03);
+      }
     }
   };
 
@@ -1420,6 +1480,22 @@
    * TEXT TO SPEECH (Web Speech API)
    * Clear, friendly English pronunciation tailored for young learners
    */
+  let cachedPreferredVoice = null;
+  function loadPreferredVoice() {
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+      cachedPreferredVoice = voices.find(v =>
+        v.lang.startsWith('en') &&
+        (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen'))
+      ) || voices.find(v => v.lang.startsWith('en-US')) || voices.find(v => v.lang.startsWith('en')) || null;
+    }
+  }
+  if ('speechSynthesis' in window) {
+    loadPreferredVoice();
+    window.speechSynthesis.onvoiceschanged = loadPreferredVoice;
+  }
+
   function speakEnglishWord(word) {
     if (!AudioEngine.speechEnabled) return;
     if (!('speechSynthesis' in window)) return;
@@ -1427,16 +1503,20 @@
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
+      utterance.volume = 1.0; // Maximum clear speech volume
       utterance.rate = 0.85; // friendly, gentle tempo for young Pre-A1 kids
       utterance.pitch = 1.1; // warm & engaging
-      
-      const voices = window.speechSynthesis.getVoices();
-      if (voices && voices.length > 0) {
-        const preferredVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen')));
-        if (preferredVoice) utterance.voice = preferredVoice;
-      }
+
+      if (!cachedPreferredVoice) loadPreferredVoice();
+      if (cachedPreferredVoice) utterance.voice = cachedPreferredVoice;
+
+      AudioEngine.duckBGM(true);
+      utterance.onend = () => AudioEngine.duckBGM(false);
+      utterance.onerror = () => AudioEngine.duckBGM(false);
+
       window.speechSynthesis.speak(utterance);
     } catch (e) {
+      AudioEngine.duckBGM(false);
       console.warn('Speech synthesis error:', e);
     }
   }
@@ -1471,6 +1551,42 @@
     flippedCards: [], // currently flipped [card1, card2]
     isBusy: false,
     lastMatchedWord: null,
+    roundTimers: [],
+    matchModalTimer: null,
+
+    scheduleRoundTask(fn, delay) {
+      const id = setTimeout(() => {
+        this.roundTimers = this.roundTimers.filter(t => t !== id);
+        fn();
+      }, delay);
+      this.roundTimers.push(id);
+      return id;
+    },
+
+    clearRoundTimers() {
+      this.roundTimers.forEach(id => clearTimeout(id));
+      this.roundTimers = [];
+      if (this.matchModalTimer) {
+        clearTimeout(this.matchModalTimer);
+        this.matchModalTimer = null;
+      }
+      const modal = document.getElementById('modalCorrectMatch');
+      const box = document.getElementById('modalCorrectBox');
+      if (modal && box) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        box.classList.remove('scale-100');
+        box.classList.add('scale-90');
+      }
+    },
+
+    shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    },
 
     // Initializer
     init() {
@@ -1577,6 +1693,7 @@
     },
 
     setupRound() {
+      this.clearRoundTimers();
       // Pairs count per level
       const pairCounts = { easy: 6, medium: 8, hard: 10 };
       this.targetPairsCount = pairCounts[this.level];
@@ -1597,8 +1714,8 @@
     },
 
     generateCards() {
-      // Shuffle vocabulary bank and pick targetPairsCount items
-      const shuffledBank = [...VOCABULARY_BANK].sort(() => Math.random() - 0.5);
+      // Unbiased Fisher-Yates shuffle of vocabulary bank
+      const shuffledBank = this.shuffleArray(VOCABULARY_BANK);
       const selectedWords = shuffledBank.slice(0, this.targetPairsCount);
 
       const generatedCards = [];
@@ -1633,8 +1750,8 @@
         generatedCards.push(card1, card2);
       });
 
-      // Shuffle cards thoroughly
-      this.cards = generatedCards.sort(() => Math.random() - 0.5);
+      // Unbiased Fisher-Yates shuffle of dealt cards
+      this.cards = this.shuffleArray(generatedCards);
     },
 
     renderBoard() {
@@ -1759,12 +1876,12 @@
 
       if (card1.wordId === card2.wordId) {
         // MATCH SUCCESS!
-        setTimeout(() => {
+        this.scheduleRoundTask(() => {
           this.handleMatchSuccess(card1, card2);
         }, 300);
       } else {
         // MATCH FAILED
-        setTimeout(() => {
+        this.scheduleRoundTask(() => {
           this.handleMatchFailed(card1, card2);
         }, 900);
       }
@@ -1816,7 +1933,8 @@
 
       // Check if Round is complete
       if (this.matchedPairsCount >= this.targetPairsCount) {
-        setTimeout(() => {
+        this.isBusy = true;
+        this.scheduleRoundTask(() => {
           this.handleRoundComplete();
         }, 1200);
       }
@@ -1832,7 +1950,7 @@
       if (el1) el1.classList.add('animate-wiggle');
       if (el2) el2.classList.add('animate-wiggle');
 
-      setTimeout(() => {
+      this.scheduleRoundTask(() => {
         if (el1) {
           el1.classList.remove('animate-wiggle', 'rotate-y-180');
         }
@@ -1850,7 +1968,12 @@
     showCorrectMatchModal(wordItem) {
       const modal = document.getElementById('modalCorrectMatch');
       const box = document.getElementById('modalCorrectBox');
-      
+
+      if (this.matchModalTimer) {
+        clearTimeout(this.matchModalTimer);
+        this.matchModalTimer = null;
+      }
+
       const encouragements = [
         '太棒了！配對成功！',
         '做得很棒！ Great Job!',
@@ -1870,28 +1993,32 @@
       box.classList.add('scale-100');
 
       // Auto dismiss after 1.8 seconds so game flows seamlessly
-      setTimeout(() => {
+      this.matchModalTimer = setTimeout(() => {
         modal.classList.add('opacity-0', 'pointer-events-none');
         box.classList.remove('scale-100');
         box.classList.add('scale-90');
+        this.matchModalTimer = null;
       }, 1800);
     },
 
     useMandarinHint() {
       if (this.hintsLeft <= 0 || this.isBusy) return;
+
+      // Find an unmatched pair (if a card is already flipped, smartly hint its partner)
+      const unmatchedCards = this.cards.filter(c => !c.isMatched);
+      if (unmatchedCards.length === 0) return;
+
+      this.isBusy = true;
       this.hintsLeft--;
       this.updateUI();
       AudioEngine.playHint();
 
-      // Find an unmatched pair
-      const unmatchedCards = this.cards.filter(c => !c.isMatched);
-      if (unmatchedCards.length === 0) return;
-
-      // Group by wordId
-      const targetWordId = unmatchedCards[0].wordId;
+      const targetWordId = this.flippedCards.length === 1
+        ? this.flippedCards[0].wordId
+        : unmatchedCards[0].wordId;
       const pair = this.cards.filter(c => c.wordId === targetWordId);
 
-      // Temporarily reveal the pair for 1.8 seconds with golden highlight
+      // Temporarily reveal the pair for 1.6 seconds with golden highlight
       pair.forEach(card => {
         const inner = document.getElementById(`card-inner-${card.uid}`);
         if (inner) {
@@ -1899,22 +2026,25 @@
         }
       });
 
-      // Play English pronunciation if one of them is English
+      // Play English pronunciation
       speakEnglishWord(pair[0].wordItem.en);
 
-      setTimeout(() => {
+      this.scheduleRoundTask(() => {
         pair.forEach(card => {
-          if (!card.isFlipped) {
-            const inner = document.getElementById(`card-inner-${card.uid}`);
-            if (inner) {
-              inner.classList.remove('rotate-y-180', 'ring-4', 'ring-amber-400');
+          const inner = document.getElementById(`card-inner-${card.uid}`);
+          if (inner) {
+            inner.classList.remove('ring-4', 'ring-amber-400');
+            if (!card.isFlipped && !card.isMatched) {
+              inner.classList.remove('rotate-y-180');
             }
           }
         });
+        this.isBusy = false;
       }, 1600);
     },
 
     handleRoundComplete() {
+      this.stopTimer();
       AudioEngine.playRoundWin();
 
       if (typeof confetti === 'function') {
@@ -1928,14 +2058,13 @@
       if (this.round < this.totalRounds) {
         // Show Round Complete Modal
         document.getElementById('roundCompleteTitle').textContent = `第 ${this.round} 回合通關！`;
-        document.getElementById('lblRoundScore').textContent = `+${this.roundScore} 分`;
-        document.getElementById('lblRoundTotalScore').textContent = `${this.score} 分`;
+        document.getElementById('lblRoundScore').textContent = `+${this.roundScore.toLocaleString()} 分`;
+        document.getElementById('lblRoundTotalScore').textContent = `${this.score.toLocaleString()} 分`;
         document.getElementById('lblRoundMoves').textContent = `${this.moves} 次`;
         document.getElementById('lblNextRoundInfo').textContent = `第 ${this.round + 1} 回合 / 共 3 回合`;
         this.showModal('modalRoundComplete');
       } else {
         // All 3 Rounds Complete! Show Certificate celebration!
-        this.stopTimer();
         AudioEngine.playCertificateFanfare();
         if (typeof confetti === 'function') {
           confetti({
@@ -1951,10 +2080,14 @@
 
     nextRound() {
       this.round++;
+      this.startTimer();
       this.setupRound();
     },
 
     restartRound() {
+      // Roll back only the current round's score & streak so re-shuffling cannot inflate total score
+      this.score = Math.max(0, this.score - this.roundScore);
+      this.streak = 0;
       this.setupRound();
     },
 
@@ -1964,6 +2097,14 @@
       document.getElementById('statStreak').textContent = `${this.streak}x`;
       document.getElementById('hintCountBadge').textContent = this.hintsLeft;
       document.getElementById('txtPairsMatched').textContent = `${this.matchedPairsCount} / ${this.targetPairsCount} 對`;
+
+      const hintBtn = document.getElementById('btnMandarinHint');
+      if (hintBtn) {
+        const disabled = this.hintsLeft <= 0;
+        hintBtn.disabled = disabled;
+        hintBtn.classList.toggle('opacity-50', disabled);
+        hintBtn.classList.toggle('cursor-not-allowed', disabled);
+      }
     },
 
     startTimer() {
@@ -2143,7 +2284,7 @@
       // Student Name with underline
       ctx.fillStyle = '#0F172A';
       ctx.font = '900 44px "Nunito", "Noto Sans TC", sans-serif';
-      ctx.fillText(name, width / 2, 335);
+      ctx.fillText(name, width / 2, 335, 760);
 
       ctx.lineWidth = 3;
       ctx.strokeStyle = '#D4AF37';
