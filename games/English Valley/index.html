@@ -376,7 +376,10 @@
           <button id="btn-friends" class="pill-btn">📖 Friends</button>
           <button id="btn-cert" class="pill-btn cert">🏆 Certificate</button>
           <button id="btn-zh-toggle" class="pill-btn">🌐 中文: ON</button>
-          <button id="btn-mute" class="pill-btn">🔊</button>
+          <div class="pill-btn" style="padding:4px 10px; gap:6px;">
+            <button id="btn-mute" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0;">🔊</button>
+            <input id="vol-slider" type="range" min="0" max="100" value="80" title="Game Volume" style="width:62px; accent-color:#f27457; cursor:pointer;" />
+          </div>
         </div>
       </div>
     </div>
@@ -861,23 +864,31 @@
     // 2. AUDIO ENGINE: 12 UNIQUE COZY ZONE SOUNDTRACKS + CUTE SFX + SPEECH
     // =========================================================================
     const AudioSys = {
-      ctx: null, bus: null, muted: false, timer: null, theme: '', step: 0,
+      ctx: null, bus: null, comp: null, muted: false, masterVol: 0.80, timer: null, theme: '', step: 0,
       init() {
         if (!this.ctx) {
           const AC = window.AudioContext || window.webkitAudioContext;
           if (AC) {
             this.ctx = new AC();
             this.bus = this.ctx.createGain();
-            this.bus.gain.value = this.muted ? 0 : 0.22;
-            this.bus.connect(this.ctx.destination);
+            this.comp = this.ctx.createDynamicsCompressor();
+            this.comp.threshold.value = -10;
+            this.comp.ratio.value = 4;
+            this.bus.gain.value = this.muted ? 0 : this.masterVol;
+            this.bus.connect(this.comp);
+            this.comp.connect(this.ctx.destination);
           }
         }
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-        if (this.bus) this.bus.gain.value = this.muted ? 0 : 0.22;
+        if (this.bus) this.bus.gain.value = this.muted ? 0 : this.masterVol;
+      },
+      setVolume(v) {
+        this.masterVol = Math.max(0, Math.min(1, v));
+        if (this.bus) this.bus.gain.value = this.muted ? 0 : this.masterVol;
       },
       setMuted(flag) {
         this.muted = flag;
-        if (this.bus) this.bus.gain.value = flag ? 0 : 0.22;
+        if (this.bus) this.bus.gain.value = flag ? 0 : this.masterVol;
         if (flag && window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch {} }
       },
       speak(text) {
@@ -905,11 +916,11 @@
       },
       sfx(kind) {
         this.init();
-        if (kind === 'pop') this.tone(587, 0.11, 'sine', 0.28);
-        else if (kind === 'heart') { this.tone(523, 0.12, 'triangle', 0.26); setTimeout(() => this.tone(659, 0.14, 'triangle', 0.26), 80); setTimeout(() => this.tone(784, 0.22, 'sine', 0.28), 160); }
-        else if (kind === 'coin') { this.tone(880, 0.09, 'sine', 0.24); setTimeout(() => this.tone(1174, 0.18, 'sine', 0.24), 75); }
-        else if (kind === 'water') { this.tone(420, 0.1, 'sine', 0.22); setTimeout(() => this.tone(540, 0.14, 'sine', 0.22), 70); }
-        else if (kind === 'wrong') this.tone(240, 0.18, 'triangle', 0.22);
+        if (kind === 'pop') this.tone(587, 0.12, 'sine', 0.52);
+        else if (kind === 'heart') { this.tone(523, 0.13, 'triangle', 0.48); setTimeout(() => this.tone(659, 0.15, 'triangle', 0.48), 80); setTimeout(() => this.tone(784, 0.24, 'sine', 0.52), 160); }
+        else if (kind === 'coin') { this.tone(880, 0.10, 'sine', 0.46); setTimeout(() => this.tone(1174, 0.20, 'sine', 0.46), 75); }
+        else if (kind === 'water') { this.tone(420, 0.11, 'sine', 0.45); setTimeout(() => this.tone(540, 0.15, 'sine', 0.45), 70); }
+        else if (kind === 'wrong') this.tone(240, 0.20, 'triangle', 0.45);
       },
       playTheme(theme) {
         if (this.theme === theme && this.timer) return;
@@ -935,8 +946,8 @@
           if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
           const m = s.m[this.step % s.m.length];
           const b = s.b[this.step % s.b.length];
-          if (m) this.tone(m, s.ms / 1000 * 1.4, s.t, 0.21);
-          if (b) this.tone(b, s.ms / 1000 * 1.7, 'sine', 0.13);
+          if (m) this.tone(m, s.ms / 1000 * 1.45, s.t, 0.40);
+          if (b) this.tone(b, s.ms / 1000 * 1.75, 'sine', 0.28);
           this.step++;
         }, s.ms);
       }
@@ -972,7 +983,8 @@
         cropsHarvested: 0,
         playSeconds: 0,
         zhHints: true,
-        muted: false
+        muted: false,
+        volume: 0.80
       };
     }
 
@@ -2376,7 +2388,7 @@
         if (!document.body.contains(el)) return;
         i++;
         el.textContent = fullText.slice(0, i);
-        if (i % 5 === 0) AudioSys.tone(520 + (i % 3) * 55, 0.035, 'sine', 0.08);
+        if (i % 5 === 0) AudioSys.tone(520 + (i % 3) * 55, 0.04, 'sine', 0.22);
         if (i < fullText.length) {
           _vnTimers.push(setTimeout(step, msPerChar));
         } else if (onDone) {
@@ -3589,7 +3601,9 @@
       if (!state.outfitStyle) state.outfitStyle = 'tunic';
       if (!state.ownedOutfits) state.ownedOutfits = ['tunic'];
       if (state.activeVehicle === undefined) state.activeVehicle = null;
-      G.state = state; AudioSys.init(); AudioSys.setMuted(!!state.muted);
+      if (state.volume === undefined) state.volume = 0.80;
+      G.state = state; AudioSys.init(); AudioSys.setVolume(state.volume); AudioSys.setMuted(!!state.muted);
+      const vs = document.getElementById('vol-slider'); if (vs) vs.value = Math.round(state.volume * 100);
       document.getElementById('start-screen').classList.add('hidden');
       document.getElementById('hud').classList.remove('hidden');
       if (G.playerMesh) G.scene.remove(G.playerMesh);
@@ -3654,6 +3668,12 @@
       document.getElementById('cutscene-overlay').addEventListener('click', endCutscene);
       document.getElementById('btn-zh-toggle').addEventListener('click', () => { G.state.zhHints = !G.state.zhHints; saveGame(); updateHUD(); buildZone(G.state.currentZoneId); });
       document.getElementById('btn-mute').addEventListener('click', () => { G.state.muted = !G.state.muted; AudioSys.setMuted(G.state.muted); saveGame(); updateHUD(); });
+      document.getElementById('vol-slider').addEventListener('input', e => {
+        const v = Number(e.target.value) / 100;
+        G.state.volume = v;
+        if (v > 0 && G.state.muted) { G.state.muted = false; AudioSys.setMuted(false); }
+        AudioSys.init(); AudioSys.setVolume(v); saveGame(); updateHUD();
+      });
 
       window.addEventListener('pointerdown', () => AudioSys.init(), { passive: true });
       window.addEventListener('keydown', e => {
