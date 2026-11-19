@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script data-goatcounter="https://tlcp-games.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Waystone Realm — Open-World English Quest</title>
@@ -49,7 +51,29 @@
     /* HUD */
     #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; }
     .hud-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .hud-left-col { display: flex; flex-direction: column; gap: 10px; max-width: 285px; }
+    /* Floating Back to Hub Button (matches TLCP@Games main hub) */
+    #back-hub-btn {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 35;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      background: #ffffff;
+      color: #1a1a1a;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      border-radius: 980px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    #back-hub-btn:hover { transform: scale(1.04); background: #f1f2f6; }
+    #back-hub-btn:active { transform: scale(0.96); }
+    .hud-left-col { display: flex; flex-direction: column; gap: 10px; max-width: 285px; margin-top: 44px; }
     .hud-card {
       pointer-events: auto;
       background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(9, 14, 28, 0.94));
@@ -417,7 +441,7 @@
         background: none !important; border: none !important; box-shadow: none !important;
         padding: 0 !important; overflow: visible !important;
       }
-      .no-print { display: none !important; }
+      .no-print, #back-hub-btn { display: none !important; }
       .cert-sheet {
         box-shadow: none !important; border: 8px double #b45309 !important;
         -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
@@ -452,6 +476,11 @@
   </style>
 </head>
 <body>
+  <!-- Floating Back to Hub Button -->
+  <a href="../../index.html" id="back-hub-btn">
+    <span>←</span>
+    <span>TLCP@Games</span>
+  </a>
   <canvas id="game-canvas"></canvas>
   <div id="world-labels"></div>
   <div id="floating-texts"></div>
