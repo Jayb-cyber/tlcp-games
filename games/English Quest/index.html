@@ -1301,19 +1301,24 @@
     // =========================================================================
     const STORAGE_KEY = 'waystone_realm_save_v5';
     const AudioSys = {
-      ctx: null, musicFilter: null, musicBus: null, muted: false, musicVol: 0.42, sfxVol: 0.48, timer: null, theme: '', step: 0,
+      ctx: null, musicFilter: null, musicBus: null, masterComp: null, muted: false, musicVol: 0.88, sfxVol: 0.85, timer: null, theme: '', step: 0,
       init() {
         if (!this.ctx) {
           const AC = window.AudioContext || window.webkitAudioContext;
           if (AC) {
             this.ctx = new AC();
+            this.masterComp = this.ctx.createDynamicsCompressor();
+            this.masterComp.threshold.value = -10;
+            this.masterComp.knee.value = 18;
+            this.masterComp.ratio.value = 6;
+            this.masterComp.connect(this.ctx.destination);
             this.musicFilter = this.ctx.createBiquadFilter();
             this.musicFilter.type = 'lowpass';
-            this.musicFilter.frequency.value = 1850;
+            this.musicFilter.frequency.value = 3400;
             this.musicBus = this.ctx.createGain();
             this.musicBus.gain.value = this.muted ? 0 : this.musicVol;
             this.musicFilter.connect(this.musicBus);
-            this.musicBus.connect(this.ctx.destination);
+            this.musicBus.connect(this.masterComp);
           }
         }
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
@@ -1332,7 +1337,7 @@
           u.lang = 'en-US';
           u.rate = 0.90;
           u.pitch = 1.02;
-          u.volume = 0.95;
+          u.volume = 1.0;
           window.speechSynthesis.speak(u);
         } catch {}
       },
@@ -1345,16 +1350,17 @@
           o.type = type;
           o.frequency.setValueAtTime(freq, now);
           g.gain.setValueAtTime(0.0001, now);
-          g.gain.linearRampToValueAtTime(vol, now + 0.018);
+          g.gain.linearRampToValueAtTime(vol, now + 0.015);
+          g.gain.setValueAtTime(vol * 0.82, now + Math.min(dur * 0.45, 0.14));
           g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
           o.connect(g);
-          g.connect(toMusicBus && this.musicFilter ? this.musicFilter : this.ctx.destination);
+          g.connect(toMusicBus && this.musicFilter ? this.musicFilter : (this.masterComp || this.ctx.destination));
           o.start(now); o.stop(now + dur + 0.02);
         } catch {}
       },
       sfx(k) {
         this.init();
-        const v = this.sfxVol * 0.28;
+        const v = this.sfxVol * 0.58;
         if (k === 'swing') { this.tone(240, 0.07, 'sine', v); setTimeout(() => this.tone(170, 0.08, 'triangle', v), 35); }
         else if (k === 'heavy') { this.tone(145, 0.2, 'sawtooth', v); setTimeout(() => this.tone(92, 0.24, 'triangle', v), 60); }
         else if (k === 'hit') this.tone(125, 0.12, 'sawtooth', v);
@@ -1377,7 +1383,7 @@
         const SONGS = {
           // Hearthmere: Chill, happy, pastoral C-major folk town melody
           village: {
-            ms: 290, leadType: 'triangle', bassType: 'sine', leadVol: 0.24, bassVol: 0.18,
+            ms: 290, leadType: 'triangle', bassType: 'sine', leadVol: 0.48, bassVol: 0.36,
             mel: [523.3, 0, 659.3, 587.3, 523.3, 0, 392.0, 440.0, 523.3, 587.3, 659.3, 784.0, 659.3, 0, 587.3, 0,
                   523.3, 0, 440.0, 523.3, 587.3, 0, 659.3, 523.3, 440.0, 392.0, 440.0, 523.3, 523.3, 0, 0, 0],
             bass: [130.8, 0, 196.0, 0, 174.6, 0, 196.0, 0, 130.8, 0, 196.0, 0, 146.8, 0, 196.0, 0,
@@ -1385,7 +1391,7 @@
           },
           // Sunmeadow / Broken Road: Bright, breezy G-major adventure stride
           meadow: {
-            ms: 250, leadType: 'triangle', bassType: 'sine', leadVol: 0.23, bassVol: 0.17,
+            ms: 250, leadType: 'triangle', bassType: 'sine', leadVol: 0.46, bassVol: 0.34,
             mel: [392.0, 493.9, 587.3, 0, 659.3, 587.3, 493.9, 440.0, 392.0, 440.0, 493.9, 587.3, 659.3, 0, 587.3, 0,
                   784.0, 0, 659.3, 587.3, 493.9, 587.3, 659.3, 0, 587.3, 493.9, 440.0, 493.9, 392.0, 0, 0, 0],
             bass: [196.0, 0, 146.8, 0, 164.8, 0, 196.0, 0, 130.8, 0, 146.8, 0, 196.0, 0, 146.8, 0,
@@ -1393,7 +1399,7 @@
           },
           // Amberwood Forest: Mystical woodland Dorian harp
           forest: {
-            ms: 310, leadType: 'sine', bassType: 'triangle', leadVol: 0.24, bassVol: 0.16,
+            ms: 310, leadType: 'sine', bassType: 'triangle', leadVol: 0.46, bassVol: 0.34,
             mel: [440.0, 0, 523.3, 587.3, 659.3, 0, 587.3, 523.3, 493.9, 0, 440.0, 392.0, 440.0, 0, 0, 0,
                   523.3, 0, 587.3, 659.3, 784.0, 0, 659.3, 587.3, 523.3, 493.9, 440.0, 0, 440.0, 0, 0, 0],
             bass: [110.0, 0, 164.8, 0, 146.8, 0, 164.8, 0, 130.8, 0, 146.8, 0, 110.0, 0, 164.8, 0,
@@ -1401,13 +1407,13 @@
           },
           // Copperdeep Mines: Echoing subterranean D-minor cavern pulse
           mine: {
-            ms: 280, leadType: 'triangle', bassType: 'sawtooth', leadVol: 0.21, bassVol: 0.13,
+            ms: 280, leadType: 'triangle', bassType: 'sawtooth', leadVol: 0.42, bassVol: 0.30,
             mel: [293.7, 0, 349.2, 0, 440.0, 392.0, 349.2, 0, 261.6, 0, 293.7, 0, 329.6, 0, 293.7, 0],
             bass: [146.8, 146.8, 0, 110.0, 146.8, 0, 130.8, 0, 116.5, 0, 130.8, 0, 110.0, 0, 146.8, 0]
           },
           // Windbreak Highlands: Soaring heroic mountain breeze
           highlands: {
-            ms: 235, leadType: 'triangle', bassType: 'sine', leadVol: 0.24, bassVol: 0.18,
+            ms: 235, leadType: 'triangle', bassType: 'sine', leadVol: 0.48, bassVol: 0.36,
             mel: [659.3, 0, 784.0, 880.0, 784.0, 659.3, 587.3, 0, 659.3, 587.3, 493.9, 587.3, 659.3, 0, 0, 0,
                   880.0, 0, 784.0, 659.3, 587.3, 659.3, 784.0, 0, 659.3, 587.3, 493.9, 0, 493.9, 0, 0, 0],
             bass: [164.8, 0, 246.9, 0, 196.0, 0, 146.8, 0, 130.8, 0, 146.8, 0, 164.8, 0, 196.0, 0,
@@ -1415,19 +1421,19 @@
           },
           // Tideglass Archive: Crystalline celesta library arpeggios
           archive: {
-            ms: 270, leadType: 'sine', bassType: 'sine', leadVol: 0.23, bassVol: 0.16,
+            ms: 270, leadType: 'sine', bassType: 'sine', leadVol: 0.46, bassVol: 0.34,
             mel: [587.3, 659.3, 740.0, 880.0, 740.0, 659.3, 587.3, 0, 493.9, 587.3, 659.3, 740.0, 880.0, 0, 740.0, 0],
             bass: [146.8, 0, 220.0, 0, 185.0, 0, 220.0, 0, 123.5, 0, 185.0, 0, 146.8, 0, 220.0, 0]
           },
           // Hollow Crown Citadel: Grand ominous gothic theme
           citadel: {
-            ms: 255, leadType: 'sawtooth', bassType: 'triangle', leadVol: 0.16, bassVol: 0.20,
+            ms: 255, leadType: 'sawtooth', bassType: 'triangle', leadVol: 0.34, bassVol: 0.38,
             mel: [293.7, 0, 349.2, 440.0, 415.3, 0, 349.2, 329.6, 293.7, 0, 261.6, 293.7, 329.6, 0, 220.0, 0],
             bass: [146.8, 0, 146.8, 130.8, 116.5, 0, 116.5, 110.0, 146.8, 0, 130.8, 0, 110.0, 110.0, 146.8, 0]
           },
           // Classic RPG Boss Intro Cutscene & Boss Encounter Theme!
           boss: {
-            ms: 175, leadType: 'sawtooth', bassType: 'square', leadVol: 0.20, bassVol: 0.14,
+            ms: 175, leadType: 'sawtooth', bassType: 'square', leadVol: 0.38, bassVol: 0.30,
             mel: [440.0, 0, 440.0, 466.2, 523.3, 0, 466.2, 440.0, 392.0, 0, 440.0, 349.2, 329.6, 0, 440.0, 0,
                   587.3, 0, 587.3, 523.3, 466.2, 0, 440.0, 392.0, 440.0, 523.3, 587.3, 659.3, 587.3, 0, 0, 0],
             bass: [110.0, 110.0, 164.8, 110.0, 116.5, 116.5, 174.6, 116.5, 98.0, 98.0, 146.8, 98.0, 110.0, 110.0, 164.8, 110.0,
