@@ -255,29 +255,148 @@ function generateCustomTextures(scene) {
   drawDogVariant('tex_dog_walk1', 1);
   drawDogVariant('tex_dog_walk2', 2);
 
-  // --- 4. ENVIRONMENT & ITEMS ---
+  // --- 4. ENVIRONMENT & ITEMS (UPGRADED VISUALS) ---
+  if (!scene.textures.exists('tex_sky_bg')) {
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 450;
+    const g = c.getContext('2d');
+    const sky = g.createLinearGradient(0, 0, 0, 450);
+    sky.addColorStop(0, '#38a1f3');
+    sky.addColorStop(0.55, '#81ecec');
+    sky.addColorStop(0.88, '#dff9fb');
+    sky.addColorStop(1, '#fff9db');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, 800, 450);
+    const sunHalo = g.createRadialGradient(690, 74, 14, 690, 74, 115);
+    sunHalo.addColorStop(0, 'rgba(255, 252, 210, 0.96)');
+    sunHalo.addColorStop(0.32, 'rgba(255, 234, 167, 0.52)');
+    sunHalo.addColorStop(1, 'rgba(255, 234, 167, 0)');
+    g.fillStyle = sunHalo;
+    g.beginPath();
+    g.arc(690, 74, 115, 0, Math.PI * 2);
+    g.fill();
+    scene.textures.addCanvas('tex_sky_bg', c);
+  }
+
+  if (!scene.textures.exists('tex_sky_boss')) {
+    const c = document.createElement('canvas');
+    c.width = 800; c.height = 450;
+    const g = c.getContext('2d');
+    const sky = g.createLinearGradient(0, 0, 0, 450);
+    sky.addColorStop(0, '#191438');
+    sky.addColorStop(0.52, '#5f27cd');
+    sky.addColorStop(0.84, '#ee5253');
+    sky.addColorStop(1, '#ff9f43');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, 800, 450);
+    const moon = g.createRadialGradient(400, 120, 12, 400, 120, 130);
+    moon.addColorStop(0, 'rgba(255, 245, 190, 0.92)');
+    moon.addColorStop(0.35, 'rgba(255, 159, 67, 0.45)');
+    moon.addColorStop(1, 'rgba(238, 82, 83, 0)');
+    g.fillStyle = moon;
+    g.beginPath();
+    g.arc(400, 120, 130, 0, Math.PI * 2);
+    g.fill();
+    scene.textures.addCanvas('tex_sky_boss', c);
+  }
+
+  if (!scene.textures.exists('tex_hills_far')) {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 180;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 20, 0, 180);
+    grad.addColorStop(0, '#74b9ff');
+    grad.addColorStop(1, '#55efc4');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.moveTo(0, 180);
+    g.lineTo(0, 108);
+    g.quadraticCurveTo(86, 22, 185, 92);
+    g.quadraticCurveTo(270, 38, 365, 86);
+    g.quadraticCurveTo(445, 26, 512, 108);
+    g.lineTo(512, 180);
+    g.closePath();
+    g.fill();
+    scene.textures.addCanvas('tex_hills_far', c);
+  }
+
+  if (!scene.textures.exists('tex_hills_near')) {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 140;
+    const g = c.getContext('2d');
+    const grad = g.createLinearGradient(0, 20, 0, 140);
+    grad.addColorStop(0, '#2ecc71');
+    grad.addColorStop(1, '#1e8449');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.moveTo(0, 140);
+    g.lineTo(0, 74);
+    g.quadraticCurveTo(95, 24, 210, 72);
+    g.quadraticCurveTo(335, 18, 430, 68);
+    g.quadraticCurveTo(475, 50, 512, 74);
+    g.lineTo(512, 140);
+    g.closePath();
+    g.fill();
+    [82, 140, 315, 360, 448].forEach((tx, idx) => {
+      const ty = idx % 2 === 0 ? 58 : 66;
+      g.fillStyle = '#6e4720';
+      g.fillRect(tx - 3, ty, 6, 18);
+      g.fillStyle = '#27ae60';
+      g.beginPath();
+      g.arc(tx, ty - 4, 14, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#55efc4';
+      g.beginPath();
+      g.arc(tx - 4, ty - 8, 6, 0, Math.PI * 2);
+      g.fill();
+    });
+    scene.textures.addCanvas('tex_hills_near', c);
+  }
+
   if (!scene.textures.exists('tex_ground')) {
     const grnd = scene.make.graphics({ x: 0, y: 0, add: false });
-    grnd.fillStyle(0x8b4513, 1);
+    grnd.fillStyle(0x7c4318, 1);
     grnd.fillRect(0, 0, 64, 64);
-    grnd.fillStyle(0x70380f, 1);
-    grnd.fillRect(10, 20, 8, 4); grnd.fillRect(40, 40, 10, 4); grnd.fillRect(20, 50, 6, 4);
+    grnd.fillStyle(0x633310, 1);
+    grnd.fillRect(0, 40, 64, 24);
+    grnd.fillStyle(0x9a5928, 0.9);
+    grnd.fillRoundedRect(8, 22, 12, 6, 3);
+    grnd.fillRoundedRect(38, 28, 14, 6, 3);
+    grnd.fillRoundedRect(20, 44, 12, 6, 3);
+    grnd.fillStyle(0x52280b, 0.85);
+    grnd.fillCircle(52, 48, 4);
+    grnd.fillCircle(12, 52, 3.5);
+    grnd.fillStyle(0x1e8449, 1);
+    grnd.fillRect(0, 11, 64, 7);
+    for (let gx = 4; gx < 64; gx += 12) {
+      grnd.fillCircle(gx, 17, 5);
+    }
     grnd.fillStyle(0x2ecc71, 1);
-    grnd.fillRect(0, 0, 64, 14);
-    grnd.fillStyle(0x27ae60, 1);
-    grnd.fillRect(0, 14, 64, 4);
+    grnd.fillRect(0, 0, 64, 13);
+    grnd.fillStyle(0x55efc4, 0.75);
+    grnd.fillRect(0, 0, 64, 3);
+    grnd.fillStyle(0xf1c40f, 1);
+    grnd.fillCircle(14, 6, 2);
+    grnd.fillStyle(0xffffff, 0.9);
+    grnd.fillCircle(48, 5, 1.8);
     grnd.generateTexture('tex_ground', 64, 64);
     grnd.destroy();
   }
 
   if (!scene.textures.exists('tex_cloud')) {
     const cld = scene.make.graphics({ x: 0, y: 0, add: false });
-    cld.fillStyle(0xffffff, 0.85);
-    cld.fillCircle(30, 30, 20);
-    cld.fillCircle(55, 20, 30);
-    cld.fillCircle(85, 25, 25);
-    cld.fillCircle(110, 35, 15);
-    cld.fillCircle(60, 40, 20);
+    cld.fillStyle(0xc8e6f5, 0.72);
+    cld.fillCircle(32, 35, 19);
+    cld.fillCircle(58, 27, 28);
+    cld.fillCircle(88, 31, 24);
+    cld.fillCircle(112, 38, 15);
+    cld.fillRoundedRect(24, 34, 92, 18, 9);
+    cld.fillStyle(0xffffff, 0.94);
+    cld.fillCircle(30, 30, 19);
+    cld.fillCircle(55, 21, 28);
+    cld.fillCircle(85, 25, 24);
+    cld.fillCircle(110, 34, 14);
+    cld.fillRoundedRect(22, 28, 90, 17, 8);
     cld.generateTexture('tex_cloud', 140, 60);
     cld.destroy();
   }
@@ -420,9 +539,16 @@ function generateCustomTextures(scene) {
 
   if (!scene.textures.exists('tex_trap')) {
     const trap = scene.make.graphics({ x: 0, y: 0, add: false });
-    trap.fillStyle(0x8e44ad, 1); trap.fillRect(0, 0, 200, 30);
-    trap.fillStyle(0x9b59b6, 1);
-    for (let i = 10; i < 200; i += 20) { trap.fillTriangle(i, 30, i + 10, 5, i + 20, 30); }
+    trap.fillStyle(0x2c3e50, 1);
+    trap.fillRoundedRect(0, 21, 200, 9, 3);
+    trap.fillStyle(0x8e44ad, 1);
+    trap.fillRect(0, 21, 200, 3);
+    for (let i = 6; i < 194; i += 18) {
+      trap.fillStyle(0x9b59b6, 1);
+      trap.fillTriangle(i, 23, i + 9, 2, i + 18, 23);
+      trap.fillStyle(0xd2b4de, 0.9);
+      trap.fillTriangle(i + 4, 22, i + 9, 4, i + 10, 22);
+    }
     trap.generateTexture('tex_trap', 200, 30); trap.destroy();
   }
 
@@ -653,11 +779,16 @@ function generateCustomTextures(scene) {
 
   if (!scene.textures.exists('tex_flag')) {
     const flag = scene.make.graphics({ x: 0, y: 0, add: false });
-    flag.fillStyle(0xbdc3c7, 1); flag.fillRect(8, 0, 6, 240);
-    flag.fillStyle(0xffffff, 1); flag.fillRect(14, 6, 30, 24);
-    flag.fillStyle(0x2c3e50, 1); flag.fillRect(14, 6, 15, 12);
-    flag.fillRect(29, 18, 15, 12);
-    flag.generateTexture('tex_flag', 50, 240); flag.destroy();
+    flag.fillStyle(0x95a5a6, 1); flag.fillRect(8, 10, 7, 230);
+    flag.fillStyle(0xecf0f1, 1); flag.fillRect(9, 10, 2.5, 230);
+    flag.fillStyle(0xf1c40f, 1); flag.fillCircle(11.5, 8, 6.5);
+    flag.lineStyle(1.5, 0xb7791f, 1); flag.strokeCircle(11.5, 8, 6.5);
+    flag.fillStyle(0xffffff, 1); flag.fillRoundedRect(15, 14, 34, 24, 3);
+    flag.fillStyle(0x2c3e50, 1);
+    flag.fillRect(15, 14, 11, 12); flag.fillRect(37, 14, 11, 12);
+    flag.fillRect(26, 26, 11, 12);
+    flag.lineStyle(1.5, 0xf1c40f, 1); flag.strokeRoundedRect(15, 14, 34, 24, 3);
+    flag.generateTexture('tex_flag', 52, 240); flag.destroy();
   }
 
   if (!scene.textures.exists('tex_gate_wall')) {
@@ -801,121 +932,196 @@ function generateCustomTextures(scene) {
 class SoundFX {
   constructor() {
     this.ctx = null;
+    this.masterGain = null;
+    this.compressor = null;
+    this.sfxBus = null;
+    this.bgmBus = null;
     this.isBgmPlaying = false;
     this.bgmTimer = null;
+    this.duckTimer = null;
     this.bgmStep = 0;
+    this.muted = false;
+    this.MASTER_NORMAL_GAIN = 1.25;
+    this.BGM_NORMAL_GAIN = 0.92;
+    this.BGM_DUCKED_GAIN = 0.30;
   }
 
   init() {
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      this.ctx = new AudioCtx();
+      if (AudioCtx) {
+        this.ctx = new AudioCtx();
+        this.compressor = this.ctx.createDynamicsCompressor();
+        this.compressor.threshold.setValueAtTime(-10, this.ctx.currentTime);
+        this.compressor.knee.setValueAtTime(16, this.ctx.currentTime);
+        this.compressor.ratio.setValueAtTime(5, this.ctx.currentTime);
+        this.compressor.attack.setValueAtTime(0.004, this.ctx.currentTime);
+        this.compressor.release.setValueAtTime(0.14, this.ctx.currentTime);
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(this.muted ? 0 : this.MASTER_NORMAL_GAIN, this.ctx.currentTime);
+
+        this.sfxBus = this.ctx.createGain();
+        this.sfxBus.gain.setValueAtTime(1.10, this.ctx.currentTime);
+
+        this.bgmBus = this.ctx.createGain();
+        this.bgmBus.gain.setValueAtTime(this.BGM_NORMAL_GAIN, this.ctx.currentTime);
+
+        this.sfxBus.connect(this.compressor);
+        this.bgmBus.connect(this.compressor);
+        this.compressor.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+      }
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      return this.ctx.resume().catch(() => {});
+    }
+    return Promise.resolve();
+  }
+
+  toggleMute() {
+    this.muted = !this.muted;
+    if (this.ctx && this.masterGain) {
+      const now = this.ctx.currentTime;
+      this.masterGain.gain.cancelScheduledValues(now);
+      this.masterGain.gain.setTargetAtTime(this.muted ? 0 : this.MASTER_NORMAL_GAIN, now, 0.02);
+    }
+    if (this.muted && 'speechSynthesis' in window) {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+    const btn = document.getElementById('audio-mute-btn');
+    if (btn) btn.textContent = this.muted ? '🔇 Muted' : '🔊 Sound';
+  }
+
+  duckBGM(isDucked) {
+    if (!this.ctx || !this.bgmBus) return;
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
+    const now = this.ctx.currentTime;
+    const target = isDucked ? this.BGM_DUCKED_GAIN : this.BGM_NORMAL_GAIN;
+    this.bgmBus.gain.cancelScheduledValues(now);
+    this.bgmBus.gain.setTargetAtTime(target, now, 0.05);
+    if (isDucked) {
+      this.duckTimer = setTimeout(() => this.duckBGM(false), 2500);
     }
   }
 
   playJump() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.connect(gain); gain.connect(this.sfxBus);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(220, now);
     osc.frequency.exponentialRampToValueAtTime(380, now + 0.06);
     osc.frequency.linearRampToValueAtTime(320, now + 0.12);
-    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.setValueAtTime(0.42, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
     osc.start(now); osc.stop(now + 0.12);
   }
 
   playDash() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.connect(gain); gain.connect(this.sfxBus);
     osc.type = 'sine';
     osc.frequency.setValueAtTime(520, now);
     osc.frequency.exponentialRampToValueAtTime(190, now + 0.11);
-    gain.gain.setValueAtTime(0.16, now);
+    gain.gain.setValueAtTime(0.38, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
     osc.start(now); osc.stop(now + 0.11);
   }
 
   playStar() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const freqs = [587.33, 880.00, 1318.51, 1760.00];
     freqs.forEach((freq, idx) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.connect(gain); gain.connect(this.sfxBus);
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-      gain.gain.setValueAtTime(0.12, now + idx * 0.05);
+      gain.gain.setValueAtTime(0.36, now + idx * 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.18);
       osc.start(now + idx * 0.05); osc.stop(now + idx * 0.05 + 0.18);
     });
   }
 
   playSuper() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const notes = [293.66, 440.00, 587.33, 880.00, 1174.66];
     notes.forEach((freq, i) => {
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.connect(gain); gain.connect(this.sfxBus);
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(freq, now + i * 0.04);
       osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + i * 0.04 + 0.3);
-      gain.gain.setValueAtTime(0.08, now + i * 0.04);
+      gain.gain.setValueAtTime(0.24, now + i * 0.04);
       gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.35);
       osc.start(now + i * 0.04); osc.stop(now + i * 0.04 + 0.35);
     });
   }
 
   playFireball() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.connect(gain); gain.connect(this.sfxBus);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(620, now);
     osc.frequency.exponentialRampToValueAtTime(140, now + 0.15);
-    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.setValueAtTime(0.44, now);
     gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
     osc.start(now); osc.stop(now + 0.15);
   }
 
   playSnakeBeam() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.connect(gain); gain.connect(this.sfxBus);
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(950, now);
     osc.frequency.linearRampToValueAtTime(220, now + 0.28);
-    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.setValueAtTime(0.34, now);
     gain.gain.exponentialRampToValueAtTime(0.005, now + 0.28);
     osc.start(now); osc.stop(now + 0.28);
   }
 
   playHit() {
+    if (this.muted) return;
     this.init();
+    if (!this.ctx) return;
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
-    osc.connect(gain); gain.connect(this.ctx.destination);
+    osc.connect(gain); gain.connect(this.sfxBus);
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(180, now);
     osc.frequency.exponentialRampToValueAtTime(40, now + 0.2);
-    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.setValueAtTime(0.50, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
     osc.start(now); osc.stop(now + 0.2);
   }
@@ -925,6 +1131,12 @@ class SoundFX {
     this.stopBGM();
     this.isBgmPlaying = true;
     this.bgmStep = 0;
+
+    if (this.ctx && this.bgmBus) {
+      const now = this.ctx.currentTime;
+      this.bgmBus.gain.cancelScheduledValues(now);
+      this.bgmBus.gain.setTargetAtTime(this.BGM_NORMAL_GAIN, now, 0.04);
+    }
 
     const stageLead = [293.66, 0, 369.99, 440.0, 587.33, 440.0, 369.99, 0, 329.63, 0, 392.0, 493.88, 440.0, 369.99, 329.63, 293.66];
     const stageBass = [146.83, 146.83, 146.83, 146.83, 196.0, 196.0, 196.0, 196.0, 220.0, 220.0, 220.0, 220.0, 146.83, 146.83, 146.83, 146.83];
@@ -937,7 +1149,7 @@ class SoundFX {
     const tempo = isBoss ? 160 : 210;
 
     this.bgmTimer = setInterval(() => {
-      if (!this.isBgmPlaying || !this.ctx) return;
+      if (!this.isBgmPlaying || !this.ctx || this.muted || this.ctx.state === 'suspended') return;
       const now = this.ctx.currentTime;
       const stepIdx = this.bgmStep % leadSeq.length;
 
@@ -945,10 +1157,10 @@ class SoundFX {
       if (leadFreq > 0) {
         const leadOsc = this.ctx.createOscillator();
         const leadGain = this.ctx.createGain();
-        leadOsc.connect(leadGain); leadGain.connect(this.ctx.destination);
-        leadOsc.type = isBoss ? 'sawtooth' : 'sine';
+        leadOsc.connect(leadGain); leadGain.connect(this.bgmBus);
+        leadOsc.type = isBoss ? 'sawtooth' : 'triangle';
         leadOsc.frequency.setValueAtTime(leadFreq, now);
-        leadGain.gain.setValueAtTime(isBoss ? 0.03 : 0.05, now);
+        leadGain.gain.setValueAtTime(isBoss ? 0.16 : 0.22, now);
         leadGain.gain.exponentialRampToValueAtTime(0.001, now + (tempo / 1000) * 0.85);
         leadOsc.start(now); leadOsc.stop(now + (tempo / 1000) * 0.85);
       }
@@ -957,10 +1169,10 @@ class SoundFX {
       if (bassFreq > 0) {
         const bassOsc = this.ctx.createOscillator();
         const bassGain = this.ctx.createGain();
-        bassOsc.connect(bassGain); bassGain.connect(this.ctx.destination);
+        bassOsc.connect(bassGain); bassGain.connect(this.bgmBus);
         bassOsc.type = 'triangle';
         bassOsc.frequency.setValueAtTime(bassFreq, now);
-        bassGain.gain.setValueAtTime(0.06, now);
+        bassGain.gain.setValueAtTime(0.26, now);
         bassGain.gain.exponentialRampToValueAtTime(0.001, now + (tempo / 1000) * 0.95);
         bassOsc.start(now); bassOsc.stop(now + (tempo / 1000) * 0.95);
       }
@@ -974,10 +1186,62 @@ class SoundFX {
       clearInterval(this.bgmTimer);
       this.bgmTimer = null;
     }
+    if (this.duckTimer) {
+      clearTimeout(this.duckTimer);
+      this.duckTimer = null;
+    }
+    if (this.ctx && this.bgmBus) {
+      const now = this.ctx.currentTime;
+      this.bgmBus.gain.cancelScheduledValues(now);
+      this.bgmBus.gain.setTargetAtTime(0.0001, now, 0.03);
+    }
   }
 }
 
 const sfx = new SoundFX();
+
+['pointerdown', 'keydown'].forEach((evtName) => {
+  window.addEventListener(evtName, () => {
+    if (sfx.ctx && sfx.ctx.state === 'suspended') {
+      sfx.ctx.resume().catch(() => {});
+    }
+  }, { capture: true, passive: true });
+});
+
+let cachedEnglishVoice = null;
+function loadPreferredEnglishVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (voices && voices.length > 0) {
+    cachedEnglishVoice = voices.find((v) =>
+      v.lang.startsWith('en') &&
+      (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen'))
+    ) || voices.find((v) => v.lang.startsWith('en-US')) || voices.find((v) => v.lang.startsWith('en')) || null;
+  }
+}
+if ('speechSynthesis' in window) {
+  loadPreferredEnglishVoice();
+  window.speechSynthesis.onvoiceschanged = loadPreferredEnglishVoice;
+}
+
+function speakEnglishAudio(text) {
+  if (sfx.muted || !('speechSynthesis' in window) || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(String(text));
+    utterance.lang = 'en-US';
+    utterance.volume = 1.0;
+    utterance.rate = 0.9;
+    if (!cachedEnglishVoice) loadPreferredEnglishVoice();
+    if (cachedEnglishVoice) utterance.voice = cachedEnglishVoice;
+    sfx.duckBGM(true);
+    utterance.onend = () => sfx.duckBGM(false);
+    utterance.onerror = () => sfx.duckBGM(false);
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    sfx.duckBGM(false);
+  }
+}
 
 // ===================================================
 // 0.8 TIER PROGRESS & CERTIFICATE GENERATOR
@@ -1136,7 +1400,7 @@ class CertificateManager {
     // Student Name
     ctx.fillStyle = '#2d3436';
     ctx.font = 'bold 52px Georgia, serif';
-    ctx.fillText(cleanName, 600, 335);
+    ctx.fillText(cleanName, 600, 335, 760);
 
     ctx.strokeStyle = '#1e3799';
     ctx.lineWidth = 2;
@@ -2113,17 +2377,21 @@ class MenuScene extends Phaser.Scene {
   create() {
     generateCustomTextures(this);
     this.cameras.main.setBackgroundColor('#74b9ff');
+    this.add.image(400, 225, 'tex_sky_bg').setDepth(-30);
+    this.add.tileSprite(400, 360, 800, 180, 'tex_hills_far').setAlpha(0.75).setDepth(-20);
+    this.add.tileSprite(400, 395, 800, 140, 'tex_hills_near').setAlpha(0.85).setDepth(-15);
     sfx.startBGM(false);
 
+    this.menuClouds = [];
     for (let i = 0; i < 8; i++) {
-      const cx = Phaser.Math.Between(-100, 900);
-      const cy = Phaser.Math.Between(20, 350);
-      const cld = this.add.image(cx, cy, 'tex_cloud').setScale(Phaser.Math.FloatBetween(0.8, 1.5)).setAlpha(0.6);
-      this.tweens.add({
-        targets: cld, x: 950,
-        duration: Phaser.Math.Between(40000, 80000),
-        repeat: -1, yoyo: false
-      });
+      const cx = Phaser.Math.Between(-80, 840);
+      const cy = Phaser.Math.Between(24, 240);
+      const cld = this.add.image(cx, cy, 'tex_cloud')
+        .setScale(Phaser.Math.FloatBetween(0.7, 1.3))
+        .setAlpha(0.72)
+        .setDepth(-10);
+      cld._driftSpeed = Phaser.Math.FloatBetween(10, 24);
+      this.menuClouds.push(cld);
     }
 
     this.userData = { level: null, skill: null, avatar: null, stage: 1, stars: 0 };
@@ -2133,6 +2401,16 @@ class MenuScene extends Phaser.Scene {
     this.createSkillScreen();
     this.createAvatarScreen();
     this.showScreen('title');
+  }
+
+  update(time, delta) {
+    if (this.menuClouds) {
+      const dt = delta / 1000;
+      this.menuClouds.forEach((cld) => {
+        cld.x += cld._driftSpeed * dt;
+        if (cld.x > 900) cld.x = -100;
+      });
+    }
   }
 
   showScreen(screenName) {
@@ -2368,14 +2646,30 @@ class GameScene extends Phaser.Scene {
 
   create() {
     generateCustomTextures(this);
-    this.cameras.main.setBackgroundColor('#81ecec');
+    this.cameras.main.setBackgroundColor(this.isBossFight ? '#191438' : '#81ecec');
+    this.add.image(400, 225, this.isBossFight ? 'tex_sky_boss' : 'tex_sky_bg').setScrollFactor(0).setDepth(-40);
+    if (!this.isBossFight) {
+      this.bgHillsFar = this.add.tileSprite(400, 345, 800, 180, 'tex_hills_far').setScrollFactor(0).setAlpha(0.65).setDepth(-30);
+      this.bgHillsNear = this.add.tileSprite(400, 382, 800, 140, 'tex_hills_near').setScrollFactor(0).setAlpha(0.82).setDepth(-25);
+    }
+
+    this.activeRecognition = null;
+    this._superKeyHandler = null;
+    this._fireKeyHandler = null;
+    this.events.once('shutdown', () => {
+      this.clearModal();
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+      sfx.duckBGM(false);
+    });
 
     this.clouds = [];
     for (let i = 0; i < 20; i++) {
       const cx = Phaser.Math.Between(0, 3800);
-      const cy = Phaser.Math.Between(20, 250);
-      const scale = Phaser.Math.FloatBetween(0.6, 1.2);
-      const cloud = this.add.image(cx, cy, 'tex_cloud').setScale(scale).setScrollFactor(scale * 0.3);
+      const cy = Phaser.Math.Between(20, 210);
+      const scale = Phaser.Math.FloatBetween(0.6, 1.15);
+      const cloud = this.add.image(cx, cy, 'tex_cloud').setScale(scale).setAlpha(this.isBossFight ? 0.28 : 0.82).setScrollFactor(scale * 0.3).setDepth(-20);
       this.clouds.push(cloud);
     }
 
@@ -3308,9 +3602,13 @@ const addElevatedCatwalk = (x, y, w) => {
     bg.on('pointerover', () => { bg.fillColor = 0xf1c40f; container.setScale(1.05); });
     bg.on('pointerout', () => { bg.fillColor = 0xf39c12; container.setScale(1.0); });
 
-    this.input.keyboard.on('keydown-S', () => {
-      if (this.stars >= 3 && !this.isSuper) activateSuper();
-    });
+    if (this._superKeyHandler) {
+      this.input.keyboard.off('keydown-S', this._superKeyHandler);
+    }
+    this._superKeyHandler = () => {
+      if (this.stars >= 3 && !this.isSuper && !this.isQuizActive) activateSuper();
+    };
+    this.input.keyboard.on('keydown-S', this._superKeyHandler);
   }
 
   activateSuper() {
@@ -3589,6 +3887,7 @@ const addElevatedCatwalk = (x, y, w) => {
 
       if (this.boss) {
         this.physics.add.overlap(fb, this.boss, (fireball) => {
+          if (this.bossState === 'burrow') return;
           fireball.destroy();
           if (!this.bossActive || this.bossHp <= 0 || this.isQuizActive || this.bossIsComplimenting) return;
           this.handleBossHit();
@@ -3602,9 +3901,13 @@ const addElevatedCatwalk = (x, y, w) => {
     bg.on('pointerover', () => { bg.fillColor = 0xff7675; container.setScale(1.05); });
     bg.on('pointerout', () => { bg.fillColor = 0xe74c3c; container.setScale(1.0); });
 
-    this.input.keyboard.on('keydown-F', () => {
-      if (this.hasFireball) triggerFire();
-    });
+    if (this._fireKeyHandler) {
+      this.input.keyboard.off('keydown-F', this._fireKeyHandler);
+    }
+    this._fireKeyHandler = () => {
+      if (this.hasFireball && !this.isQuizActive) triggerFire();
+    };
+    this.input.keyboard.on('keydown-F', this._fireKeyHandler);
   }
 
   resetPlayer() {
@@ -3686,8 +3989,17 @@ const addElevatedCatwalk = (x, y, w) => {
   }
 
   clearModal() {
+    if (this.activeRecognition) {
+      try { this.activeRecognition.abort(); } catch (e) {}
+      this.activeRecognition = null;
+    }
     this.modalElements.forEach((el) => { if (el && el.destroy) el.destroy(); });
     this.modalElements = [];
+    const writingInput = document.getElementById('quiz-writing-input');
+    if (writingInput) {
+      writingInput.blur();
+      writingInput.style.display = 'none';
+    }
   }
 
   // Creates & manages the Mandarin hint element (hidden until 1st failed attempt)
@@ -3777,14 +4089,13 @@ const addElevatedCatwalk = (x, y, w) => {
     this.modalElements.push(title, feedback);
     const hintLabel = this.createMandarinHintDisplay(q, 352);
 
-    this.createDirectQuizButton(400, 152, 160, 42, '🔊 Play Audio', null, () => {
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(q.audio);
-        utterance.lang = 'en-US'; utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-        feedback.setText('Playing...'); feedback.setColor('#00d2d3');
-      }
-    });
+    const playAudioFn = () => {
+      speakEnglishAudio(q.audio);
+      feedback.setText('🔊 Playing audio...');
+      feedback.setColor('#00d2d3');
+    };
+    this.createDirectQuizButton(400, 152, 170, 42, '🔊 Play Audio', null, playAudioFn);
+    this.time.delayedCall(180, playAudioFn);
 
     const isLeftCorrect = Math.random() > 0.5;
     const handleCorrect = () => {
@@ -3815,59 +4126,120 @@ const addElevatedCatwalk = (x, y, w) => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         feedback.setText('❌ Speech recognition not supported in this browser.');
+        feedback.setColor('#ff7675');
         return;
       }
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.onstart = () => { feedback.setText('Listening... Speak now!'); feedback.setColor('#00d2d3'); };
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        const normalized = normalizeSpeech(transcript);
-        const isCorrect = q.ans.some(answer => normalizeSpeech(answer) === normalized);
-        if (isCorrect) {
-          if (block) block.qData = null;
-          feedback.setText(`Heard: "${transcript}" — Good job! 🎉`); feedback.setColor('#2ecc71');
-          this.time.delayedCall(800, () => {
-            this.clearModal(); this.isQuizActive = false;
-            if (this.player.body) this.player.body.allowGravity = !this.isSuper;
-            this.unfreezeEnemies();
-            if (onCorrect) onCorrect();
-          });
-        } else {
-          this.handleQuizWrongAttempt(q, feedback, hintLabel, `Heard: "${transcript}" — Try again!`, onWrong, block);
+      try {
+        if (this.activeRecognition) {
+          try { this.activeRecognition.abort(); } catch (e) {}
         }
-      };
-      recognition.start();
+        const recognition = new SpeechRecognition();
+        this.activeRecognition = recognition;
+        recognition.lang = 'en-US';
+        recognition.onstart = () => {
+          if (!this.isQuizActive) return;
+          feedback.setText('🎧 Listening... Speak now!');
+          feedback.setColor('#00d2d3');
+        };
+        recognition.onresult = (event) => {
+          this.activeRecognition = null;
+          if (!this.isQuizActive) return;
+          const transcript = event.results[0][0].transcript || '';
+          const normalized = normalizeSpeech(transcript);
+          const isCorrect = normalized.length > 0 && q.ans.some(answer => normalizeSpeech(answer) === normalized || normalized.includes(normalizeSpeech(answer)));
+          if (isCorrect) {
+            if (block) block.qData = null;
+            feedback.setText(`Heard: "${transcript}" — Good job! 🎉`);
+            feedback.setColor('#2ecc71');
+            this.time.delayedCall(800, () => {
+              this.clearModal(); this.isQuizActive = false;
+              if (this.player.body) this.player.body.allowGravity = !this.isSuper;
+              this.unfreezeEnemies();
+              if (onCorrect) onCorrect();
+            });
+          } else {
+            this.handleQuizWrongAttempt(q, feedback, hintLabel, `Heard: "${transcript || '(no speech)'}" — Try again!`, onWrong, block);
+          }
+        };
+        recognition.onerror = () => {
+          this.activeRecognition = null;
+          if (!this.isQuizActive) return;
+          feedback.setText('⚠️ Microphone unavailable or blocked. Please check browser mic permissions.');
+          feedback.setColor('#ffbe76');
+        };
+        recognition.start();
+      } catch (e) {
+        this.activeRecognition = null;
+        feedback.setText('⚠️ Could not start microphone. Please try again.');
+        feedback.setColor('#ffbe76');
+      }
     });
   }
 
   buildWritingQuiz(q, block, onCorrect, onWrong) {
-    const title = this.add.text(400, 110, q.p, { fontSize: '20px', fontWeight: 'bold', color: '#ffffff', align: 'center', wordWrap: { width: 500 } }).setOrigin(0.5).setScrollFactor(0).setDepth(352);
-    const feedback = this.add.text(400, 295, 'Click below to type.', { fontSize: '15px', color: '#8395a7', align: 'center', wordWrap: { width: 480 } }).setOrigin(0.5).setScrollFactor(0).setDepth(352);
+    const title = this.add.text(400, 102, q.p, { fontSize: '19px', fontWeight: 'bold', color: '#ffffff', align: 'center', wordWrap: { width: 500 } }).setOrigin(0.5).setScrollFactor(0).setDepth(352);
+    const feedback = this.add.text(400, 304, 'Type your answer below and press Enter or Submit.', { fontSize: '14px', color: '#8395a7', align: 'center', wordWrap: { width: 480 } }).setOrigin(0.5).setScrollFactor(0).setDepth(352);
     this.modalElements.push(title, feedback);
     const hintLabel = this.createMandarinHintDisplay(q, 352);
 
-    this.createDirectQuizButton(400, 208, 200, 66, '⌨️ Type Answer', null, () => {
-      this.time.delayedCall(50, () => {
-        const userInput = window.prompt("Type your answer:");
-        if (userInput === null) return;
-        const normalizedInput = normalizeSpeech(userInput);
-        const acceptList = Array.isArray(q.ans) ? q.ans : (q.c ? [q.c] : []);
-        const isCorrect = acceptList.some(answer => normalizeSpeech(answer) === normalizedInput);
-        if (isCorrect) {
-          if (block) block.qData = null;
-          feedback.setText(`You typed: "${userInput}" — Excellent! 🎉`); feedback.setColor('#2ecc71');
-          this.time.delayedCall(800, () => {
-            this.clearModal(); this.isQuizActive = false;
-            if (this.player.body) this.player.body.allowGravity = !this.isSuper;
-            this.unfreezeEnemies();
-            if (onCorrect) onCorrect();
-          });
-        } else {
-          this.handleQuizWrongAttempt(q, feedback, hintLabel, `You typed: "${userInput}" — Check spelling & try again.`, onWrong, block);
-        }
-      });
+    let inputEl = document.getElementById('quiz-writing-input');
+    if (!inputEl) {
+      inputEl = document.createElement('input');
+      inputEl.id = 'quiz-writing-input';
+      inputEl.type = 'text';
+      inputEl.autocomplete = 'off';
+      document.body.appendChild(inputEl);
+    }
+    inputEl.value = '';
+    inputEl.placeholder = 'Type your answer...';
+    inputEl.style.cssText = 'position:fixed;top:46%;left:50%;transform:translate(-50%,-50%);z-index:999;width:260px;padding:9px 14px;border:3px solid #00d2d3;border-radius:10px;font-size:18px;font-weight:bold;color:#2d3436;background:#ffffff;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.5);outline:none;';
+    inputEl.style.display = 'block';
+
+    ['keydown', 'keyup', 'keypress'].forEach((evtType) => {
+      inputEl[`on${evtType}`] = (e) => { e.stopPropagation(); };
     });
+
+    const cleanupInput = () => {
+      if (inputEl) {
+        inputEl.blur();
+        inputEl.style.display = 'none';
+      }
+    };
+    this.modalElements.push({ destroy: cleanupInput });
+
+    setTimeout(() => {
+      if (inputEl && inputEl.style.display !== 'none') inputEl.focus();
+    }, 80);
+
+    const checkAnswer = () => {
+      const userInput = inputEl.value.trim();
+      if (!userInput) return;
+      const normalizedInput = normalizeSpeech(userInput);
+      const acceptList = Array.isArray(q.ans) ? q.ans : (q.c ? [q.c] : []);
+      const isCorrect = acceptList.some(answer => normalizeSpeech(answer) === normalizedInput);
+      if (isCorrect) {
+        cleanupInput();
+        if (block) block.qData = null;
+        speakEnglishAudio(userInput);
+        feedback.setText(`You typed: "${userInput}" — Excellent! 🎉`);
+        feedback.setColor('#2ecc71');
+        this.time.delayedCall(800, () => {
+          this.clearModal(); this.isQuizActive = false;
+          if (this.player.body) this.player.body.allowGravity = !this.isSuper;
+          this.unfreezeEnemies();
+          if (onCorrect) onCorrect();
+        });
+      } else {
+        this.handleQuizWrongAttempt(q, feedback, hintLabel, `You typed: "${userInput}" — Check spelling & try again.`, onWrong, block);
+      }
+    };
+
+    inputEl.onkeydown = (e) => {
+      e.stopPropagation();
+      if (e.key === 'Enter') checkAnswer();
+    };
+
+    this.createDirectQuizButton(400, 250, 195, 48, '✅ Submit Answer', null, checkAnswer);
   }
 
   createDirectQuizButton(x, y, width, height, text, imageKey, onClick, depth = 353) {
@@ -3916,7 +4288,7 @@ const addElevatedCatwalk = (x, y, w) => {
     const sub = this.add.text(400, 192, `Question Boxes Cleared in ${this.level}: ${stats.cleared} / ${stats.total}`, { fontSize: '14px', color: '#f1c40f' }).setOrigin(0.5).setScrollFactor(0).setDepth(352);
     this.modalElements.push(overlay, box, title, sub);
     sfx.stopBGM();
-    sfx.startBGM(this.isBossFight);
+    sfx.playStar();
 
     if (this.stage < this.maxStages) {
       this.createDirectQuizButton(290, 270, 180, 52, '⏭ Next Stage', null, () => {
@@ -4238,6 +4610,8 @@ updateBossAI(time, delta) {
   }
 
   update(time, delta) {
+    if (this.bgHillsFar) this.bgHillsFar.tilePositionX = this.cameras.main.scrollX * 0.14;
+    if (this.bgHillsNear) this.bgHillsNear.tilePositionX = this.cameras.main.scrollX * 0.34;
     if (this.isQuizActive || this.levelCompleted) {
       this.player.setVelocityX(0);
       if (!this.isSuper) this.player.setVelocityY(0);
@@ -4325,7 +4699,7 @@ updateBossAI(time, delta) {
     }
 
     // --- SMOOTH WALL JUMPING & BOX DISMOUNT (NO STICKING) ---
-    const jumpJustPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.wasd.up);
+    const jumpJustPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.cursors.space) || Phaser.Input.Keyboard.JustDown(this.wasd.up);
     if (jumpJustPressed && !this.player.isLaunched) {
       if (onGround) {
         this.player.setVelocityY(-400);
@@ -4477,6 +4851,11 @@ const config = {
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
+  },
+  render: {
+    antialias: true,
+    antialiasGL: true,
+    roundPixels: false
   },
   physics: {
     default: 'arcade',
