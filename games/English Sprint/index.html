@@ -2,10 +2,10 @@
 <html lang="zh-Hant-TW">
 <head>
   <script data-goatcounter="https://tlcp-games.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+        async src="https://gc.zgo.at/count.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>English Sprint — Pre-A1 Edition (英語跑酷</title>
+  <title>English Sprint — Pre-A1 Edition (英語跑酷)</title>
   <style>
     :root {
       --gold: #f1c40f;
@@ -670,6 +670,7 @@
       <div class="hud-pill" id="hud-lives">❤️❤️❤️</div>
       <div class="hud-pill" id="hud-score">🪙 0</div>
       <div class="hud-pill" id="hud-time">⏱️ 00:00</div>
+      <button class="hud-pill" id="hud-audio-btn" style="cursor: pointer;" title="切換音樂與音效 Toggle Sound">🔊</button>
       <button class="hud-btn" id="hud-menu-btn">🏠 主選單 Menu</button>
     </div>
 
@@ -699,7 +700,7 @@
     <div class="overlay-screen" id="menu-screen" style="display: flex;">
       <div class="modal-card">
         <span class="title-badge">CEFR PRE-A1 EDITION • 幼兒與兒童初級英語跑酷</span>
-        <h1 class="game-title">🏛️ ENGLISH Sprint• 英語大冒險</h1>
+        <h1 class="game-title">🏛️ ENGLISH SPRINT • 英語大冒險</h1>
         <p class="game-subtitle">
           左右切換跑道、跳過地面尖刺圓木、滑行鑽過雕刻石門！每 8 秒穿越「知識石門」，限時 10 秒作答！
         </p>
@@ -750,7 +751,6 @@
             <span>←</span>
             <span>TLCP@Games</span>
           </a>
-        </div>
         </div>
       </div>
     </div>
@@ -1223,19 +1223,171 @@
         g.arc(66, 50, 22, 0, Math.PI * 2);
         g.fill();
         g.stroke();
-      } else {
+      } else if (word === "star") {
+        const sg = g.createRadialGradient(60, 44, 4, 66, 52, 34);
+        sg.addColorStop(0, "#fff9c4");
+        sg.addColorStop(0.55, "#f1c40f");
+        sg.addColorStop(1, "#e67e22");
+        g.fillStyle = sg;
+        g.strokeStyle = "#9c640c";
+        g.lineWidth = 2.6;
+        g.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? 34 : 15;
+          const a = -Math.PI / 2 + (i * Math.PI) / 5;
+          const px = 66 + Math.cos(a) * r;
+          const py = 52 + Math.sin(a) * r;
+          if (i === 0) g.moveTo(px, py);
+          else g.lineTo(px, py);
+        }
+        g.closePath();
+        g.fill();
+        g.stroke();
+        g.fillStyle = "#2d3436";
+        g.beginPath();
+        g.arc(59, 50, 2.5, 0, Math.PI * 2);
+        g.arc(73, 50, 2.5, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = "#2d3436";
+        g.lineWidth = 2;
+        g.beginPath();
+        g.arc(66, 54, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+        g.stroke();
+      } else if (word === "cake") {
+        g.fillStyle = "#ff9ff3";
+        g.strokeStyle = "#c44569";
+        g.lineWidth = 2.4;
+        g.beginPath();
+        g.roundRect(36, 48, 60, 32, 7);
+        g.fill();
+        g.stroke();
         g.fillStyle = "#ffffff";
+        g.beginPath();
+        g.moveTo(36, 54);
+        for (let x = 36; x <= 96; x += 12) {
+          g.quadraticCurveTo(x + 6, 62, x + 12, 54);
+        }
+        g.lineTo(96, 48);
+        g.lineTo(36, 48);
+        g.closePath();
+        g.fill();
+        g.fillStyle = "#74b9ff";
+        g.fillRect(62, 26, 8, 22);
+        g.fillStyle = "#f39c12";
+        g.beginPath();
+        g.moveTo(66, 12);
+        g.quadraticCurveTo(73, 21, 66, 26);
+        g.quadraticCurveTo(59, 21, 66, 12);
+        g.fill();
+      } else if (word === "milk" || word === "water") {
+        const isMilk = word === "milk";
+        g.fillStyle = isMilk ? "#ffffff" : "#dff9fb";
+        g.strokeStyle = "#0984e3";
+        g.lineWidth = 2.6;
+        g.beginPath();
+        g.roundRect(45, 32, 42, 52, 6);
+        g.fill();
+        g.stroke();
+        g.fillStyle = isMilk ? "#74b9ff" : "#00cec9";
+        g.beginPath();
+        g.moveTo(45, 32);
+        g.lineTo(54, 18);
+        g.lineTo(78, 18);
+        g.lineTo(87, 32);
+        g.closePath();
+        g.fill();
+        g.stroke();
+        g.fillStyle = isMilk ? "#0984e3" : "#00a8ff";
+        g.beginPath();
+        g.moveTo(66, 44);
+        g.quadraticCurveTo(78, 60, 66, 70);
+        g.quadraticCurveTo(54, 60, 66, 44);
+        g.fill();
+      } else if (word === "cat" || word === "dog") {
+        const isCat = word === "cat";
+        g.fillStyle = isCat ? "#ffa94d" : "#d49b6a";
+        g.strokeStyle = isCat ? "#a04000" : "#6f4518";
+        g.lineWidth = 2.4;
+        if (isCat) {
+          g.beginPath();
+          g.moveTo(42, 42); g.lineTo(36, 18); g.lineTo(56, 30); g.closePath(); g.fill(); g.stroke();
+          g.beginPath();
+          g.moveTo(90, 42); g.lineTo(96, 18); g.lineTo(76, 30); g.closePath(); g.fill(); g.stroke();
+        } else {
+          g.fillStyle = "#6f4518";
+          g.beginPath();
+          g.ellipse(38, 52, 9, 20, 0.25, 0, Math.PI * 2);
+          g.ellipse(94, 52, 9, 20, -0.25, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = "#d49b6a";
+        }
+        g.beginPath();
+        g.arc(66, 54, 26, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
+        g.fillStyle = "#fff4e6";
+        g.beginPath();
+        g.ellipse(66, 63, 12, 9, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = "#2d3436";
+        g.beginPath();
+        g.arc(56, 48, 3.6, 0, Math.PI * 2);
+        g.arc(76, 48, 3.6, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = isCat ? "#ff7675" : "#2d3436";
+        g.beginPath();
+        g.arc(66, 58, 3.5, 0, Math.PI * 2);
+        g.fill();
+      } else if (word === "ball") {
+        const bg = g.createRadialGradient(56, 38, 5, 66, 50, 32);
+        bg.addColorStop(0, "#ffffff");
+        bg.addColorStop(0.7, "#dfe6e9");
+        bg.addColorStop(1, "#636e72");
+        g.fillStyle = bg;
+        g.strokeStyle = "#2d3436";
+        g.lineWidth = 2.6;
+        g.beginPath();
+        g.arc(66, 50, 31, 0, Math.PI * 2);
+        g.fill();
+        g.stroke();
+        g.fillStyle = "#2d3436";
+        g.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
+          const px = 66 + Math.cos(a) * 11;
+          const py = 50 + Math.sin(a) * 11;
+          if (i === 0) g.moveTo(px, py); else g.lineTo(px, py);
+        }
+        g.closePath();
+        g.fill();
+      } else {
+        // Upgraded gilded illustrated medallion card
+        const cardGrad = g.createLinearGradient(22, 10, 110, 90);
+        cardGrad.addColorStop(0, "#fffdf5");
+        cardGrad.addColorStop(1, "#e8f8f5");
+        g.fillStyle = cardGrad;
         g.strokeStyle = "#d4af37";
         g.lineWidth = 3;
         g.beginPath();
-        g.roundRect(22, 10, 88, 80, 14);
+        g.roundRect(20, 9, 92, 82, 16);
         g.fill();
         g.stroke();
 
-        g.font = '54px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+        g.strokeStyle = "rgba(0, 206, 201, 0.35)";
+        g.lineWidth = 1.5;
+        g.beginPath();
+        g.roundRect(25, 14, 82, 72, 12);
+        g.stroke();
+
+        g.save();
+        g.shadowColor = "rgba(0, 0, 0, 0.18)";
+        g.shadowBlur = 6;
+        g.shadowOffsetY = 3;
+        g.font = '52px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
         g.textAlign = "center";
         g.textBaseline = "middle";
         g.fillText(item.icon || "🌟", w / 2, h / 2 + 2);
+        g.restore();
       }
 
       g.restore();
@@ -1247,21 +1399,83 @@
     class SoundEngine {
       constructor() {
         this.ctx = null;
+        this.masterGain = null;
+        this.compressor = null;
+        this.sfxBus = null;
+        this.bgmBus = null;
         this.bgmInterval = null;
+        this.duckTimer = null;
         this.bgmStep = 0;
+        this.muted = false;
+        this.BGM_NORMAL_GAIN = 0.92;
+        this.BGM_DUCKED_GAIN = 0.34;
+        this.MASTER_NORMAL_GAIN = 1.25;
       }
 
       init() {
         if (!this.ctx) {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          if (AudioCtx) this.ctx = new AudioCtx();
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+            this.compressor = this.ctx.createDynamicsCompressor();
+            this.compressor.threshold.setValueAtTime(-10, this.ctx.currentTime);
+            this.compressor.knee.setValueAtTime(16, this.ctx.currentTime);
+            this.compressor.ratio.setValueAtTime(5, this.ctx.currentTime);
+            this.compressor.attack.setValueAtTime(0.004, this.ctx.currentTime);
+            this.compressor.release.setValueAtTime(0.14, this.ctx.currentTime);
+
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.gain.setValueAtTime(this.muted ? 0 : this.MASTER_NORMAL_GAIN, this.ctx.currentTime);
+
+            this.sfxBus = this.ctx.createGain();
+            this.sfxBus.gain.setValueAtTime(1.10, this.ctx.currentTime);
+
+            this.bgmBus = this.ctx.createGain();
+            this.bgmBus.gain.setValueAtTime(this.BGM_NORMAL_GAIN, this.ctx.currentTime);
+
+            this.sfxBus.connect(this.compressor);
+            this.bgmBus.connect(this.compressor);
+            this.compressor.connect(this.masterGain);
+            this.masterGain.connect(this.ctx.destination);
+          }
         }
         if (this.ctx && this.ctx.state === "suspended") {
-          this.ctx.resume();
+          return this.ctx.resume().catch(() => {});
+        }
+        return Promise.resolve();
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        if (this.ctx && this.masterGain) {
+          const now = this.ctx.currentTime;
+          this.masterGain.gain.cancelScheduledValues(now);
+          this.masterGain.gain.setTargetAtTime(this.muted ? 0 : this.MASTER_NORMAL_GAIN, now, 0.02);
+        }
+        if (this.muted && "speechSynthesis" in window) {
+          try { window.speechSynthesis.cancel(); } catch (e) {}
+        }
+        const btn = document.getElementById("hud-audio-btn");
+        if (btn) btn.textContent = this.muted ? "🔇" : "🔊";
+      }
+
+      duckBGM(isDucked) {
+        if (!this.ctx || !this.bgmBus) return;
+        if (this.duckTimer) {
+          clearTimeout(this.duckTimer);
+          this.duckTimer = null;
+        }
+        const now = this.ctx.currentTime;
+        const target = isDucked ? this.BGM_DUCKED_GAIN : this.BGM_NORMAL_GAIN;
+        this.bgmBus.gain.cancelScheduledValues(now);
+        this.bgmBus.gain.setTargetAtTime(target, now, 0.05);
+        if (isDucked) {
+          this.duckTimer = setTimeout(() => this.duckBGM(false), 2500);
         }
       }
 
-      playTone(freq, endFreq, duration, type = "sine", gainVal = 0.14) {
+      playTone(freq, endFreq, duration, type = "sine", gainVal = 0.38, bus = "sfx") {
+        if (this.muted) return;
         this.init();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
@@ -1275,51 +1489,115 @@
         gain.gain.setValueAtTime(gainVal, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(bus === "bgm" ? this.bgmBus : this.sfxBus);
         osc.start(now);
         osc.stop(now + duration);
       }
 
       playCoin() {
-        this.playTone(880, 1318.5, 0.11, "sine", 0.12);
+        this.playTone(880, 1318.5, 0.11, "sine", 0.38);
       }
 
       playJump() {
-        this.playTone(240, 480, 0.14, "triangle", 0.16);
+        this.playTone(240, 480, 0.14, "triangle", 0.42);
       }
 
       playSlide() {
-        this.playTone(420, 180, 0.13, "sine", 0.14);
+        this.playTone(420, 180, 0.13, "sine", 0.38);
       }
 
       playLaneSwitch() {
-        this.playTone(340, 420, 0.06, "sine", 0.08);
+        this.playTone(340, 420, 0.06, "sine", 0.28);
       }
 
       playGateSuccess() {
         [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
-          setTimeout(() => this.playTone(f, f * 1.02, 0.14, "triangle", 0.15), idx * 55);
+          setTimeout(() => this.playTone(f, f * 1.02, 0.14, "triangle", 0.44), idx * 55);
         });
       }
 
       playCrash() {
-        this.playTone(160, 45, 0.3, "sawtooth", 0.24);
+        this.playTone(160, 45, 0.3, "sawtooth", 0.45);
+      }
+
+      playTaikoHit(isAccent) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(isAccent ? 132 : 98, now);
+        osc.frequency.exponentialRampToValueAtTime(42, now + 0.16);
+        gain.gain.setValueAtTime(isAccent ? 0.28 : 0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+        osc.connect(gain);
+        gain.connect(this.bgmBus);
+        osc.start(now);
+        osc.stop(now + 0.18);
       }
 
       startBGM() {
-        this.init();
         this.stopBGM();
-        const notes = [261.63, 329.63, 392.00, 329.63, 293.66, 349.23, 440.00, 349.23];
-        this.bgmStep = 0;
-        this.bgmInterval = setInterval(() => {
-          if (!this.ctx || game.state !== "RUNNING") return;
-          const f = notes[this.bgmStep % notes.length];
-          this.playTone(f, f, 0.12, "sine", 0.032);
-          if (this.bgmStep % 2 === 0) {
-            this.playTone(f / 2, f / 2, 0.15, "triangle", 0.038);
+        this.init().then(() => {
+          if (game.state !== "RUNNING") return;
+          if (this.ctx && this.bgmBus) {
+            const now = this.ctx.currentTime;
+            this.bgmBus.gain.cancelScheduledValues(now);
+            this.bgmBus.gain.setTargetAtTime(this.BGM_NORMAL_GAIN, now, 0.04);
           }
-          this.bgmStep++;
-        }, 230);
+          // Original upbeat East Asian pentatonic runner theme (C D E G A)
+          const leadMelody = [
+            523.25, 0,      659.25, 587.33, 523.25, 440.00, 392.00, 0,
+            440.00, 523.25, 587.33, 659.25, 783.99, 659.25, 587.33, 0,
+            783.99, 0,      880.00, 783.99, 659.25, 587.33, 523.25, 440.00,
+            392.00, 440.00, 523.25, 587.33, 659.25, 587.33, 523.25, 0
+          ];
+          const bassLine = [
+            130.81, 196.00, 130.81, 196.00, 110.00, 164.81, 110.00, 164.81,
+            146.83, 220.00, 146.83, 220.00, 196.00, 293.66, 196.00, 146.83
+          ];
+          const padChords = [
+            [261.63, 329.63, 392.00], // C5/maj
+            [220.00, 261.63, 329.63], // Am
+            [293.66, 392.00, 440.00], // Dsus4
+            [196.00, 293.66, 392.00]  // G5
+          ];
+          this.bgmStep = 0;
+          this.bgmInterval = setInterval(() => {
+            if (!this.ctx || game.state !== "RUNNING" || this.muted) return;
+            const step = this.bgmStep;
+
+            // Plucked koto/guzheng-style pentatonic lead (fundamental + soft octave shimmer)
+            const leadFreq = leadMelody[step % leadMelody.length];
+            if (leadFreq > 0) {
+              this.playTone(leadFreq, leadFreq, 0.22, "triangle", 0.22, "bgm");
+              this.playTone(leadFreq * 2, leadFreq * 2, 0.10, "sine", 0.06, "bgm");
+            }
+
+            // Rolling shamisen-style bass pulse every 2 steps
+            if (step % 2 === 0) {
+              const bFreq = bassLine[Math.floor(step / 2) % bassLine.length];
+              this.playTone(bFreq, bFreq, 0.22, "triangle", 0.24, "bgm");
+            }
+
+            // Soft warm pentatonic harmony pad every 8 steps
+            if (step % 8 === 0) {
+              const chord = padChords[Math.floor(step / 8) % padChords.length];
+              chord.forEach((cf) => {
+                this.playTone(cf, cf, 1.35, "sine", 0.085, "bgm");
+              });
+            }
+
+            // Energetic taiko drum pulse
+            if (step % 4 === 0) {
+              this.playTaikoHit(step % 8 === 0);
+            } else if (step % 8 === 6) {
+              this.playTaikoHit(false);
+            }
+
+            this.bgmStep++;
+          }, 195);
+        });
       }
 
       stopBGM() {
@@ -1327,22 +1605,55 @@
           clearInterval(this.bgmInterval);
           this.bgmInterval = null;
         }
+        if (this.duckTimer) {
+          clearTimeout(this.duckTimer);
+          this.duckTimer = null;
+        }
+        if (this.ctx && this.bgmBus) {
+          const now = this.ctx.currentTime;
+          this.bgmBus.gain.cancelScheduledValues(now);
+          this.bgmBus.gain.setTargetAtTime(0.0001, now, 0.03);
+        }
       }
     }
 
     const sfx = new SoundEngine();
 
+    let cachedEnglishVoice = null;
+    function loadEnglishVoice() {
+      if (!("speechSynthesis" in window)) return;
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        cachedEnglishVoice = voices.find((v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha") || v.name.includes("Daniel") || v.name.includes("Karen"))
+        ) || voices.find((v) => v.lang.startsWith("en-US")) || voices.find((v) => v.lang.startsWith("en")) || null;
+      }
+    }
+    if ("speechSynthesis" in window) {
+      loadEnglishVoice();
+      window.speechSynthesis.onvoiceschanged = loadEnglishVoice;
+    }
+
     function speakEnglish(text) {
-      if (!("speechSynthesis" in window) || !text) return;
+      if (sfx.muted || !("speechSynthesis" in window) || !text) return;
       try {
         window.speechSynthesis.cancel();
         const clean = String(text).replace(/\([^)]*\)/g, "").trim();
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = "en-US";
+        u.volume = 1.0;
         u.rate = 0.88;
         u.pitch = 1.08;
+        if (!cachedEnglishVoice) loadEnglishVoice();
+        if (cachedEnglishVoice) u.voice = cachedEnglishVoice;
+        sfx.duckBGM(true);
+        u.onend = () => sfx.duckBGM(false);
+        u.onerror = () => sfx.duckBGM(false);
         window.speechSynthesis.speak(u);
-      } catch (e) {}
+      } catch (e) {
+        sfx.duckBGM(false);
+      }
     }
 
     // =========================================================================
@@ -1412,11 +1723,15 @@
         phase: i * 0.9
       })),
 
+      landSquash: 0,
+
       // Active Quiz Gate state
       activeWallObj: null,
       activeQuestion: null,
       quizTimeRemaining: 10.0,
       quizMaxTime: 10.0,
+      quizResolveTimer: null,
+      activeRecognition: null,
       micActive: false,
       usedItemIndices: new Set()
     };
@@ -1492,7 +1807,27 @@
       canvas.focus();
     });
 
+    function cleanupActiveQuizResources() {
+      if (game.quizResolveTimer) {
+        clearTimeout(game.quizResolveTimer);
+        game.quizResolveTimer = null;
+      }
+      if (game.activeRecognition) {
+        try { game.activeRecognition.abort(); } catch (e) {}
+        game.activeRecognition = null;
+      }
+      game.micActive = false;
+      if ("speechSynthesis" in window) {
+        try { window.speechSynthesis.cancel(); } catch (e) {}
+      }
+    }
+
+    document.getElementById("hud-audio-btn").addEventListener("click", () => {
+      sfx.toggleMute();
+    });
+
     document.getElementById("hud-menu-btn").addEventListener("click", () => {
+      cleanupActiveQuizResources();
       sfx.stopBGM();
       hideAllOverlays();
       document.getElementById("hud-bar").style.display = "none";
@@ -1580,6 +1915,7 @@
     // 7. START LEVEL & SPAWN OBJECTS (OBSTACLES, COINS, CUTOUT WALLS)
     // =========================================================================
     function startLevel(levelIdx, showIntroIfLevel1 = false) {
+      cleanupActiveQuizResources();
       game.currentLevelIdx = Math.max(0, Math.min(LEVEL_CONFIGS.length - 1, levelIdx));
       const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
 
@@ -1646,7 +1982,7 @@
       const secs = String(totalSec % 60).padStart(2, "0");
       document.getElementById("hud-time").textContent = `⏱️ ${mins}:${secs}`;
 
-      const pct = Math.min(100, Math.round(((game.gatesClearedInLevel + (1 - game.timeUntilNextWall / cfg.wallIntervalSec) * 0.85) / cfg.questionsCount) * 100));
+      const pct = Math.min(100, Math.round(((game.gatesClearedInLevel + (1 - Math.max(0, game.timeUntilNextWall) / cfg.wallIntervalSec) * 0.85) / cfg.questionsCount) * 100));
       document.getElementById("progress-label").textContent = `🏃 本關進度 Level ${cfg.level}: ${Math.max(0, pct)}%`;
       document.getElementById("progress-fill").style.width = `${Math.max(0, pct)}%`;
     }
@@ -1881,24 +2217,32 @@
             return;
           }
           try {
+            if (game.activeRecognition) {
+              try { game.activeRecognition.abort(); } catch (e) {}
+            }
             const rec = new SpeechRec();
+            game.activeRecognition = rec;
             rec.lang = "en-US";
             game.micActive = true;
             feedbackEl.style.color = "#00cec9";
             feedbackEl.textContent = `🎧 正在聆聽... 請大聲說出 "${q.item.word}"！`;
             rec.onresult = (evt) => {
               game.micActive = false;
+              game.activeRecognition = null;
+              if (game.state !== "QUIZ_FREEZE") return;
               const transcript = evt.results[0][0].transcript || "";
               const cleanT = transcript.toLowerCase().replace(/[^a-z]/g, "");
               const target = q.item.word.toLowerCase().replace(/[^a-z]/g, "");
-              if (cleanT.includes(target) || target.includes(cleanT)) {
+              if (cleanT.length > 0 && (cleanT.includes(target) || (cleanT.length >= 2 && target.includes(cleanT)))) {
                 handleQuizSuccess(q.item.word);
               } else {
-                handleQuizFailure(`聽到 "${transcript}"，目標單字是「${q.item.word}」！`);
+                handleQuizFailure(`聽到 "${transcript || "（無聲音）"}"，目標單字是「${q.item.word}」！`);
               }
             };
             rec.onerror = () => {
               game.micActive = false;
+              game.activeRecognition = null;
+              if (game.state !== "QUIZ_FREEZE") return;
               speakEnglish(q.item.word);
               handleQuizSuccess(q.item.word);
             };
@@ -1919,6 +2263,11 @@
 
     function handleQuizSuccess(wordSpoken) {
       if (game.state !== "QUIZ_FREEZE") return;
+      if (game.activeRecognition) {
+        try { game.activeRecognition.abort(); } catch (e) {}
+        game.activeRecognition = null;
+      }
+      game.micActive = false;
       game.state = "QUIZ_RESOLVING";
       sfx.playGateSuccess();
       speakEnglish(wordSpoken);
@@ -1938,7 +2287,10 @@
 
       const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
 
-      setTimeout(() => {
+      if (game.quizResolveTimer) clearTimeout(game.quizResolveTimer);
+      game.quizResolveTimer = setTimeout(() => {
+        game.quizResolveTimer = null;
+        if (game.state !== "QUIZ_RESOLVING") return;
         const writingInput = document.getElementById("writing-input");
         if (writingInput) writingInput.blur();
         document.getElementById("quiz-overlay").style.display = "none";
@@ -1964,6 +2316,11 @@
 
     function handleQuizFailure(reasonMsg) {
       if (game.state !== "QUIZ_FREEZE") return;
+      if (game.activeRecognition) {
+        try { game.activeRecognition.abort(); } catch (e) {}
+        game.activeRecognition = null;
+      }
+      game.micActive = false;
       game.state = "QUIZ_RESOLVING";
       sfx.playCrash();
 
@@ -1983,7 +2340,10 @@
 
       const cfg = LEVEL_CONFIGS[game.currentLevelIdx];
 
-      setTimeout(() => {
+      if (game.quizResolveTimer) clearTimeout(game.quizResolveTimer);
+      game.quizResolveTimer = setTimeout(() => {
+        game.quizResolveTimer = null;
+        if (game.state !== "QUIZ_RESOLVING") return;
         const writingInput = document.getElementById("writing-input");
         if (writingInput) writingInput.blur();
         document.getElementById("quiz-overlay").style.display = "none";
@@ -2105,6 +2465,21 @@
       retryBtn.textContent = `🔄 重新挑戰第 ${cfg.level} 關 Retry Level ${cfg.level}`;
       retryBtn.onclick = () => startLevel(game.currentLevelIdx, false);
       btns.appendChild(retryBtn);
+
+      const menuBtn = document.createElement("button");
+      menuBtn.className = "secondary-btn";
+      menuBtn.style.background = "#34495e";
+      menuBtn.textContent = "🏠 主選單 Menu";
+      menuBtn.onclick = () => {
+        hideAllOverlays();
+        document.getElementById("hud-bar").style.display = "none";
+        document.getElementById("progress-container").style.display = "none";
+        document.getElementById("touch-controls").style.display = "none";
+        renderLevelSelector();
+        document.getElementById("menu-screen").style.display = "flex";
+        game.state = "MENU";
+      };
+      btns.appendChild(menuBtn);
     }
 
     // =========================================================================
@@ -2429,7 +2804,8 @@
       // Smooth lane interpolation
       game.currentLaneX += (game.targetLane - game.currentLaneX) * Math.min(1, dt * 14);
 
-      // Jump physics
+      // Jump physics + snappy landing squash
+      if (game.landSquash > 0) game.landSquash = Math.max(0, game.landSquash - dt * 5.5);
       if (game.isJumping) {
         game.jumpY += game.jumpVy * dt * 28;
         game.jumpVy -= 28 * dt;
@@ -2437,7 +2813,23 @@
           game.jumpY = 0;
           game.jumpVy = 0;
           game.isJumping = false;
+          game.landSquash = 1.0;
         }
+      }
+
+      // Golden speed-boost trail sparkles
+      if (game.speedBoostTimer > 0 && Math.random() < dt * 32) {
+        const rp = project3D(game.currentLaneX, game.jumpY + 26, 0.08);
+        game.particles.push({
+          x: rp.x + (Math.random() - 0.5) * 34,
+          y: rp.y + (Math.random() - 0.5) * 34,
+          vx: (Math.random() - 0.5) * 40,
+          vy: 28 + Math.random() * 35,
+          r: 2.5 + Math.random() * 3.5,
+          color: Math.random() > 0.5 ? "#f1c40f" : "#55efc4",
+          life: 0.35,
+          maxLife: 0.35
+        });
       }
 
       // Slide timer
@@ -2745,11 +3137,19 @@
         }
       });
 
-      // Grand Horizon Mayan/Aztec Stepped Pyramid Complex
+      // Grand Horizon East Asian Pagoda & Temple Complex
       drawHorizonSanctuary(w / 2, horizonY, cfg);
 
       // Rich Layered Jungle Canopy Silhouettes & Swaying Palm Fronds on Horizon
       drawHorizonJungleCanopy(w, horizonY, cfg);
+
+      // Soft Atmospheric Horizon Mist & Bloom Band (blends sky, pyramid & canyon seamlessly)
+      const mistBand = ctx.createLinearGradient(0, horizonY - 26, 0, horizonY + 26);
+      mistBand.addColorStop(0, "rgba(255, 255, 255, 0.0)");
+      mistBand.addColorStop(0.5, cfg.skyBot + "55");
+      mistBand.addColorStop(1, "rgba(16, 34, 47, 0.0)");
+      ctx.fillStyle = mistBand;
+      ctx.fillRect(0, horizonY - 26, w, 52);
 
       // -----------------------------------------------------------------------
       // B. DEEP 3D CANYON GORGE, CLIFF WALLS, RIVER & BRIDGE SUPPORT ARCHES
@@ -3091,6 +3491,30 @@
       // -----------------------------------------------------------------------
       drawForegroundJungleFrame(w, h, cfg);
 
+      // Subtle cinematic edge vignette for stronger depth focus
+      const vig = ctx.createRadialGradient(w / 2, h * 0.52, w * 0.30, w / 2, h * 0.52, w * 0.65);
+      vig.addColorStop(0, "rgba(0, 0, 0, 0)");
+      vig.addColorStop(1, "rgba(4, 10, 18, 0.36)");
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, w, h);
+
+      // Dynamic radial speed-lines when speed boost is active after clearing a Cutout Gate
+      if (game.speedBoostTimer > 0) {
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 249, 196, ${Math.min(0.42, game.speedBoostTimer * 0.35)})`;
+        ctx.lineWidth = 2.2;
+        for (let sl = 0; sl < 14; sl++) {
+          const ang = (sl / 14) * Math.PI * 2 + Math.sin(game.ambientClock * 12 + sl) * 0.03;
+          const innerR = 230 + (sl % 3) * 35;
+          const outerR = 560;
+          ctx.beginPath();
+          ctx.moveTo(w / 2 + Math.cos(ang) * innerR, h / 2 + Math.sin(ang) * innerR * 0.65);
+          ctx.lineTo(w / 2 + Math.cos(ang) * outerR, h / 2 + Math.sin(ang) * outerR * 0.65);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
       if (game.chaserWarningTimer > 0) {
         const warnGrad = ctx.createRadialGradient(w / 2, h / 2, 160, w / 2, h / 2, 520);
         warnGrad.addColorStop(0, "rgba(231, 76, 60, 0.0)");
@@ -3120,104 +3544,202 @@
       });
     }
 
-    // GRAND STEPPED MAYAN / AZTEC PYRAMID COMPLEX AT HORIZON
+    // GRAND EAST ASIAN (CHINESE / JAPANESE) MULTI-TIERED PAGODA TEMPLE AT HORIZON
     function drawHorizonSanctuary(cx, horizonY, cfg) {
       ctx.save();
 
-      // Vertical Mystic Light Pillar Ascending from the Pyramid Apex
-      const beamGrad = ctx.createLinearGradient(cx, horizonY - 155, cx, horizonY - 65);
+      // Helper: Sweeping upturned East Asian curved roof eave (飛檐)
+      function drawCurvedRoof(x, y, baseW, roofH, overhang) {
+        const roofGrad = ctx.createLinearGradient(x, y - roofH, x, y + 4);
+        roofGrad.addColorStop(0, "#2c3e50");
+        roofGrad.addColorStop(0.55, "#1b2631");
+        roofGrad.addColorStop(1, "#0f1720");
+        ctx.fillStyle = roofGrad;
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = 1.5;
+
+        const halfB = baseW / 2;
+        const halfTop = baseW * 0.28;
+        ctx.beginPath();
+        // Sweeping upturned left eave -> ridge -> upturned right eave
+        ctx.moveTo(x - halfB - overhang, y - 3);
+        ctx.quadraticCurveTo(x - halfB * 0.65, y - roofH * 0.35, x - halfTop, y - roofH);
+        ctx.lineTo(x + halfTop, y - roofH);
+        ctx.quadraticCurveTo(x + halfB * 0.65, y - roofH * 0.35, x + halfB + overhang, y - 3);
+        ctx.quadraticCurveTo(x + halfB * 0.85, y + 3, x + halfB, y + 2);
+        ctx.lineTo(x - halfB, y + 2);
+        ctx.quadraticCurveTo(x - halfB * 0.85, y + 3, x - halfB - overhang, y - 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Imperial gold roof ridge ornament
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillRect(x - halfTop - 3, y - roofH - 2.5, halfTop * 2 + 6, 3);
+      }
+
+      // Vertical Mystic Light Pillar Ascending from the Pagoda Finial Spire
+      const beamGrad = ctx.createLinearGradient(cx, horizonY - 165, cx, horizonY - 108);
       beamGrad.addColorStop(0, "rgba(255, 255, 255, 0.0)");
       beamGrad.addColorStop(1, cfg.trimCol + "66");
       ctx.fillStyle = beamGrad;
-      ctx.fillRect(cx - 14, horizonY - 155, 28, 90);
+      ctx.fillRect(cx - 12, horizonY - 165, 24, 58);
 
-      // 5 Stepped Pyramid Tiers with 3D Stone Shading & Golden Cornices
-      const tiers = [
-        { w: 220, h: 18, y: horizonY - 18 },
-        { w: 176, h: 17, y: horizonY - 35 },
-        { w: 136, h: 16, y: horizonY - 51 },
-        { w: 98,  h: 15, y: horizonY - 66 },
-        { w: 64,  h: 22, y: horizonY - 88 }
-      ];
-      tiers.forEach((t, idx) => {
-        const tGrad = ctx.createLinearGradient(cx - t.w / 2, t.y, cx + t.w / 2, t.y);
-        tGrad.addColorStop(0, "#1e1815");
-        tGrad.addColorStop(0.5, "#3d312a");
-        tGrad.addColorStop(1, "#181311");
-        ctx.fillStyle = tGrad;
-        ctx.strokeStyle = "#d4af37";
-        ctx.lineWidth = 1.4;
-        ctx.fillRect(cx - t.w / 2, t.y, t.w, t.h);
-        ctx.strokeRect(cx - t.w / 2, t.y, t.w, t.h);
+      // 1. Elevated Carved Stone Temple Terrace & Vermilion Balustrade
+      const baseGrad = ctx.createLinearGradient(cx - 135, horizonY - 16, cx + 135, horizonY);
+      baseGrad.addColorStop(0, "#2f3640");
+      baseGrad.addColorStop(0.5, "#576574");
+      baseGrad.addColorStop(1, "#222f3e");
+      ctx.fillStyle = baseGrad;
+      ctx.strokeStyle = "#d4af37";
+      ctx.lineWidth = 1.4;
+      ctx.fillRect(cx - 132, horizonY - 15, 264, 15);
+      ctx.strokeRect(cx - 132, horizonY - 15, 264, 15);
 
-        // Decorative carved recesses on each terrace
-        if (idx < 4) {
-          ctx.fillStyle = "rgba(241, 196, 15, 0.25)";
-          for (let rx = -t.w * 0.38; rx <= t.w * 0.38; rx += 22) {
-            if (Math.abs(rx) > 20) {
-              ctx.fillRect(cx + rx - 4, t.y + 4, 8, t.h - 8);
-            }
-          }
+      // Crimson-and-gold terrace railing
+      ctx.strokeStyle = "#c0392b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 130, horizonY - 19);
+      ctx.lineTo(cx + 130, horizonY - 19);
+      ctx.stroke();
+      ctx.fillStyle = "#f1c40f";
+      for (let rx = -126; rx <= 126; rx += 18) {
+        if (Math.abs(rx) > 20) {
+          ctx.fillRect(cx + rx - 1.5, horizonY - 21, 3, 6);
         }
+      }
+
+      // 2. Twin Flanking East Asian Pagoda Pavilions & Swaying Red Lanterns
+      const lanternSway = Math.sin(game.ambientClock * 2.2) * 2.2;
+      [-114, 114].forEach((offsetX) => {
+        const px = cx + offsetX;
+        // Pavilion body & vermilion lacquer pillars
+        ctx.fillStyle = "#7b1e1e";
+        ctx.fillRect(px - 22, horizonY - 46, 44, 31);
+        ctx.fillStyle = "#ffeaa7";
+        ctx.fillRect(px - 12, horizonY - 41, 24, 18); // Warm shoji glow
+        ctx.fillStyle = "#c0392b";
+        [-20, -10, 10, 20].forEach((colX) => {
+          ctx.fillRect(px + colX - 2, horizonY - 47, 4, 32);
+        });
+
+        // Curved pavilion roof + golden finial
+        drawCurvedRoof(px, horizonY - 46, 46, 15, 11);
+        ctx.fillStyle = "#f1c40f";
+        ctx.beginPath();
+        ctx.arc(px, horizonY - 64, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hanging glowing red paper lantern under outer eave
+        const lx = px + (offsetX < 0 ? -24 : 24) + lanternSway;
+        const ly = horizonY - 38;
+        const lg = ctx.createRadialGradient(lx, ly, 1.5, lx, ly, 12);
+        lg.addColorStop(0, "#fff59d");
+        lg.addColorStop(0.5, "rgba(231, 76, 60, 0.75)");
+        lg.addColorStop(1, "rgba(231, 76, 60, 0)");
+        ctx.fillStyle = lg;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#e74c3c";
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(lx, ly, 4, 5.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
       });
 
-      // Twin Flanking  Watchtowers with Burning Ceremonial Braziers
-      [-126, 126].forEach((offsetX) => {
-        const tx = cx + offsetX;
-        ctx.fillStyle = "#2b211c";
-        ctx.strokeStyle = "#d4af37";
-        ctx.lineWidth = 1.3;
-        ctx.fillRect(tx - 16, horizonY - 46, 32, 46);
-        ctx.strokeRect(tx - 16, horizonY - 46, 32, 46);
+      // 3. Central 4-Tier Grand Pagoda / Palace Temple Hall
+      const tiers = [
+        { w: 146, h: 24, y: horizonY - 39, roofH: 15, overhang: 16 },
+        { w: 112, h: 20, y: horizonY - 63, roofH: 14, overhang: 15 },
+        { w: 80,  h: 18, y: horizonY - 85, roofH: 13, overhang: 14 },
+        { w: 50,  h: 15, y: horizonY - 104, roofH: 14, overhang: 12 }
+      ];
 
-        // Watchtower roof cap
+      tiers.forEach((t, idx) => {
+        // Cream plaster & vermilion lacquer wall
+        const wallGrad = ctx.createLinearGradient(cx - t.w / 2, t.y, cx + t.w / 2, t.y);
+        wallGrad.addColorStop(0, "#641e16");
+        wallGrad.addColorStop(0.5, "#a93226");
+        wallGrad.addColorStop(1, "#511610");
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(cx - t.w / 2, t.y, t.w, t.h);
+
+        // Warm illuminated shoji / lattice windows
+        ctx.fillStyle = "#ffeaa7";
+        const winCount = Math.max(2, 5 - idx);
+        const step = t.w / (winCount + 1);
+        for (let i = 1; i <= winCount; i++) {
+          const wx = cx - t.w / 2 + i * step;
+          if (idx === 0 && Math.abs(wx - cx) < 18) continue;
+          ctx.fillRect(wx - 4.5, t.y + 5, 9, t.h - 9);
+        }
+
+        // Vermilion columns & golden lintel trim
         ctx.fillStyle = "#d4af37";
-        ctx.beginPath();
-        ctx.moveTo(tx - 21, horizonY - 46);
-        ctx.lineTo(tx, horizonY - 60);
-        ctx.lineTo(tx + 21, horizonY - 46);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillRect(cx - t.w / 2, t.y + t.h - 2.5, t.w, 2.5);
 
-        // Watchtower flame glow
-        const fg = ctx.createRadialGradient(tx, horizonY - 64, 2, tx, horizonY - 64, 16);
-        fg.addColorStop(0, "#fff59d");
-        fg.addColorStop(0.5, "#f39c12");
-        fg.addColorStop(1, "rgba(243, 156, 18, 0)");
-        ctx.fillStyle = fg;
-        ctx.beginPath();
-        ctx.arc(tx, horizonY - 64, 16, 0, Math.PI * 2);
-        ctx.fill();
+        // Sweeping upturned curved roof for this tier
+        drawCurvedRoof(cx, t.y, t.w + 8, t.roofH, t.overhang);
       });
 
-      // Grand Golden Stepped Stairway with Serpent Balustrades
+      // 4. Golden Pagoda Spire Finial (相輪 / Sorin) at Apex
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(cx, horizonY - 118);
+      ctx.lineTo(cx, horizonY - 140);
+      ctx.stroke();
+      ctx.fillStyle = "#fff9c4";
+      ctx.beginPath();
+      ctx.arc(cx, horizonY - 141, 3.8, 0, Math.PI * 2);
+      ctx.fill();
+      // Decorative finial rings
+      ctx.strokeStyle = "#d4af37";
+      ctx.lineWidth = 1.5;
+      [-125, -130, -135].forEach((ry, i) => {
+        const rw = 5 - i;
+        ctx.beginPath();
+        ctx.moveTo(cx - rw, horizonY + ry);
+        ctx.lineTo(cx + rw, horizonY + ry);
+        ctx.stroke();
+      });
+
+      // 5. Grand Central Stone Staircase & Luminous Sanctum Gateway
+      const portalGrad = ctx.createRadialGradient(cx, horizonY - 25, 2, cx, horizonY - 25, 18);
+      portalGrad.addColorStop(0, "#ffffff");
+      portalGrad.addColorStop(0.45, "#ffeaa7");
+      portalGrad.addColorStop(1, cfg.trimCol);
+      ctx.fillStyle = portalGrad;
+      ctx.strokeStyle = "#f1c40f";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.roundRect(cx - 14, horizonY - 37, 28, 22, [12, 12, 0, 0]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Central stone steps leading up to the temple entrance
       ctx.fillStyle = "#d4af37";
       ctx.beginPath();
-      ctx.moveTo(cx - 24, horizonY);
-      ctx.lineTo(cx + 24, horizonY);
-      ctx.lineTo(cx + 13, horizonY - 66);
-      ctx.lineTo(cx - 13, horizonY - 66);
+      ctx.moveTo(cx - 22, horizonY);
+      ctx.lineTo(cx + 22, horizonY);
+      ctx.lineTo(cx + 15, horizonY - 15);
+      ctx.lineTo(cx - 15, horizonY - 15);
       ctx.closePath();
       ctx.fill();
 
       ctx.strokeStyle = "#5c3d1e";
       ctx.lineWidth = 1;
-      for (let sy = horizonY - 4; sy > horizonY - 66; sy -= 5) {
+      for (let sy = horizonY - 3; sy > horizonY - 15; sy -= 4) {
         ctx.beginPath();
-        ctx.moveTo(cx - 16, sy);
-        ctx.lineTo(cx + 16, sy);
+        ctx.moveTo(cx - 18, sy);
+        ctx.lineTo(cx + 18, sy);
         ctx.stroke();
       }
-
-      // Glowing Jade/Gold Sanctum Portal Inside Top Shrine
-      const portalGrad = ctx.createRadialGradient(cx, horizonY - 75, 2, cx, horizonY - 75, 14);
-      portalGrad.addColorStop(0, "#ffffff");
-      portalGrad.addColorStop(0.5, cfg.trimCol);
-      portalGrad.addColorStop(1, "#006266");
-      ctx.fillStyle = portalGrad;
-      ctx.beginPath();
-      ctx.roundRect(cx - 11, horizonY - 84, 22, 18, [10, 10, 0, 0]);
-      ctx.fill();
 
       ctx.restore();
     }
@@ -3382,6 +3904,17 @@
         ctx.quadraticCurveTo(p.x - flicker * 0.5, p.y - ph - 25 * s, p.x + 5.5 * s, p.y - ph - 5 * s);
         ctx.closePath();
         ctx.fill();
+
+        // Rising glowing embers floating above each torch
+        for (let eIdx = 0; eIdx < 3; eIdx++) {
+          const eCycle = (game.ambientClock * 1.4 + obj.z * 5 + eIdx * 0.33) % 1;
+          const ex = p.x + Math.sin(game.ambientClock * 4 + eIdx * 2.1 + obj.z * 8) * 7 * s;
+          const ey = p.y - ph - (14 + eCycle * 34) * s;
+          ctx.fillStyle = `rgba(255, 234, 167, ${(1 - eCycle) * 0.85})`;
+          ctx.beginPath();
+          ctx.arc(ex, ey, (2.2 - eCycle * 1.2) * s, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       ctx.restore();
@@ -4011,6 +4544,9 @@
       ctx.rotate(leanX);
       if (isSliding) {
         ctx.scale(1.06, 0.58);
+      } else if (game.landSquash > 0) {
+        const sq = game.landSquash * 0.14;
+        ctx.scale(1 + sq, 1 - sq);
       }
 
       // 2. Speed Boost Golden Wind Aura & Upward Jump Wind Ring
