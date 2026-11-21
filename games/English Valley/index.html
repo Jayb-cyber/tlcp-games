@@ -280,6 +280,26 @@
     .cert-val { font-family: 'Fredoka', sans-serif; font-size: 20px; color: #c2410c; }
     .cert-lbl { font-size: 11px; color: var(--ink-soft); font-weight: 700; }
 
+    #design-hud {
+      position: fixed; inset: 0; z-index: 38; pointer-events: none;
+      display: flex; flex-direction: column; justify-content: space-between; padding: 14px;
+    }
+    #design-hud.hidden { display: none !important; }
+    .design-bar {
+      pointer-events: auto; background: var(--panel); border: 2.5px solid #f5cba7;
+      border-radius: 20px; padding: 10px 16px; box-shadow: 0 10px 28px rgba(59,47,47,0.2);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+      max-width: 980px; margin: 0 auto; width: 100%;
+    }
+    .design-palette {
+      display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+      max-height: 112px; overflow-y: auto; width: 100%;
+    }
+    .design-status {
+      font-size: 12.5px; font-weight: 800; padding: 4px 12px; border-radius: 999px;
+      background: #dcfce7; color: #166534; border: 1.5px solid #86efac;
+    }
+    .design-status.invalid { background: #fee2e2; color: #991b1b; border-color: #f87171; }
     #toast-container { position: fixed; bottom: 86px; right: 14px; z-index: 48; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
     .toast {
       background: var(--panel); border: 2px solid var(--mint); border-left-width: 6px;
@@ -374,6 +394,7 @@
           <button id="btn-map" class="pill-btn">🗺️ Map</button>
           <button id="btn-bag" class="pill-btn">🎒 Bag</button>
           <button id="btn-friends" class="pill-btn">📖 Friends</button>
+          <button id="btn-events" class="pill-btn" title="10-Min Town Events">🎪 Events</button>
           <button id="btn-cert" class="pill-btn cert">🏆 Certificate</button>
           <button id="btn-zh-toggle" class="pill-btn">🌐 中文: ON</button>
           <div class="pill-btn" style="padding:4px 10px; gap:6px;">
@@ -408,6 +429,25 @@
     <div class="cut-bar"></div>
   </div>
 
+  <!-- Interactive Farm Design Mode HUD -->
+  <div id="design-hud" class="hidden">
+    <div class="design-bar">
+      <div>
+        <div style="font-family:'Fredoka',sans-serif; font-size:17px; font-weight:700;">🧰 Farm Design Mode · 農場佈置模式</div>
+        <div style="font-size:11.5px; color:var(--ink-soft); font-weight:700;">Red blocks mark reserved farm areas. Move mouse / WASD to position, [R] to rotate, click to place!</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span id="design-status" class="design-status">Select a decoration below</span>
+        <button id="btn-design-rot" class="btn btn-sky btn-sm">↻ Rotate 45° [R]</button>
+        <button id="btn-design-place" class="btn btn-mint btn-sm">✅ Place Here</button>
+        <button id="btn-design-exit" class="btn btn-peach btn-sm">🏡 Done Designing</button>
+      </div>
+    </div>
+    <div class="design-bar" style="flex-direction:column; gap:8px;">
+      <div id="design-palette" class="design-palette"></div>
+    </div>
+  </div>
+
   <div id="modal-backdrop" class="modal-backdrop hidden">
     <div id="modal-box" class="modal-box"></div>
   </div>
@@ -437,18 +477,38 @@
     ];
 
     const OUTFITS = {
-      tunic:    { id: 'tunic',    name: 'Cozy Starter Tunic', zh: '溫馨新手上衣', price: 0,  icon: '👕', desc: 'Clean, comfy everyday valley tunic.' },
-      apron:    { id: 'apron',    name: 'Strawberry Apron',   zh: '草莓圍裙裝',   price: 38, icon: '🍓', desc: 'Cute cream apron with a sweet berry pocket.' },
-      cardigan: { id: 'cardigan', name: 'Starlight Cardigan', zh: '星光針織衫',   price: 45, icon: '✨', desc: 'Soft pastel cardigan with golden star buttons.' },
-      overalls: { id: 'overalls', name: 'Sunny Overalls',     zh: '陽光吊帶褲',   price: 42, icon: '🌻', desc: 'Playful denim overalls with brass clasps.' },
-      sailor:   { id: 'sailor',   name: 'Ocean Sailor Collar',zh: '海風水手服',   price: 48, icon: '⚓', desc: 'Crisp nautical collar with a cute ribbon bow.' },
-      hoodie:   { id: 'hoodie',   name: 'Cloud Bunny Hoodie', zh: '雲朵兔耳帽T',  price: 55, icon: '☁️', desc: 'Ultra-cozy pastel hoodie with plush collar.' }
+      tunic:     { id: 'tunic',     name: 'Cozy Starter Tunic',  zh: '溫馨新手上衣', price: 0,  icon: '👕', desc: 'Clean, comfy everyday valley tunic.' },
+      apron:     { id: 'apron',     name: 'Strawberry Apron',    zh: '草莓圍裙裝',   price: 38, icon: '🍓', desc: 'Cute cream apron with a sweet berry pocket.' },
+      cardigan:  { id: 'cardigan',  name: 'Starlight Cardigan',  zh: '星光針織衫',   price: 45, icon: '✨', desc: 'Soft pastel cardigan with golden star buttons.' },
+      overalls:  { id: 'overalls',  name: 'Sunny Overalls',      zh: '陽光吊帶褲',   price: 42, icon: '🌻', desc: 'Playful denim overalls with brass clasps.' },
+      sailor:    { id: 'sailor',    name: 'Ocean Sailor Collar', zh: '海風水手服',   price: 48, icon: '⚓', desc: 'Crisp nautical collar with a cute ribbon bow.' },
+      hoodie:    { id: 'hoodie',    name: 'Cloud Bunny Hoodie',  zh: '雲朵兔耳帽T',  price: 55, icon: '☁️', desc: 'Ultra-cozy pastel hoodie with plush collar.' },
+      kimono:    { id: 'kimono',    name: 'Sakura Kimono',       zh: '櫻花和服',     price: 60, icon: '🌸', desc: 'Flowing pastel kimono with wide ribbon obi sash.' },
+      gardener:  { id: 'gardener',  name: 'Sunhat Gardener',     zh: '陽光園丁裝',   price: 52, icon: '👒', desc: 'Woven flower sunhat and botanical pocket vest.' },
+      stargazer: { id: 'stargazer', name: 'Starry Cape',         zh: '星光斗篷',     price: 64, icon: '🌙', desc: 'Dreamy twilight cape clasped with a golden moon.' },
+      beekeeper: { id: 'beekeeper', name: 'Honeybee Sweater',    zh: '蜂蜜條紋毛衣', price: 50, icon: '🐝', desc: 'Warm striped honey-knit sweater with bee brooch.' }
+    };
+
+    const HOUSE_UPGRADE_PRICE = 140;
+    const HOUSE_COLORS = {
+      strawberry: { id: 'strawberry', name: 'Strawberry Cream', zh: '草莓奶油',   price: 0,  wall: 0xfff8eb, roof: 0xf28482, trim: 0xffccd5, css: '#f28482' },
+      mint:       { id: 'mint',       name: 'Mint Macaron',     zh: '薄荷馬卡龍', price: 35, wall: 0xf0fdf4, roof: 0x52c99b, trim: 0xbbf7d0, css: '#52c99b' },
+      lavender:   { id: 'lavender',   name: 'Lavender Dream',   zh: '薰衣草夢境', price: 35, wall: 0xfaf5ff, roof: 0xa78bfa, trim: 0xe9d5ff, css: '#a78bfa' },
+      buttercup:  { id: 'buttercup',  name: 'Sunny Buttercup',  zh: '陽光奶油花', price: 35, wall: 0xfffbeb, roof: 0xf59e0b, trim: 0xfde68a, css: '#f59e0b' },
+      sky:        { id: 'sky',        name: 'Sky Cottage',      zh: '晴空小屋',   price: 35, wall: 0xf0f9ff, roof: 0x38bdf8, trim: 0xbae6fd, css: '#38bdf8' },
+      berry:      { id: 'berry',      name: 'Rose Berry',       zh: '玫瑰莓果',   price: 35, wall: 0xfff1f5, roof: 0xec4899, trim: 0xfbcfe8, css: '#ec4899' }
     };
 
     const FARM_UPGRADES = {
-      flower_arch: { id: 'flower_arch', name: 'Pastel Flower Archway', zh: '粉彩花朵拱門', price: 55, icon: '🌺', desc: 'Blooming pastel rose archway at your farm entrance.' },
-      fairy_lanterns: { id: 'fairy_lanterns', name: 'Glowing Fairy Lanterns', zh: '發光精靈提燈', price: 75, icon: '🏮', desc: 'Warm glowing lanterns around your farm meadows.' },
-      tea_gazebo: { id: 'tea_gazebo', name: 'Berry Blossom Gazebo', zh: '莓果花亭', price: 110, icon: '🎀', desc: 'Cozy pastel tea pavilion beside the central plains.' }
+      flower_arch:    { id: 'flower_arch',    name: 'Pastel Flower Archway',  zh: '粉彩花朵拱門', price: 55,  icon: '🌺', radius: 2.7, desc: 'Blooming pastel vine archway—place & rotate on your farm!' },
+      fairy_lanterns: { id: 'fairy_lanterns', name: 'Glowing Fairy Lanterns', zh: '發光精靈提燈', price: 75,  icon: '🏮', radius: 2.2, desc: 'Warm festival lantern post with glowing stars.' },
+      tea_gazebo:     { id: 'tea_gazebo',     name: 'Berry Blossom Gazebo',   zh: '莓果花亭',     price: 110, icon: '🎀', radius: 3.6, desc: 'Cozy pastel tea pavilion with walkable deck & teapot.' },
+      wishing_well:   { id: 'wishing_well',   name: 'Cozy Wishing Well',      zh: '許願古井',     price: 65,  icon: '⛲', radius: 1.9, desc: 'Stone-and-timber wishing well with cute tiled roof.' },
+      picnic_set:     { id: 'picnic_set',     name: 'Berry Picnic Blanket',   zh: '莓果野餐墊',   price: 48,  icon: '🧺', radius: 2.1, desc: 'Checkered picnic quilt with basket & teacup.' },
+      windmill:       { id: 'windmill',       name: 'Pastel Garden Windmill', zh: '粉彩小風車',   price: 95,  icon: '🌬️', radius: 2.2, desc: 'Spinning pastel cottage windmill for breezy charm.' },
+      birdbath:       { id: 'birdbath',       name: 'Blossom Birdbath',       zh: '花朵鳥浴盆',   price: 52,  icon: '🕊️', radius: 1.4, desc: 'Sculpted stone birdbath with sparkling water.' },
+      mushroom_bench: { id: 'mushroom_bench', name: 'Glowing Mushroom Bench', zh: '發光蘑菇長椅', price: 58,  icon: '🍄', radius: 1.7, desc: 'Whimsical pastel mushroom bench with soft glow.' },
+      flower_fence:   { id: 'flower_fence',   name: 'Picket Flower Fence',    zh: '花朵白色圍欄', price: 42,  icon: '🌷', radius: 2.0, desc: 'White wooden picket fence lined with tulips.' }
     };
 
     // Base Seeds & Grooming Comb
@@ -459,7 +519,22 @@
       seed_bamboo: { id: 'seed_bamboo', name: 'Sweet Bamboo Seeds', zh: '甜竹筍種子', type: 'seed', price: 10, growsInto: 'food_fern', growSec: 16, icon: '🌱' },
       soft_comb: { id: 'soft_comb', name: 'Fluffy Grooming Comb', zh: '蓬鬆美容梳', type: 'care', price: 18, icon: '🪮', desc: 'Gently brush any animal (+10 Friendship!).' },
       gear_bike: { id: 'gear_bike', name: 'Pastel Bicycle', zh: '粉彩腳踏車', type: 'gear', price: 65, icon: '🚲', desc: 'Ride fast on land across every zone! Press [1] or HUD button.' },
-      gear_surfboard: { id: 'gear_surfboard', name: 'Sunny Surfboard', zh: '陽光衝浪板', type: 'gear', price: 75, icon: '🏄', desc: 'Glide smoothly across oceans, lakes & ponds! Press [2] or HUD button.' }
+      gear_surfboard: { id: 'gear_surfboard', name: 'Sunny Surfboard', zh: '陽光衝浪板', type: 'gear', price: 75, icon: '🏄', desc: 'Glide smoothly across oceans, lakes & ponds! Press [2] or HUD button.' },
+      // 7 Flower Seeds & Bloomed Flowers (Flora's Flower Shop!)
+      seed_daisy:     { id: 'seed_daisy',     name: 'Golden Daisy Seeds',    zh: '陽光雛菊種子',   type: 'flower_seed', price: 8,  growsInto: 'flower_daisy',     growSec: 10, icon: '🌼', petalHex: 0xffffff, centerHex: 0xfacc15 },
+      seed_tulip:     { id: 'seed_tulip',     name: 'Pink Tulip Seeds',      zh: '粉紅鬱金香種子', type: 'flower_seed', price: 10, growsInto: 'flower_tulip',     growSec: 12, icon: '🌷', petalHex: 0xf472b6, centerHex: 0xfef08a },
+      seed_sunflower: { id: 'seed_sunflower', name: 'Sunny Sunflower Seeds', zh: '向日葵種子',     type: 'flower_seed', price: 12, growsInto: 'flower_sunflower', growSec: 14, icon: '🌻', petalHex: 0xfacc15, centerHex: 0x78350f },
+      seed_lavender:  { id: 'seed_lavender',  name: 'Lavender Sprig Seeds',  zh: '薰衣草種子',     type: 'flower_seed', price: 12, growsInto: 'flower_lavender',  growSec: 14, icon: '🪻', petalHex: 0xa78bfa, centerHex: 0xe9d5ff },
+      seed_bluebell:  { id: 'seed_bluebell',  name: 'Sky Bluebell Seeds',    zh: '天空風鈴草種子', type: 'flower_seed', price: 14, growsInto: 'flower_bluebell',  growSec: 15, icon: '💠', petalHex: 0x38bdf8, centerHex: 0xe0f2fe },
+      seed_rose:      { id: 'seed_rose',      name: 'Cherry Rose Seeds',     zh: '櫻桃玫瑰種子',   type: 'flower_seed', price: 16, growsInto: 'flower_rose',      growSec: 16, icon: '🌹', petalHex: 0xf43f5e, centerHex: 0xfda4af },
+      seed_orchid:    { id: 'seed_orchid',    name: 'Royal Orchid Seeds',    zh: '皇家蘭花種子',   type: 'flower_seed', price: 18, growsInto: 'flower_orchid',    growSec: 18, icon: '🌺', petalHex: 0xd946ef, centerHex: 0xfef08a },
+      flower_daisy:     { id: 'flower_daisy',     name: 'Golden Daisy',    zh: '陽光雛菊',   type: 'flower', price: 15, sellPrice: 15, giftBonus: 15, icon: '🌼', petalHex: 0xffffff },
+      flower_tulip:     { id: 'flower_tulip',     name: 'Pink Tulip',      zh: '粉紅鬱金香', type: 'flower', price: 18, sellPrice: 18, giftBonus: 15, icon: '🌷', petalHex: 0xf472b6 },
+      flower_sunflower: { id: 'flower_sunflower', name: 'Sunny Sunflower', zh: '向日葵',     type: 'flower', price: 22, sellPrice: 22, giftBonus: 16, icon: '🌻', petalHex: 0xfacc15 },
+      flower_lavender:  { id: 'flower_lavender',  name: 'Lavender Sprig',  zh: '薰衣草',     type: 'flower', price: 22, sellPrice: 22, giftBonus: 16, icon: '🪻', petalHex: 0xa78bfa },
+      flower_bluebell:  { id: 'flower_bluebell',  name: 'Sky Bluebell',    zh: '天空風鈴草', type: 'flower', price: 25, sellPrice: 25, giftBonus: 17, icon: '💠', petalHex: 0x38bdf8 },
+      flower_rose:      { id: 'flower_rose',      name: 'Cherry Rose',     zh: '櫻桃玫瑰',   type: 'flower', price: 28, sellPrice: 28, giftBonus: 17, icon: '🌹', petalHex: 0xf43f5e },
+      flower_orchid:    { id: 'flower_orchid',    name: 'Royal Orchid',    zh: '皇家蘭花',   type: 'flower', price: 32, sellPrice: 32, giftBonus: 18, icon: '🌺', petalHex: 0xd946ef }
     };
 
     // 55 Unique Animals & Guardians Roster:
@@ -864,23 +939,38 @@
     // 2. AUDIO ENGINE: 12 UNIQUE COZY ZONE SOUNDTRACKS + CUTE SFX + SPEECH
     // =========================================================================
     const AudioSys = {
-      ctx: null, bus: null, comp: null, muted: false, masterVol: 0.80, timer: null, theme: '', step: 0,
+      ctx: null, bus: null, bgmGain: null, comp: null, muted: false, masterVol: 0.80, ducked: false, duckTimer: null, timer: null, theme: '', step: 0,
       init() {
         if (!this.ctx) {
           const AC = window.AudioContext || window.webkitAudioContext;
           if (AC) {
             this.ctx = new AC();
             this.bus = this.ctx.createGain();
+            this.bgmGain = this.ctx.createGain();
             this.comp = this.ctx.createDynamicsCompressor();
             this.comp.threshold.value = -10;
             this.comp.ratio.value = 4;
             this.bus.gain.value = this.muted ? 0 : this.masterVol;
+            this.bgmGain.gain.value = 1.0;
+            this.bgmGain.connect(this.bus);
             this.bus.connect(this.comp);
             this.comp.connect(this.ctx.destination);
           }
         }
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
         if (this.bus) this.bus.gain.value = this.muted ? 0 : this.masterVol;
+      },
+      duckBGM(active, safetyMs = 6000) {
+        this.ducked = active;
+        if (this.duckTimer) { clearTimeout(this.duckTimer); this.duckTimer = null; }
+        if (this.bgmGain && this.ctx) {
+          const now = this.ctx.currentTime;
+          this.bgmGain.gain.cancelScheduledValues(now);
+          this.bgmGain.gain.setTargetAtTime(active ? 0.05 : 1.0, now, active ? 0.03 : 0.14);
+        }
+        if (active && safetyMs > 0) {
+          this.duckTimer = setTimeout(() => this.duckBGM(false), safetyMs);
+        }
       },
       setVolume(v) {
         this.masterVol = Math.max(0, Math.min(1, v));
@@ -890,17 +980,22 @@
         this.muted = flag;
         if (this.bus) this.bus.gain.value = flag ? 0 : this.masterVol;
         if (flag && window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch {} }
+        if (flag) this.duckBGM(false);
       },
-      speak(text) {
-        if (this.muted || !text || !window.speechSynthesis) return;
+      speak(text, onDone = null) {
+        if (this.muted || !text || !window.speechSynthesis) { if (onDone) onDone(); return; }
         try {
           window.speechSynthesis.cancel();
+          this.duckBGM(true, Math.max(3200, text.length * 110 + 1400));
           const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'en-US'; u.rate = 0.9; u.pitch = 1.06;
+          u.lang = 'en-US'; u.rate = 0.88; u.pitch = 1.05; u.volume = 1.0;
+          const finish = () => { this.duckBGM(false); if (onDone) onDone(); };
+          u.onend = finish;
+          u.onerror = finish;
           window.speechSynthesis.speak(u);
-        } catch {}
+        } catch { this.duckBGM(false); if (onDone) onDone(); }
       },
-      tone(freq, dur, type = 'sine', vol = 0.22) {
+      tone(freq, dur, type = 'sine', vol = 0.22, isBgm = false) {
         if (this.muted || !this.ctx || this.ctx.state !== 'running' || !freq) return;
         try {
           const now = this.ctx.currentTime;
@@ -910,7 +1005,7 @@
           g.gain.setValueAtTime(0.0001, now);
           g.gain.linearRampToValueAtTime(vol, now + 0.02);
           g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-          o.connect(g); g.connect(this.bus || this.ctx.destination);
+          o.connect(g); g.connect((isBgm && this.bgmGain) ? this.bgmGain : (this.bus || this.ctx.destination));
           o.start(now); o.stop(now + dur + 0.03);
         } catch {}
       },
@@ -946,8 +1041,8 @@
           if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
           const m = s.m[this.step % s.m.length];
           const b = s.b[this.step % s.b.length];
-          if (m) this.tone(m, s.ms / 1000 * 1.45, s.t, 0.40);
-          if (b) this.tone(b, s.ms / 1000 * 1.75, 'sine', 0.28);
+          if (m) this.tone(m, s.ms / 1000 * 1.45, s.t, 0.34, true);
+          if (b) this.tone(b, s.ms / 1000 * 1.75, 'sine', 0.24, true);
           this.step++;
         }, s.ms);
       }
@@ -976,6 +1071,14 @@
         farmFriends: [],
         farmPlots: Array.from({ length: 6 }, (_, i) => ({ id: i, seedId: null, plantedAt: 0, watered: false, ready: false })),
         upgrades: [],
+        placedDecor: [],
+        houseUpgraded: false,
+        houseColor: 'strawberry',
+        ownedHouseColors: ['strawberry'],
+        wildFlowers: [],
+        lastFlowerSpawnSec: 0,
+        lastEventSec: 0,
+        nextEventIdx: 0,
         seenTutorials: [],
         seenCutscenes: [],
         miniGamesDone: 0,
@@ -999,6 +1102,9 @@
       playerMesh: null, playerParts: {}, zoneGroup: null,
       interactables: [], animalMeshes: {}, plotMeshes: [], platforms: [], waterAreas: [], waterTexList: [], clouds: [], sparkles: null,
       ridingGuardian: null, rideMesh: null, mirrorPreview: false,
+      designMode: false, designSelectedId: null, designGhost: null, designGhostRing: null,
+      designCursorX: -6, designCursorZ: 7, designRotY: 0, designRedGroup: null,
+      decorMeshes: [], raycaster: new THREE.Raycaster(), mouseNDC: new THREE.Vector2(),
       keys: {}, camYaw: 0, camPitch: 0.36, camDist: 10.5,
       isDragging: false, lastX: 0, lastY: 0, velY: 0, onGround: true,
       modalOpen: false, cutscene: null, nearest: null, portalCooldown: 0,
@@ -1179,7 +1285,11 @@
       // Complete, Kid-Friendly Full-Coverage Outfit Color & Silhouette Routing!
       const topMat = outfitStyle === 'sailor' ? plushMat(0xffffff)
         : (outfitStyle === 'overalls' ? plushMat(0xfef08a)
-        : (outfitStyle === 'cardigan' ? plushMat(0xfff5f8) : outfitMat));
+        : (outfitStyle === 'cardigan' ? plushMat(0xfff5f8)
+        : (outfitStyle === 'kimono' ? plushMat(0xffd6e7)
+        : (outfitStyle === 'gardener' ? plushMat(0xd9f99d)
+        : (outfitStyle === 'stargazer' ? plushMat(0x312e81)
+        : (outfitStyle === 'beekeeper' ? plushMat(0xfef08a) : outfitMat))))));
       const sleeveMat = outfitStyle === 'cardigan' ? outfitMat : topMat;
       const bottomMat = outfitStyle === 'overalls' ? plushMat(0x60a5fa)
         : (outfitStyle === 'sailor' ? plushMat(0x1e3a8a)
@@ -1341,6 +1451,47 @@
           bodyGroup.add(hEar);
         }
         bodyGroup.add(hem, pocket, hoodBack);
+      } else if (outfitStyle === 'kimono') {
+        const robe = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.56, 16), plushMat(0xffd6e7));
+        robe.position.y = 0.44;
+        const obi = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.35, 0.16, 16), outfitMat);
+        obi.position.y = 0.62;
+        const obiBow = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.20, 0.12), outfitMat);
+        obiBow.position.set(0, 0.62, 0.34);
+        const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.28, 0.08), plushMat(0xffffff));
+        lapel.position.set(0, 0.82, -0.28); lapel.rotation.z = 0.28;
+        bodyGroup.add(robe, obi, obiBow, lapel);
+      } else if (outfitStyle === 'gardener') {
+        const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.34, 0.44, 14), plushMat(0x84cc16));
+        vest.position.y = 0.66;
+        const pock = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.08), plushMat(0xfef3c7));
+        pock.position.set(0.14, 0.58, -0.32);
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.72, 0.06, 20), plushMat(0xfde68a));
+        brim.position.set(0, 0.44, 0.02);
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.44, 0.24, 16), plushMat(0xfde68a));
+        crown.position.set(0, 0.56, 0.02);
+        const ribbon = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.045, 8, 20), plushMat(0xf472b6));
+        ribbon.rotation.x = Math.PI / 2; ribbon.position.set(0, 0.47, 0.02);
+        headG.add(brim, crown, ribbon);
+        bodyGroup.add(vest, pock);
+      } else if (outfitStyle === 'stargazer') {
+        const cape = new THREE.Mesh(new THREE.ConeGeometry(0.56, 0.78, 16, 1, true, -Math.PI * 0.68, Math.PI * 1.36), plushMat(0x4338ca));
+        cape.position.set(0, 0.56, 0.06); cape.material.side = THREE.DoubleSide;
+        const clasp = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.02, 6, 12, Math.PI * 1.3), plushMat(0xfef08a));
+        clasp.position.set(0, 0.88, -0.32);
+        for (let si = 0; si < 3; si++) {
+          const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), plushMat(0xfef08a));
+          st.position.set(-0.18 + si * 0.18, 0.34 + (si % 2) * 0.16, 0.42); bodyGroup.add(st);
+        }
+        bodyGroup.add(cape, clasp);
+      } else if (outfitStyle === 'beekeeper') {
+        for (let bi = 0; bi < 3; bi++) {
+          const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.075, 16), plushMat(0x451a03));
+          stripe.position.y = 0.52 + bi * 0.15; bodyGroup.add(stripe);
+        }
+        const bee = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), plushMat(0xfbbf24));
+        bee.position.set(0.14, 0.78, -0.32);
+        bodyGroup.add(bee);
       }
 
       // Cute 3D Pastel Bicycle (bigger, crisp, flower basket, bright tires & pastel frame!)
@@ -1595,7 +1746,19 @@
       head.scale.set(1.12, 0.95, 1.02); head.castShadow = true; headG.add(head);
 
       let earL = null, earR = null;
-      if (sp === 'bunny' || sp === 'jackalope') {
+      const aid = a.id;
+
+      // Helper for cute protruding snouts (Polar Bear, Honey Bear, Cow, Goat, Camel, etc.)
+      const addSnout = (colHex, sx = 0.24, sy = 0.18, sz = 0.24, zPos = -0.49, yPos = -0.09, noseHex = 0x2b252c) => {
+        const sn = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 12), plushMat(colHex));
+        sn.scale.set(sx, sy, sz); sn.position.set(0, yPos, zPos);
+        const ns = new THREE.Mesh(new THREE.SphereGeometry(0.068, 10, 10), plushMat(noseHex));
+        ns.scale.set(1.25, 0.85, 0.75); ns.position.set(0, yPos + sy * 0.32, zPos - sz * 0.92);
+        headG.add(sn, ns);
+      };
+
+      // --- GUARDIANS: Jackalope & Tanuki (kept 100% verbatim!) ---
+      if (sp === 'jackalope') {
         for (const side of [-1, 1]) {
           const eGrp = new THREE.Group();
           eGrp.position.set(side * 0.22, 0.48, 0.02); eGrp.rotation.z = -side * 0.12;
@@ -1605,13 +1768,11 @@
           inner.position.set(0, 0.24, -0.05); inner.scale.set(1, 1, 0.35);
           eGrp.add(outer, inner); headG.add(eGrp);
           if (side < 0) earL = eGrp; else earR = eGrp;
-          if (sp === 'jackalope') {
-            const ant = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.38, 8, 10), plushMat(0xf59e0b));
-            ant.position.set(side * 0.32, 0.62, -0.06); ant.rotation.z = -side * 0.42;
-            const tine = new THREE.Mesh(new THREE.CapsuleGeometry(0.032, 0.18, 6, 8), plushMat(0xf59e0b));
-            tine.position.set(side * 0.44, 0.70, -0.08); tine.rotation.z = -side * 1.0;
-            headG.add(ant, tine);
-          }
+          const ant = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.38, 8, 10), plushMat(0xf59e0b));
+          ant.position.set(side * 0.32, 0.62, -0.06); ant.rotation.z = -side * 0.42;
+          const tine = new THREE.Mesh(new THREE.CapsuleGeometry(0.032, 0.18, 6, 8), plushMat(0xf59e0b));
+          tine.position.set(side * 0.44, 0.70, -0.08); tine.rotation.z = -side * 1.0;
+          headG.add(ant, tine);
         }
         const tail = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), mainMat);
         tail.position.set(0, 0.34, 0.44); bodyGroup.add(tail);
@@ -1626,8 +1787,289 @@
         const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.20, 0.42, 10, 12), mainMat);
         tail.position.set(0, 0.42, 0.52); tail.rotation.x = 0.85; bodyGroup.add(tail);
         attachCuteFace(headG, { muzzleColor: 0xfef3c7 });
+      }
+      // --- REDESIGNED 50 UNIQUE & DISTINCT CUTE NPC ANIMALS ---
+      else if (aid === 'summit') {
+        // Mountain Goat: Curved ridged grey horns, cute chin beard, goat ears, dark hooves!
+        const hornMat = plushMat(0x64748b);
+        const hoofMat = plushMat(0x334155);
+        footL.material = hoofMat; footR.material = hoofMat;
+        for (const side of [-1, 1]) {
+          const horn = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.058, 8, 14, Math.PI * 0.78), hornMat);
+          horn.position.set(side * 0.20, 0.56, 0.14); horn.rotation.y = Math.PI / 2 - side * 0.22; horn.rotation.z = -0.35;
+          const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.20, 8, 10), mainMat);
+          ear.position.set(side * 0.48, 0.26, 0.02); ear.rotation.z = -side * 1.15;
+          headG.add(horn, ear);
+        }
+        const beard = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.24, 8), plushMat(0xe2e8f0));
+        beard.rotation.x = Math.PI; beard.position.set(0, -0.36, -0.42);
+        headG.add(beard);
+        addSnout(0xf1f5f9, 0.22, 0.16, 0.22, -0.48, -0.09, 0x475569);
+        attachCuteFace(headG, { eyeY: 0.08, eyeX: 0.22, eyeZ: -0.47, muzzleColor: 0xf1f5f9 });
+      } else if (aid === 'flurry' || aid === 'bumble' || aid === 'bao' || aid === 'fern' || aid === 'clover_b' || aid === 'choco' || aid === 'taro') {
+        // Distinct Bears, Pandas, Badger, Marmot & Macaque!
+        const isPolar = aid === 'flurry', isPanda = aid === 'bao', isRedPanda = aid === 'fern', isBadger = aid === 'clover_b', isMarmot = aid === 'choco', isMacaque = aid === 'taro';
+        const darkMat = plushMat(0x1e293b);
+        if (isPanda) {
+          armL.material = darkMat; armR.material = darkMat; footL.material = darkMat; footR.material = darkMat;
+          const band = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.43, 0.20, 16), darkMat);
+          band.position.y = 0.76; bodyGroup.add(band);
+        }
+        if (isRedPanda) {
+          const rpDark = plushMat(0x3b1f16);
+          armL.material = rpDark; armR.material = rpDark; footL.material = rpDark; footR.material = rpDark;
+        }
+        for (const side of [-1, 1]) {
+          const earMat = isPanda ? darkMat : (isBadger ? darkMat : mainMat);
+          const ear = new THREE.Mesh(new THREE.SphereGeometry(isMacaque ? 0.19 : 0.16, 14, 12), earMat);
+          ear.position.set(side * (isMacaque ? 0.54 : 0.40), isMacaque ? 0.08 : 0.42, 0.02); ear.scale.z = 0.55;
+          const inn = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 10), isMacaque ? pinkInner : (isPanda ? darkMat : accMat));
+          inn.position.set(side * (isMacaque ? 0.54 : 0.40), isMacaque ? 0.08 : 0.42, -0.04); inn.scale.z = 0.35;
+          headG.add(ear, inn);
+          if (isPanda) {
+            const patch = new THREE.Mesh(new THREE.SphereGeometry(0.175, 12, 10), darkMat);
+            patch.scale.set(1.05, 1.2, 0.38); patch.position.set(side * 0.21, 0.04, -0.45); headG.add(patch);
+          }
+          if (isRedPanda) {
+            const brow = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), plushMat(0xffffff));
+            brow.position.set(side * 0.18, 0.22, -0.46);
+            const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), plushMat(0xffffff));
+            cheek.scale.set(1.1, 0.75, 0.45); cheek.position.set(side * 0.32, -0.10, -0.42);
+            headG.add(brow, cheek);
+          }
+          if (isBadger) {
+            const stripe = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.42, 8, 10), darkMat);
+            stripe.position.set(side * 0.20, 0.14, -0.42); stripe.rotation.x = 0.22; headG.add(stripe);
+          }
+        }
+        if (isBadger) {
+          const centerW = new THREE.Mesh(new THREE.CapsuleGeometry(0.10, 0.48, 8, 10), plushMat(0xffffff));
+          centerW.position.set(0, 0.16, -0.44); centerW.rotation.x = 0.22; headG.add(centerW);
+        }
+        if (isMacaque) {
+          const faceMask = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 14), plushMat(0xffd6c9));
+          faceMask.scale.set(1.02, 0.88, 0.42); faceMask.position.set(0, -0.02, -0.35); headG.add(faceMask);
+          const mTail = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.055, 8, 16, Math.PI * 1.45), mainMat);
+          mTail.position.set(0, 0.46, 0.56); mTail.rotation.y = Math.PI / 2; bodyGroup.add(mTail);
+        } else if (isRedPanda) {
+          for (let ti = 0; ti < 4; ti++) {
+            const tSeg = new THREE.Mesh(new THREE.SphereGeometry(0.17 - ti * 0.015, 10, 10), ti % 2 === 0 ? mainMat : plushMat(0x5c2d16));
+            tSeg.position.set(0, 0.36 + ti * 0.06, 0.48 + ti * 0.19); bodyGroup.add(tSeg);
+          }
+        } else {
+          const bTail = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), isPanda ? darkMat : mainMat);
+          bTail.position.set(0, 0.32, 0.45); bodyGroup.add(bTail);
+        }
+        if (isPolar) {
+          // Polar Bear: Clear elongated polar bear snout, black nose, plump bear silhouette!
+          head.scale.set(1.06, 0.96, 1.12);
+          addSnout(0xffffff, 0.25, 0.20, 0.28, -0.50, -0.09, 0x1e293b);
+          attachCuteFace(headG, { eyeY: 0.09, eyeX: 0.21, eyeZ: -0.48, noseColor: 0x1e293b, muzzleColor: 0xffffff });
+        } else if (aid === 'bumble') {
+          addSnout(0xfff1d6, 0.24, 0.19, 0.24, -0.49, -0.09, 0x451a03);
+          attachCuteFace(headG, { eyeY: 0.08, eyeX: 0.21, eyeZ: -0.48, noseColor: 0x451a03, muzzleColor: 0xfff1d6 });
+        } else if (isMarmot) {
+          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.05), plushMat(0xffffff));
+          tooth.position.set(0, -0.17, -0.55); headG.add(tooth);
+          attachCuteFace(headG, { hasWhiskers: true, muzzleColor: a.accent });
+        } else {
+          attachCuteFace(headG, { noseColor: isPanda || isBadger ? 0x1e293b : 0x5c3a31, muzzleColor: isMacaque ? 0xffd6c9 : a.accent });
+        }
+      } else if (aid === 'daisy' || aid === 'woolly' || aid === 'puff') {
+        // Baby Cow, Alpaca & Cloud Lamb!
+        if (aid === 'daisy') {
+          const spotMat = plushMat(0x334155);
+          const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), spotMat); s1.scale.set(1, 0.9, 0.4); s1.position.set(0.26, 0.62, 0.26);
+          const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), spotMat); s2.scale.set(1, 1, 0.45); s2.position.set(-0.24, 0.16, -0.38);
+          bodyGroup.add(s1); headG.add(s2);
+          for (const side of [-1, 1]) {
+            const horn = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.22, 8), plushMat(0xfde68a));
+            horn.position.set(side * 0.24, 0.50, -0.02); horn.rotation.z = -side * 0.35;
+            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.18, 8, 8), mainMat);
+            ear.position.set(side * 0.48, 0.26, 0.02); ear.rotation.z = -side * 1.1;
+            headG.add(horn, ear);
+          }
+          addSnout(0xffc2d1, 0.30, 0.19, 0.22, -0.49, -0.11, 0xf472b6);
+          attachCuteFace(headG, { eyeY: 0.09, eyeX: 0.22, eyeZ: -0.47, muzzleColor: 0xffc2d1 });
+        } else if (aid === 'woolly') {
+          headG.position.y = 1.48;
+          const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.20, 0.36, 10, 12), mainMat);
+          neck.position.set(0, 1.02, -0.04); bodyGroup.add(neck);
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.26, 8, 10), mainMat);
+            ear.position.set(side * 0.24, 0.54, 0.02); ear.rotation.z = -side * 0.18; headG.add(ear);
+          }
+          const crest = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), accMat);
+          crest.position.set(0, 0.44, -0.10); headG.add(crest);
+          attachCuteFace(headG, { muzzleColor: 0xfff5f8 });
+        } else {
+          for (let ci = 0; ci < 7; ci++) {
+            const ca = (ci / 7) * Math.PI * 2;
+            const puff = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), mainMat);
+            puff.position.set(Math.cos(ca) * 0.36, 0.42, Math.sin(ca) * 0.30); headG.add(puff);
+          }
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.22, 8, 10), pinkInner);
+            ear.position.set(side * 0.48, 0.12, 0.02); ear.rotation.z = -side * 1.15; headG.add(ear);
+          }
+          attachCuteFace(headG, { muzzleColor: 0xfff0f5 });
+        }
+      } else if (aid === 'sunny' || aid === 'gecko' || aid === 'ribbit') {
+        // Sea Turtle (domed scute shell + flippers), Leopard Gecko (spotted + gecko tail), Tree Frog (bulging top eyes)!
+        if (aid === 'sunny') {
+          const shell = new THREE.Mesh(new THREE.SphereGeometry(0.54, 16, 14), plushMat(0x1f8a62));
+          shell.position.set(0, 0.62, 0.24); shell.scale.set(1.08, 1.06, 0.78);
+          const rim = new THREE.Mesh(new THREE.TorusGeometry(0.50, 0.07, 8, 20), plushMat(0xfef3c7));
+          rim.position.set(0, 0.62, 0.12);
+          for (let si = 0; si < 5; si++) {
+            const sa = (si / 5) * Math.PI * 2;
+            const scute = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 0.08, 6), plushMat(0x4ade80));
+            scute.rotation.x = Math.PI / 2; scute.position.set(Math.cos(sa) * 0.24, 0.62 + Math.sin(sa) * 0.24, 0.60);
+            bodyGroup.add(scute);
+          }
+          armL.scale.set(1.4, 0.65, 1.35); armR.scale.set(1.4, 0.65, 1.35);
+          bodyGroup.add(shell, rim);
+          attachCuteFace(headG, { muzzleColor: 0xd9f99d });
+        } else if (aid === 'gecko') {
+          const spotMat = plushMat(0x78350f);
+          for (let si = 0; si < 6; si++) {
+            const spDot = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), spotMat);
+            spDot.position.set(((si % 2) ? 1 : -1) * 0.26, 0.45 + (si % 3) * 0.16, 0.28); bodyGroup.add(spDot);
+          }
+          const gTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.48, 10, 12), mainMat);
+          gTail.position.set(0, 0.30, 0.56); gTail.rotation.x = 1.25; bodyGroup.add(gTail);
+          attachCuteFace(headG, { eyeScale: 1.18, muzzleColor: 0xfef9c3 });
+        } else {
+          // Tree Frog: Big cute bulging frog eyes perched right on top of the head!
+          for (const side of [-1, 1]) {
+            const bulge = new THREE.Mesh(new THREE.SphereGeometry(0.20, 14, 12), mainMat);
+            bulge.position.set(side * 0.26, 0.44, -0.22); headG.add(bulge);
+          }
+          attachCuteFace(headG, { eyeY: 0.44, eyeX: 0.26, eyeZ: -0.37, eyeScale: 1.05, muzzleColor: 0xecfccb });
+        }
+      } else if (sp === 'bird') {
+        // Distinct Birds: Penguin, Puffin, Duckling, Swan, Barn Owl, Snowy Owl, Crane, Meadow Chick, Moon Moth, Baby Griffin!
+        armL.scale.set(1.3, 0.85, 0.42); armR.scale.set(1.3, 0.85, 0.42);
+        if (aid === 'nori') {
+          // Penguin: Orange feet & flipper sheen
+          footL.material = plushMat(0xf97316); footR.material = plushMat(0xf97316);
+          const faceW = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 12), plushMat(0xffffff));
+          faceW.scale.set(0.95, 0.85, 0.42); faceW.position.set(0, -0.04, -0.36); headG.add(faceW);
+          attachCuteFace(headG, { hasBeak: true, eyeScale: 1.05 });
+        } else if (aid === 'puffin') {
+          // Puffin: Iconic bright striped orange/yellow/blue puffin beak!
+          const faceW = new THREE.Mesh(new THREE.SphereGeometry(0.43, 14, 12), plushMat(0xffffff));
+          faceW.scale.set(0.98, 0.88, 0.44); faceW.position.set(0, -0.02, -0.36); headG.add(faceW);
+          const b1 = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.26, 8), plushMat(0xf97316));
+          b1.rotation.x = -Math.PI / 2; b1.position.set(0, -0.06, -0.60);
+          const b2 = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.08, 8), plushMat(0xfacc15));
+          b2.rotation.x = Math.PI / 2; b2.position.set(0, -0.06, -0.50);
+          headG.add(b1, b2);
+          attachCuteFace(headG, { hasBeak: false, eyeScale: 1.05, muzzleColor: 0xffffff });
+        } else if (aid === 'quackers') {
+          // Duckling: Wide flat orange duck bill + top head tuft!
+          footL.material = plushMat(0xf97316); footR.material = plushMat(0xf97316);
+          const bill = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), plushMat(0xf97316));
+          bill.scale.set(1.35, 0.48, 1.25); bill.position.set(0, -0.09, -0.56);
+          const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.22, 8), mainMat);
+          tuft.position.set(0, 0.56, -0.05); headG.add(bill, tuft);
+          attachCuteFace(headG, { hasBeak: false, eyeScale: 1.05, muzzleColor: 0xfef08a });
+        } else if (aid === 'swanee' || aid === 'yuzu') {
+          // Swan & Crane: Graceful long neck (+ crimson crown cap for Yuzu the Crane!)
+          headG.position.y = 1.54;
+          const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.42, 10, 12), mainMat);
+          neck.position.set(0, 1.05, -0.08); bodyGroup.add(neck);
+          if (aid === 'yuzu') {
+            const cap = new THREE.Mesh(new THREE.SphereGeometry(0.20, 12, 10), plushMat(0xf43f5e));
+            cap.scale.set(1.0, 0.45, 1.0); cap.position.set(0, 0.48, -0.04); headG.add(cap);
+            armL.material = plushMat(0x1e293b); armR.material = plushMat(0x1e293b);
+          }
+          attachCuteFace(headG, { hasBeak: true, eyeScale: 1.02 });
+        } else if (aid === 'barnaby' || aid === 'snowy') {
+          // Owls: Heart-shaped facial disc + ear tufts!
+          const disc = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 14), plushMat(0xfffbeb));
+          disc.scale.set(1.05, 0.88, 0.36); disc.position.set(0, 0.02, -0.38); headG.add(disc);
+          for (const side of [-1, 1]) {
+            const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.24, 8), mainMat);
+            tuft.position.set(side * 0.32, 0.48, -0.05); tuft.rotation.z = -side * 0.35; headG.add(tuft);
+          }
+          attachCuteFace(headG, { hasBeak: true, eyeScale: 1.15 });
+        } else if (aid === 'glimmer') {
+          // Moon Moth: Glowing pastel moth wings + feathery antennae!
+          for (const side of [-1, 1]) {
+            const wing = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 12), plushMat(0xd8b4fe));
+            wing.scale.set(1.25, 0.92, 0.14); wing.position.set(side * 0.62, 0.72, 0.24); wing.rotation.y = side * 0.28;
+            const spot = new THREE.Mesh(new THREE.CircleGeometry(0.14, 12), new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide }));
+            spot.position.set(side * 0.72, 0.78, 0.33);
+            const ant = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.32, 6, 8), plushMat(0xfef08a));
+            ant.position.set(side * 0.18, 0.56, -0.10); ant.rotation.z = -side * 0.38;
+            bodyGroup.add(wing, spot); headG.add(ant);
+          }
+          attachCuteFace(headG, { eyeScale: 1.12, muzzleColor: 0xfaf5ff });
+        } else if (aid === 'nova') {
+          // Baby Griffin: Golden wings + tufted ears + lion tail!
+          for (const side of [-1, 1]) {
+            const wing = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 10), plushMat(0xfef3c7));
+            wing.scale.set(1.25, 0.72, 0.22); wing.position.set(side * 0.56, 0.72, 0.20); wing.rotation.z = side * 0.28;
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.28, 8), mainMat);
+            ear.position.set(side * 0.30, 0.46, 0); ear.rotation.z = -side * 0.35;
+            bodyGroup.add(wing); headG.add(ear);
+          }
+          const lTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.38, 6, 8), mainMat);
+          lTail.position.set(0, 0.38, 0.50); lTail.rotation.x = 0.85; bodyGroup.add(lTail);
+          attachCuteFace(headG, { hasBeak: true, eyeScale: 1.08 });
+        } else {
+          // Meadow Chick: Cute yellow crest tuft!
+          const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.22, 8), mainMat);
+          tuft.position.set(0, 0.56, 0); headG.add(tuft);
+          attachCuteFace(headG, { hasBeak: true, eyeScale: 1.08 });
+        }
+      } else if (sp === 'bunny') {
+        // Distinct Bunny (Mochi), Fennec Fox (Sandy - HUGE desert ears!), Pika (Pippin - small round ears), Chinchilla (Crag - round velvet ears + curled tail)
+        if (aid === 'sandy') {
+          for (const side of [-1, 1]) {
+            const eGrp = new THREE.Group();
+            eGrp.position.set(side * 0.34, 0.38, 0.02); eGrp.rotation.z = -side * 0.48;
+            const outer = new THREE.Mesh(new THREE.ConeGeometry(0.26, 0.76, 12), mainMat); outer.position.y = 0.38; outer.scale.z = 0.45;
+            const inner = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.56, 10), pinkInner); inner.position.set(0, 0.32, -0.06); inner.scale.z = 0.3;
+            eGrp.add(outer, inner); headG.add(eGrp);
+            if (side < 0) earL = eGrp; else earR = eGrp;
+          }
+          const fTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.44, 10, 12), accMat);
+          fTail.position.set(0, 0.40, 0.50); fTail.rotation.x = 0.8; bodyGroup.add(fTail);
+          addSnout(0xfff8eb, 0.18, 0.13, 0.22, -0.50, -0.09, 0x7c5840);
+          attachCuteFace(headG, { hasWhiskers: true, muzzleColor: 0xfff8eb });
+        } else if (aid === 'pippin' || aid === 'crag') {
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(aid === 'crag' ? 0.21 : 0.17, 14, 12), mainMat);
+            ear.position.set(side * 0.40, 0.40, 0.02); ear.scale.z = 0.42;
+            const inn = new THREE.Mesh(new THREE.SphereGeometry(aid === 'crag' ? 0.14 : 0.11, 10, 10), pinkInner);
+            inn.position.set(side * 0.40, 0.40, -0.04); inn.scale.z = 0.3;
+            headG.add(ear, inn);
+          }
+          if (aid === 'crag') {
+            const cTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.42, 10, 12), mainMat);
+            cTail.position.set(0, 0.48, 0.50); cTail.rotation.x = 0.45; bodyGroup.add(cTail);
+          }
+          attachCuteFace(headG, { hasWhiskers: true, muzzleColor: 0xffffff });
+        } else {
+          for (const side of [-1, 1]) {
+            const eGrp = new THREE.Group();
+            eGrp.position.set(side * 0.22, 0.48, 0.02); eGrp.rotation.z = -side * 0.12;
+            const outer = new THREE.Mesh(new THREE.CapsuleGeometry(0.12, 0.44, 10, 12), mainMat);
+            outer.position.y = 0.26; outer.scale.set(1, 1, 0.58); outer.castShadow = true;
+            const inner = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.34, 8, 10), pinkInner);
+            inner.position.set(0, 0.24, -0.05); inner.scale.set(1, 1, 0.35);
+            eGrp.add(outer, inner); headG.add(eGrp);
+            if (side < 0) earL = eGrp; else earR = eGrp;
+          }
+          const tail = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 12), mainMat);
+          tail.position.set(0, 0.34, 0.44); bodyGroup.add(tail);
+          attachCuteFace(headG, { hasWhiskers: true, muzzleColor: 0xffffff });
+        }
       } else if (sp === 'cat' || sp === 'corgi' || sp === 'fox') {
-        const earH = sp === 'corgi' ? 0.38 : (sp === 'fox' ? 0.42 : 0.28);
+        const isSquirrel = (aid === 'acorn' || aid === 'hazel' || aid === 'kiki');
+        const earH = sp === 'corgi' ? 0.38 : (sp === 'fox' && !isSquirrel ? 0.44 : 0.28);
         for (const side of [-1, 1]) {
           const eGrp = new THREE.Group();
           eGrp.position.set(side * 0.32, 0.40, 0.02); eGrp.rotation.z = -side * 0.34;
@@ -1638,67 +2080,151 @@
           eGrp.add(outer, inner); headG.add(eGrp);
           if (side < 0) earL = eGrp; else earR = eGrp;
         }
-        const tail = new THREE.Mesh(new THREE.CapsuleGeometry(sp === 'fox' ? 0.18 : 0.11, sp === 'fox' ? 0.42 : 0.28, 10, 12), sp === 'fox' ? accMat : mainMat);
-        tail.position.set(0, 0.45, 0.48); tail.rotation.x = 0.68; bodyGroup.add(tail);
-        attachCuteFace(headG, { hasWhiskers: sp === 'cat', muzzleColor: a.accent });
-      } else if (sp === 'bear' || sp === 'otter') {
-        for (const side of [-1, 1]) {
-          const ear = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), mainMat);
-          ear.position.set(side * 0.42, 0.38, 0.02); ear.scale.z = 0.65;
-          const inn = new THREE.Mesh(new THREE.SphereGeometry(0.10, 10, 10), accMat);
-          inn.position.set(side * 0.42, 0.38, -0.06); inn.scale.z = 0.4;
-          headG.add(ear, inn);
+        if (isSquirrel) {
+          // Big Fluffy Curled Squirrel Tail (+ stripes for Chipmunk, gliding membranes for Flying Squirrel!)
+          const sqTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.58, 12, 14), mainMat);
+          sqTail.position.set(0, 0.78, 0.52); sqTail.rotation.x = 0.22; bodyGroup.add(sqTail);
+          if (aid === 'hazel') {
+            for (const sx of [-0.14, 0, 0.14]) {
+              const st = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.42, 6, 8), plushMat(0x451a03));
+              st.position.set(sx, 0.62, 0.36); bodyGroup.add(st);
+            }
+          } else if (aid === 'kiki') {
+            for (const side of [-1, 1]) {
+              const mem = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.44, 0.06), accMat);
+              mem.position.set(side * 0.48, 0.56, 0.02); bodyGroup.add(mem);
+            }
+          }
+        } else if (aid === 'misty') {
+          // Snow Leopard: Rosette spots + extra-long fluffy tail!
+          for (let si = 0; si < 5; si++) {
+            const spDot = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), plushMat(0x64748b));
+            spDot.position.set(((si % 2) ? 1 : -1) * 0.28, 0.48 + (si % 3) * 0.14, 0.28); bodyGroup.add(spDot);
+          }
+          const slTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.68, 10, 12), mainMat);
+          slTail.position.set(0, 0.36, 0.62); slTail.rotation.x = 1.15; bodyGroup.add(slTail);
+        } else if (aid === 'twinkle') {
+          const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+          gem.position.set(0, 0.34, -0.46); headG.add(gem);
+          const cTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.10, 0.36, 8, 10), mainMat);
+          cTail.position.set(0, 0.46, 0.48); cTail.rotation.x = 0.68; bodyGroup.add(cTail);
+        } else if (aid === 'miso') {
+          const dTail = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.09, 8, 14), mainMat);
+          dTail.position.set(0, 0.56, 0.48); dTail.rotation.y = Math.PI / 2; bodyGroup.add(dTail);
+          addSnout(0xfff8eb, 0.22, 0.15, 0.20, -0.48, -0.09, 0x2b252c);
+        } else {
+          const tail = new THREE.Mesh(new THREE.CapsuleGeometry(sp === 'fox' ? 0.19 : 0.11, sp === 'fox' ? 0.46 : 0.28, 10, 12), sp === 'fox' ? accMat : mainMat);
+          tail.position.set(0, 0.45, 0.48); tail.rotation.x = 0.68; bodyGroup.add(tail);
         }
-        const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.10, sp === 'otter' ? 0.40 : 0.08, 8, 10), mainMat);
-        tail.position.set(0, 0.34, 0.46); tail.rotation.x = 1.1; bodyGroup.add(tail);
-        attachCuteFace(headG, { hasWhiskers: sp === 'otter', muzzleColor: a.accent });
+        attachCuteFace(headG, { hasWhiskers: sp === 'cat' || isSquirrel, muzzleColor: a.accent });
+      } else if (sp === 'otter') {
+        // Sea Otter (holds shell!), Platypus (wide duck-bill + flat tail!), Beaver (buck teeth + paddle tail!), Meerkat (tall upright + eye rings!)
+        for (const side of [-1, 1]) {
+          const ear = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), mainMat);
+          ear.position.set(side * 0.42, 0.36, 0.02); ear.scale.z = 0.55; headG.add(ear);
+          if (aid === 'spike') {
+            const ring = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), plushMat(0x451a03));
+            ring.scale.set(1.05, 1.0, 0.35); ring.position.set(side * 0.20, 0.04, -0.46); headG.add(ring);
+          }
+        }
+        if (aid === 'pebble') {
+          const shl = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 0), plushMat(0xffc2d1));
+          shl.scale.set(1.2, 0.9, 0.45); shl.position.set(0, 0.54, -0.46); bodyGroup.add(shl);
+        }
+        if (aid === 'splash') {
+          const bill = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), plushMat(0x475569));
+          bill.scale.set(1.35, 0.45, 1.45); bill.position.set(0, -0.09, -0.58); headG.add(bill);
+        }
+        if (aid === 'marsh') {
+          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.05), plushMat(0xffffff));
+          tooth.position.set(0, -0.18, -0.55); headG.add(tooth);
+        }
+        const tail = new THREE.Mesh(new THREE.CapsuleGeometry((aid === 'splash' || aid === 'marsh') ? 0.18 : 0.10, 0.44, 8, 10), (aid === 'splash' || aid === 'marsh') ? plushMat(0x5c4033) : mainMat);
+        if (aid === 'splash' || aid === 'marsh') tail.scale.set(1.3, 0.35, 1.0);
+        tail.position.set(0, 0.30, 0.52); tail.rotation.x = 1.2; bodyGroup.add(tail);
+        attachCuteFace(headG, { hasWhiskers: aid === 'pebble' || aid === 'marsh', muzzleColor: a.accent });
       } else if (sp === 'hedgehog') {
-        const quillMat = plushMat(0x7c5840);
-        for (let qi = 0; qi < 10; qi++) {
-          const aAng = (qi / 10) * Math.PI * 2;
-          const q = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 8), quillMat);
-          q.position.set(Math.cos(aAng) * 0.42, 0.10 + Math.sin(aAng) * 0.28, 0.34); q.rotation.x = 1.1; headG.add(q);
+        // Hedgehog (quills), Armadillo (banded armored shell!), Guinea Pig (cute floppy calico ears!)
+        if (aid === 'dusty') {
+          for (let bi = 0; bi < 4; bi++) {
+            const band = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.085, 8, 16, Math.PI), plushMat(bi % 2 ? 0xa3856d : 0x856651));
+            band.position.set(0, 0.46 + bi * 0.11, 0.14); band.rotation.x = Math.PI / 2; bodyGroup.add(band);
+          }
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.24, 8), mainMat);
+            ear.position.set(side * 0.32, 0.42, 0); ear.rotation.z = -side * 0.35; headG.add(ear);
+          }
+          addSnout(0xf3e5d8, 0.16, 0.12, 0.24, -0.50, -0.09, 0x5c4033);
+        } else if (aid === 'squeak') {
+          for (const side of [-1, 1]) {
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), plushMat(0x78350f));
+            ear.scale.set(0.75, 1.0, 0.35); ear.position.set(side * 0.46, 0.22, -0.04); headG.add(ear);
+          }
+        } else {
+          const quillMat = plushMat(0x7c5840);
+          for (let qi = 0; qi < 12; qi++) {
+            const aAng = (qi / 12) * Math.PI * 2;
+            const q = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.34, 8), quillMat);
+            q.position.set(Math.cos(aAng) * 0.42, 0.10 + Math.sin(aAng) * 0.28, 0.34); q.rotation.x = 1.1; headG.add(q);
+          }
         }
         attachCuteFace(headG, { muzzleColor: a.accent });
       } else if (sp === 'fawn') {
+        // Fawn (white spots!), Baby Camel (cute hump!), Pony (mane & tail!)
         for (const side of [-1, 1]) {
-          const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.22, 8, 10), mainMat);
-          ear.position.set(side * 0.44, 0.32, 0); ear.rotation.z = -side * 0.78; headG.add(ear);
+          const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.085, 0.22, 8, 10), mainMat);
+          ear.position.set(side * 0.44, 0.32, 0); ear.rotation.z = -side * 0.72; headG.add(ear);
+        }
+        if (aid === 'willow') {
+          for (let fi = 0; fi < 5; fi++) {
+            const spDot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), plushMat(0xfffbeb));
+            spDot.position.set(((fi % 2) ? 1 : -1) * 0.22, 0.50 + (fi % 3) * 0.14, 0.34); bodyGroup.add(spDot);
+          }
+        } else if (aid === 'dune') {
+          const hump = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 12), mainMat);
+          hump.scale.set(0.9, 1.15, 1.0); hump.position.set(0, 0.76, 0.36); bodyGroup.add(hump);
+        } else if (aid === 'trotter') {
+          for (let mi = 0; mi < 3; mi++) {
+            const mane = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), plushMat(0x78350f));
+            mane.position.set(0, 0.48 - mi * 0.14, 0.24 + mi * 0.10); headG.add(mane);
+          }
+          const hTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.38, 8, 10), plushMat(0x78350f));
+          hTail.position.set(0, 0.42, 0.50); hTail.rotation.x = 0.6; bodyGroup.add(hTail);
         }
         attachCuteFace(headG, { muzzleColor: a.accent });
-      } else if (sp === 'bird') {
-        armL.scale.set(1.25, 0.85, 0.45); armR.scale.set(1.25, 0.85, 0.45);
-        attachCuteFace(headG, { hasBeak: true, eyeScale: 1.05 });
       } else if (sp === 'seal') {
-        armL.scale.set(1.2, 0.7, 1.3); armR.scale.set(1.2, 0.7, 1.3);
+        // Baby Seal & Baby Walrus (ivory tusks + plush mustache!)
+        armL.scale.set(1.25, 0.65, 1.35); armR.scale.set(1.25, 0.65, 1.35);
         const tail = new THREE.Mesh(new THREE.SphereGeometry(0.20, 12, 10), mainMat);
         tail.scale.set(1.4, 0.5, 1.2); tail.position.set(0, 0.22, 0.46); bodyGroup.add(tail);
+        if (aid === 'tusk') {
+          for (const side of [-1, 1]) {
+            const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.28, 8), plushMat(0xfffbeb));
+            tusk.rotation.x = Math.PI; tusk.position.set(side * 0.11, -0.24, -0.54);
+            headG.add(tusk);
+          }
+        }
         attachCuteFace(headG, { hasWhiskers: true, muzzleColor: 0xffffff });
-      } else if (sp === 'turtle' || sp === 'frog') {
-        if (sp === 'turtle') {
-          const shell = new THREE.Mesh(new THREE.SphereGeometry(0.48, 16, 14), plushMat(0x2fa67a));
-          shell.position.set(0, 0.62, 0.20); shell.scale.set(1.05, 1.05, 0.75); bodyGroup.add(shell);
-        }
-        attachCuteFace(headG, { muzzleColor: a.accent });
       } else {
-        for (let ci = 0; ci < 6; ci++) {
-          const ca = (ci / 6) * Math.PI * 2;
-          const puff = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), mainMat);
-          puff.position.set(Math.cos(ca) * 0.34, 0.42, Math.sin(ca) * 0.28); headG.add(puff);
-        }
-        attachCuteFace(headG, { muzzleColor: 0xfff0f5 });
+        attachCuteFace(headG, { muzzleColor: a.accent });
       }
 
-      // Cute Accessories
+      // Cute Accessories (Upgraded Flower Crown -> Clear, Distinct Small 3D Daisies!)
       if (a.accessory === 'scarf') {
-        const sc = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.09, 10, 20), plushMat(0xf472b6));
+        const sc = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.09, 10, 20), plushMat(aid === 'flurry' ? 0x38bdf8 : 0xf472b6));
         sc.rotation.x = Math.PI / 2; sc.position.y = 0.86; bodyGroup.add(sc);
       } else if (a.accessory === 'flower_crown') {
-        [0xf472b6, 0xfef08a, 0x93c5fd, 0x86efac, 0xfdba74, 0xd8b4fe].forEach((c, fi) => {
-          const fa = (fi / 6) * Math.PI * 2;
-          const fl = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), plushMat(c));
-          fl.position.set(Math.cos(fa) * 0.36, 0.46, Math.sin(fa) * 0.36); headG.add(fl);
-        });
+        // Small, crisp, recognizable 3D daisies on a delicate green stem band!
+        const crownBand = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.025, 6, 20), plushMat(0x4ade80));
+        crownBand.rotation.x = Math.PI / 2; crownBand.position.y = 0.44; headG.add(crownBand);
+        const daisyColors = [0xffffff, 0xfff1f5, 0xffffff, 0xfef9c3, 0xffffff];
+        for (let fi = 0; fi < 5; fi++) {
+          const fa = (fi / 5) * Math.PI * 2 - Math.PI / 2;
+          const daisy = buildSixPetalFlower(daisyColors[fi], 0.44);
+          daisy.position.set(Math.cos(fa) * 0.36, 0.48, Math.sin(fa) * 0.36);
+          daisy.lookAt(Math.cos(fa) * 1.2, 0.85, Math.sin(fa) * 1.2);
+          headG.add(daisy);
+        }
       } else if (a.accessory === 'bow_tie' || a.accessory === 'ribbon') {
         const bMat = plushMat(0xf43f5e);
         const b1 = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), bMat);
@@ -1792,18 +2318,61 @@
       return grp;
     }
 
-    function buildCozyCottage(x, z, wallHex = 0xfff5e4, roofHex = 0xff8fa3) {
+    function buildCozyCottage(x, z, wallHex = 0xfff5e4, roofHex = 0xff8fa3, upgraded = false, trimHex = 0xffccd5) {
       const grp = new THREE.Group(); grp.position.set(x, 0, z);
-      const body = new THREE.Mesh(new THREE.BoxGeometry(5.6, 3.6, 4.8), plushMat(wallHex));
-      body.position.y = 1.8; body.castShadow = true; body.receiveShadow = true;
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(4.6, 2.8, 4), plushMat(roofHex));
-      roof.position.y = 4.9; roof.rotation.y = Math.PI / 4; roof.castShadow = true;
-      const door = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.1, 0.2), plushMat(0xa47148));
-      door.position.set(0, 1.05, 2.42);
+      const bodyW = upgraded ? 6.4 : 5.6, bodyH = upgraded ? 4.0 : 3.6, bodyD = upgraded ? 5.2 : 4.8;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(bodyW, bodyH, bodyD), plushMat(wallHex));
+      body.position.y = bodyH / 2; body.castShadow = true; body.receiveShadow = true;
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(upgraded ? 5.3 : 4.6, upgraded ? 3.2 : 2.8, 4), plushMat(roofHex));
+      roof.position.y = bodyH + (upgraded ? 1.55 : 1.3); roof.rotation.y = Math.PI / 4; roof.castShadow = true;
+      const door = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.15, 0.22), plushMat(upgraded ? 0x8d5b4c : 0xa47148));
+      door.position.set(0, 1.08, bodyD / 2 + 0.02);
       const win1 = new THREE.Mesh(new THREE.CircleGeometry(0.55, 16), new THREE.MeshBasicMaterial({ color: 0xfef9c3 }));
-      win1.position.set(-1.6, 2.0, 2.44);
-      const win2 = win1.clone(); win2.position.x = 1.6;
-      grp.add(body, roof, door, win1, win2); return grp;
+      win1.position.set(-1.75, 2.15, bodyD / 2 + 0.04);
+      const win2 = win1.clone(); win2.position.x = 1.75;
+      grp.add(body, roof, door, win1, win2);
+
+      if (upgraded) {
+        // Storybook Cottage Upgrades: Chimney, Porch, Scalloped Trim, Dormer Window & Flowerboxes!
+        const trimMat = plushMat(trimHex);
+        const whiteMat = plushMat(0xffffff);
+        const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.6, 0.95), plushMat(0xd6d3d1));
+        chimney.position.set(1.9, 5.2, -0.8); chimney.castShadow = true;
+        const chimCap = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.22, 1.15), plushMat(roofHex));
+        chimCap.position.set(1.9, 6.55, -0.8);
+        const puff1 = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72 }));
+        puff1.position.set(1.9, 7.05, -0.8);
+        const puff2 = puff1.clone(); puff2.scale.setScalar(0.75); puff2.position.set(2.15, 7.55, -0.7);
+        // Cute arched porch awning & white pillars
+        const porchDeck = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.24, 1.45), plushMat(0xe6c39c));
+        porchDeck.position.set(0, 0.12, bodyD / 2 + 0.72);
+        const porchRoof = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.24, 1.55), plushMat(roofHex));
+        porchRoof.position.set(0, 2.65, bodyD / 2 + 0.75); porchRoof.rotation.x = 0.2;
+        for (const sx of [-1.4, 1.4]) {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.11, 2.4, 8), whiteMat);
+          post.position.set(sx, 1.32, bodyD / 2 + 1.25); grp.add(post);
+        }
+        // Heart door ornament + dormer round window + flowerboxes
+        const heartDot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), trimMat);
+        heartDot.scale.set(1.1, 1.0, 0.35); heartDot.position.set(0, 1.55, bodyD / 2 + 0.15);
+        const dormer = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.1, 1.1), plushMat(wallHex));
+        dormer.position.set(0, 4.6, 1.65);
+        const dormerWin = new THREE.Mesh(new THREE.CircleGeometry(0.36, 14), new THREE.MeshBasicMaterial({ color: 0xfef9c3 }));
+        dormerWin.position.set(0, 4.65, 2.22);
+        const roofTrim = new THREE.Mesh(new THREE.BoxGeometry(bodyW + 0.35, 0.24, bodyD + 0.35), trimMat);
+        roofTrim.position.y = bodyH - 0.05;
+        for (const wx of [-1.75, 1.75]) {
+          const box = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.34, 0.36), plushMat(0xa47148));
+          box.position.set(wx, 1.42, bodyD / 2 + 0.18);
+          grp.add(box);
+          for (let fi = -1; fi <= 1; fi++) {
+            const fl = buildSixPetalFlower([0xf472b6, 0xfef08a, 0x38bdf8][fi + 1], 0.55);
+            fl.position.set(wx + fi * 0.36, 1.68, bodyD / 2 + 0.28); grp.add(fl);
+          }
+        }
+        grp.add(chimney, chimCap, puff1, puff2, porchDeck, porchRoof, heartDot, dormer, dormerWin, roofTrim);
+      }
+      return grp;
     }
 
     // Detailed 6-Petal Blossom Flower (inspired by reference: 6 sculpted petals, soft inner highlight & sunny golden center!)
@@ -1828,6 +2397,129 @@
       center.scale.z = 0.55; center.position.z = 0.04 * scale;
       fg.add(center);
       return fg;
+    }
+
+    function buildWildTulip() {
+      const grp = new THREE.Group();
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 1.05, 8), plushMat(0x22c55e));
+      stem.position.y = 0.52;
+      for (const side of [-1, 1]) {
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), plushMat(0x4ade80));
+        leaf.scale.set(0.42, 1.55, 0.16); leaf.position.set(side * 0.24, 0.42, 0); leaf.rotation.z = -side * 0.48;
+        grp.add(leaf);
+      }
+      // Sculpted layered cup-shaped Tulip petals
+      const cupCols = [0xf43f5e, 0xfb7185, 0xf472b6];
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), plushMat(cupCols[i % 3]));
+        p.scale.set(0.75, 1.45, 0.38);
+        p.position.set(Math.cos(a) * 0.14, 1.18, Math.sin(a) * 0.14);
+        p.rotation.y = -a + Math.PI / 2; p.rotation.x = 0.26;
+        grp.add(p);
+      }
+      const glow = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.65, 20), new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.7, side: THREE.DoubleSide }));
+      glow.rotation.x = -Math.PI / 2; glow.position.y = 0.06;
+      grp.add(stem, glow);
+      grp.userData.glowRing = glow;
+      return grp;
+    }
+
+    function buildWildOrchid() {
+      const grp = new THREE.Group();
+      const stemPts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.72, 0.05), new THREE.Vector3(0.16, 1.25, 0.12), new THREE.Vector3(0.42, 1.38, 0.14)];
+      const stem = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(stemPts), 16, 0.048, 6, false), plushMat(0x22c55e));
+      for (const side of [-1, 1]) {
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), plushMat(0x16a34a));
+        leaf.scale.set(1.25, 0.16, 0.55); leaf.position.set(side * 0.26, 0.14, 0); leaf.rotation.z = side * 0.25;
+        grp.add(leaf);
+      }
+      // Two delicate 5-petal Orchid blossoms along the arching stem
+      [[0.18, 1.24, 0.12, 0.95], [0.42, 1.36, 0.14, 0.78]].forEach(([bx, by, bz, sc]) => {
+        const bg = new THREE.Group(); bg.position.set(bx, by, bz); bg.scale.setScalar(sc);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), plushMat(i % 2 ? 0xe879f9 : 0xc084fc));
+          p.scale.set(0.85, 1.35, 0.28);
+          p.position.set(Math.cos(a) * 0.22, Math.sin(a) * 0.22, 0);
+          p.rotation.z = a - Math.PI / 2;
+          bg.add(p);
+        }
+        const lip = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), plushMat(0xfef08a));
+        lip.position.set(0, -0.05, 0.06);
+        bg.add(lip); grp.add(bg);
+      });
+      const glow = new THREE.Mesh(new THREE.RingGeometry(0.45, 0.65, 20), new THREE.MeshBasicMaterial({ color: 0xf5d0fe, transparent: true, opacity: 0.75, side: THREE.DoubleSide }));
+      glow.rotation.x = -Math.PI / 2; glow.position.y = 0.06;
+      grp.add(stem, glow);
+      grp.userData.glowRing = glow;
+      return grp;
+    }
+
+    const WILD_FLOWER_ZONES = ['town', 'flowers', 'beach', 'lake', 'forest', 'mountains', 'ice', 'desert', 'plains', 'magical', 'bamboo'];
+    function spawnWildFlowerInCurrentScene(wf) {
+      const mesh = wf.kind === 'orchid' ? buildWildOrchid() : buildWildTulip();
+      mesh.position.set(wf.x, 0, wf.z);
+      G.zoneGroup.add(mesh);
+      const label = wf.kind === 'orchid' ? '🌺 Rare Wild Orchid (+20c)' : '🌷 Rare Wild Tulip (+20c)';
+      const zh = wf.kind === 'orchid' ? '稀有野生蘭花' : '稀有野生鬱金香';
+      const el = addLabel(label, zh, 'guardian');
+      G.interactables.push({
+        kind: 'wild_flower', wfId: wf.id, wfKind: wf.kind,
+        name: label, zh, prompt: `Pluck ${wf.kind === 'orchid' ? 'Wild Orchid' : 'Wild Tulip'} (+20 Coins)`,
+        x: wf.x, z: wf.z, mesh, labelEl: el
+      });
+    }
+
+    function maybeSpawnWildFlower() {
+      if (!G.state) return;
+      if (!G.state.wildFlowers) G.state.wildFlowers = [];
+      if (G.state.lastFlowerSpawnSec === undefined) G.state.lastFlowerSpawnSec = 0;
+      if (G.state.playSeconds - G.state.lastFlowerSpawnSec < 300) return;
+      G.state.lastFlowerSpawnSec = G.state.playSeconds;
+
+      // FIFO cap: max 5 wild flowers across the entire map; oldest vanishes when 6th appears
+      if (G.state.wildFlowers.length >= 5) {
+        const oldest = G.state.wildFlowers.shift();
+        if (oldest && oldest.zoneId === G.state.currentZoneId) {
+          removeWildFlowerFromScene(oldest.id);
+        }
+      }
+
+      const zId = WILD_FLOWER_ZONES[Math.floor(Math.random() * WILD_FLOWER_ZONES.length)];
+      const kind = Math.random() < 0.5 ? 'tulip' : 'orchid';
+      // Pick safe open spot away from center lake/ocean/town shops
+      let fx = (Math.random() - 0.5) * 32, fz = (Math.random() - 0.5) * 32;
+      if (zId === 'beach') fz = 4 + Math.random() * 14;
+      else if (zId === 'lake') { const a = Math.random() * Math.PI * 2; fx = Math.cos(a) * 15; fz = Math.sin(a) * 15; }
+      else if (zId === 'desert') fz = 4 + Math.random() * 14;
+      else if (zId === 'town') { fx = (Math.random() - 0.5) * 10; fz = 12 + Math.random() * 7; }
+
+      const wf = { id: 'wf_' + Date.now() + '_' + Math.floor(Math.random() * 999), zoneId: zId, kind, x: Number(fx.toFixed(1)), z: Number(fz.toFixed(1)) };
+      G.state.wildFlowers.push(wf);
+      saveGame();
+      if (zId === G.state.currentZoneId) spawnWildFlowerInCurrentScene(wf);
+      const zName = ZONES[zId] ? ZONES[zId].name : zId;
+      toast(`✨ A rare Wild ${kind === 'orchid' ? 'Orchid 🌺' : 'Tulip 🌷'} sprouted in ${zName}! Pluck it for +20 Coins!`);
+    }
+
+    function removeWildFlowerFromScene(wfId) {
+      const idx = G.interactables.findIndex(x => x.kind === 'wild_flower' && x.wfId === wfId);
+      if (idx >= 0) {
+        const it = G.interactables[idx];
+        if (it.mesh && G.zoneGroup) G.zoneGroup.remove(it.mesh);
+        if (it.labelEl) it.labelEl.remove();
+        G.interactables.splice(idx, 1);
+      }
+    }
+
+    function pluckWildFlower(wfId, wfKind) {
+      G.state.wildFlowers = (G.state.wildFlowers || []).filter(w => w.id !== wfId);
+      removeWildFlowerFromScene(wfId);
+      G.state.coins += 20; G.state.totalCoinsEarned += 20;
+      AudioSys.sfx('coin'); setTimeout(() => AudioSys.sfx('heart'), 90);
+      saveGame(); updateHUD();
+      toast(`✨ Plucked a rare Wild ${wfKind === 'orchid' ? 'Orchid 🌺' : 'Tulip 🌷'}! (+20 Coins 🪙)`);
     }
 
     function buildFlowerCluster(x, z) {
@@ -1925,20 +2617,31 @@
       }
 
       if (zoneId === 'town') {
-        const plaza = new THREE.Mesh(new THREE.CircleGeometry(9, 28), plushMat(0xfef3c7));
+        const plaza = new THREE.Mesh(new THREE.CircleGeometry(10.5, 32), plushMat(0xfef3c7));
         plaza.rotation.x = -Math.PI / 2; plaza.position.y = 0.03; G.zoneGroup.add(plaza);
-        // Open-Concept Walk-In General Store (No door! Walk right in & talk to Pippa!)
-        const genShop = buildOpenShop(-10.5, -10, 0xfff5e4, 0xff8fa3, 0x6b4423, 0xff9f7f);
+        // Shop 1: Open-Concept General Store (Treats, Guardian Foods & Crop Seeds)
+        const genShop = buildOpenShop(-12.5, -11.5, 0xfff5e4, 0xff8fa3, 0x6b4423, 0xff9f7f);
         G.zoneGroup.add(genShop);
-        G.interactables.push({ kind: 'shop', name: 'Pippa’s General Store', zh: '皮帕溫馨雜貨店', prompt: 'Talk to Pippa (Foods, Seeds & Upgrades)', x: -10.5, z: -8.6, mesh: genShop, labelEl: addLabel('🛍️ Pippa’s General Store', '開放式雜貨店') });
-        // Open-Concept Walk-In Boutique & Gear Shop (No door! Outfits, Bicycle & Surfboard!)
-        const gearShop = buildOpenShop(10.5, -10, 0xf0f9ff, 0x60a5fa, 0xe6b86a, 0x60a5fa);
+        G.interactables.push({ kind: 'shop', name: 'Pippa’s General Store', zh: '皮帕溫馨雜貨店', prompt: 'Talk to Pippa (Foods, Seeds & Comb)', x: -12.5, z: -9.8, mesh: genShop, labelEl: addLabel('🛍️ Pippa’s General Store', '雜貨與動物點心') });
+        // Shop 2: Open-Concept Boutique & Gear Shop (10 Outfits, Bicycle & Surfboard!)
+        const gearShop = buildOpenShop(12.5, -11.5, 0xf0f9ff, 0x60a5fa, 0xe6b86a, 0x60a5fa);
         G.zoneGroup.add(gearShop);
-        G.interactables.push({ kind: 'boutique', name: 'Sunny’s Boutique & Gear', zh: '服飾與交通工具店', prompt: 'Talk to Sunny (Outfits, Bicycle & Surfboard)', x: 10.5, z: -8.6, mesh: gearShop, labelEl: addLabel('👗🚲 Sunny’s Boutique & Gear', '服飾・單車・衝浪板') });
+        G.interactables.push({ kind: 'boutique', name: 'Sunny’s Boutique & Gear', zh: '服飾與交通工具店', prompt: 'Talk to Sunny (10 Outfits, Bike & Surfboard)', x: 12.5, z: -9.8, mesh: gearShop, labelEl: addLabel('👗🚲 Sunny’s Boutique & Gear', '服飾・單車・衝浪板') });
+        // Shop 3: NEW Flora's Flower Shop (7 Flower Seeds + Sell Picked Flowers!)
+        const flowerShop = buildOpenShop(-13.5, 8.5, 0xfff1f5, 0xf472b6, 0xf48fb1, 0x52c99b);
+        [[-2.5, 2.2], [2.5, 2.2]].forEach(([fx, fz]) => {
+          const fc = buildFlowerCluster(fx, fz); flowerShop.add(fc);
+        });
+        G.zoneGroup.add(flowerShop);
+        G.interactables.push({ kind: 'flower_shop', name: 'Flora’s Flower Shop', zh: '芙蘿拉花店（7種花種）', prompt: 'Visit Flora’s Flower Shop (Buy Seeds & Sell Blooms)', x: -13.5, z: 10.2, mesh: flowerShop, labelEl: addLabel('🌸 Flora’s Flower Shop', '花朵種子＆收購') });
+        // Shop 4: NEW Maple's Home & Decor Studio (House Upgrade, Paint Colors & 9 Farm Decorations!)
+        const decorShop = buildOpenShop(13.5, 8.5, 0xf0fdf4, 0x52c99b, 0xc26a4a, 0xfbbf24);
+        G.zoneGroup.add(decorShop);
+        G.interactables.push({ kind: 'decor_shop', name: 'Maple’s Home & Decor', zh: '楓葉家飾與小屋改建', prompt: 'Visit Maple’s Home & Decor (House, Paint & 9 Decor)', x: 13.5, z: 10.2, mesh: decorShop, labelEl: addLabel('🏡🔨 Maple’s Home & Decor', '小屋升級・油漆・家具') });
 
         const board = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.8, 0.3), plushMat(0xb08968)); board.position.set(0, 1.1, -6.5); board.castShadow = true; G.zoneGroup.add(board);
         G.interactables.push({ kind: 'town_board', name: 'Town English Board', zh: '小鎮英語任務板（7題輪替）', prompt: 'Play Town English Challenge (7 Rotating Games)', x: 0, z: -5.2, mesh: board, labelEl: addLabel('📝 Town English Board', '7題輪替英語遊戲') });
-        [[-18, 12], [18, 12], [-18, -18], [18, -18]].forEach(([tx, tz]) => G.zoneGroup.add(buildPuffyTree(tx, tz, 0x58c472, 1.1)));
+        [[-22, 17], [22, 17], [-22, -19], [22, -19]].forEach(([tx, tz]) => G.zoneGroup.add(buildPuffyTree(tx, tz, 0x58c472, 1.1)));
       } else if (zoneId === 'farm_house') {
         // Cute Self-Contained Farm House Interior Map!
         const floor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.2, 14), plushMat(0xecc89b)); floor.position.y = 0.05; floor.receiveShadow = true;
@@ -1968,12 +2671,29 @@
         const tvScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.1), new THREE.MeshBasicMaterial({ color: 0xbae6fd })); tvScreen.position.set(0, 1.6, 0.47);
         tvGrp.add(tvStand, tvBody, tvScreen);
         G.interactables.push({ kind: 'tv', name: 'Cozy Animal TV', zh: '動物英語電視（4款小遊戲）', prompt: 'Watch Animal TV (4 English Learning Games)', x: 3.4, z: -4.1, mesh: tvGrp, labelEl: addLabel('📺 Cozy Animal TV', '動物英語小遊戲') });
+        // Treasure Chest (right-front) -> Farm Design Inventory Box!
+        const chestGrp = new THREE.Group(); chestGrp.position.set(5.4, 0, 2.0); chestGrp.rotation.y = -Math.PI / 3;
+        const cBase = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.95, 1.15), plushMat(0x9c6644)); cBase.position.y = 0.56; cBase.castShadow = true;
+        const cLid = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 1.75, 14, 1, false, 0, Math.PI), plushMat(0xb0754b));
+        cLid.rotation.z = Math.PI / 2; cLid.position.set(0, 1.02, 0);
+        const goldMat = plushMat(0xf59e0b);
+        for (const sx of [-0.62, 0.62]) {
+          const band = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.02, 1.22), goldMat); band.position.set(sx, 0.58, 0);
+          const lidBand = new THREE.Mesh(new THREE.TorusGeometry(0.59, 0.05, 6, 14, Math.PI), goldMat);
+          lidBand.rotation.y = Math.PI / 2; lidBand.position.set(sx, 1.02, 0);
+          chestGrp.add(band, lidBand);
+        }
+        const clasp = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.34, 0.14), goldMat); clasp.position.set(0, 0.92, 0.60);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.10, 0), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); gem.position.set(0, 0.92, 0.69);
+        chestGrp.add(cBase, cLid, clasp, gem);
+        G.interactables.push({ kind: 'design_chest', name: 'Farm Design Chest', zh: '農場佈置寶箱', prompt: 'Open Treasure Chest (Design & Decorate Farm)', x: 4.5, z: 2.0, mesh: chestGrp, labelEl: addLabel('🧰 Farm Design Chest', '農場佈置寶箱', 'guardian') });
         // Exit Door Mat (front-center)
         const exitMat = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, 1.4), plushMat(0x52c99b)); exitMat.position.set(0, 0.16, 6.0);
         G.interactables.push({ kind: 'door', target: 'farm', spawn: { x: -4, z: -8.6 }, name: 'Step Outside', zh: '走出小屋', prompt: 'Step Outside to My Cozy Farm', x: 0, z: 6.0, mesh: exitMat, labelEl: addLabel('🚪 Exit to Farm', '回到農場', 'gate') });
-        G.zoneGroup.add(floor, backWall, leftWall, rightWall, winFrame, rug, bedBase, quilt, pillow, pot, plant, mirGrp, tvGrp, exitMat);
+        G.zoneGroup.add(floor, backWall, leftWall, rightWall, winFrame, rug, bedBase, quilt, pillow, pot, plant, mirGrp, tvGrp, chestGrp, exitMat);
       } else if (zoneId === 'farm') {
-        const house = buildCozyCottage(-4, -13, 0xfff8eb, 0xf28482);
+        const hc = HOUSE_COLORS[G.state.houseColor || 'strawberry'] || HOUSE_COLORS.strawberry;
+        const house = buildCozyCottage(-4, -13, hc.wall, hc.roof, !!G.state.houseUpgraded, hc.trim);
         G.zoneGroup.add(house);
         const doorMat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.1, 1.2), plushMat(0xf472b6));
         doorMat.position.set(-4, 0.06, -9.8); G.zoneGroup.add(doorMat);
@@ -2040,150 +2760,19 @@
 
         [[14, 0], [16, 2], [17, -2], [13, -3]].forEach(([fx, fz]) => G.zoneGroup.add(buildFlowerCluster(fx, fz)));
 
-        if (G.state.upgrades.includes('flower_arch')) {
-          // Artsy White Garden Trellis with Spiraling Wrapping Vines, Delicate Leaves & Fully Visible 6-Petal Blossoms!
-          const aGrp = new THREE.Group(); aGrp.position.set(-22, 0, 0); aGrp.rotation.y = Math.PI / 2;
-          const whiteWood = plushMat(0xfffdf7);
-          const vineMat = plushMat(0x34a853);
-          const leafMat = plushMat(0x4ade80);
-          for (const side of [-1, 1]) {
-            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.48, 0.34, 10), plushMat(0xe2e8f0));
-            base.position.set(side * 2.55, 0.17, 0);
-            const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.105, 2.6, 8), whiteWood); p1.position.set(side * 2.55, 1.45, -0.32);
-            const p2 = p1.clone(); p2.position.z = 0.32;
-            for (let r = 0; r < 4; r++) {
-              const rung = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.07, 0.66), whiteWood);
-              rung.position.set(side * 2.55, 0.65 + r * 0.54, 0); aGrp.add(rung);
-            }
-            // Spiraling climbing vine winding artistically up each post!
-            const pPts = [];
-            for (let k = 0; k <= 16; k++) {
-              const u = k / 16, ang = u * Math.PI * 5;
-              pPts.push(new THREE.Vector3(side * 2.55 + Math.cos(ang) * 0.22, 0.32 + u * 2.38, Math.sin(ang) * 0.42));
-            }
-            const postVine = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pPts), 28, 0.048, 6, false), vineMat);
-            aGrp.add(base, p1, p2, postVine);
+        // Render all player-placed Farm Decorations from the Treasure Chest!
+        G.decorMeshes = [];
+        (G.state.placedDecor || []).forEach(pd => {
+          const dMesh = buildFarmDecorMesh(pd.id);
+          if (!dMesh) return;
+          dMesh.position.set(pd.x, 0, pd.z);
+          dMesh.rotation.y = pd.rotY || 0;
+          G.zoneGroup.add(dMesh);
+          G.decorMeshes.push({ pd, mesh: dMesh });
+          if (pd.id === 'tea_gazebo') {
+            G.platforms.push({ x: pd.x, z: pd.z, r: 3.3, h: 0.42 });
           }
-          const arch1 = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.10, 10, 28, Math.PI), whiteWood); arch1.position.set(0, 2.65, -0.30);
-          const arch2 = arch1.clone(); arch2.position.z = 0.30;
-          aGrp.add(arch1, arch2);
-
-          // Continuous Artsy Spiral Vine Wrapping Smoothly Around the Arch Curve!
-          const aPts = [];
-          for (let k = 0; k <= 40; k++) {
-            const u = k / 40, theta = u * Math.PI, spiral = u * Math.PI * 10;
-            const rr = 2.56 + Math.cos(spiral) * 0.16;
-            aPts.push(new THREE.Vector3(Math.cos(theta) * rr, 2.65 + Math.sin(theta) * rr, Math.sin(spiral) * 0.36));
-          }
-          const archVine = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(aPts), 64, 0.052, 6, false), vineMat);
-          aGrp.add(archVine);
-
-          // Delicate Flat Pointed Ivy Leaves & Fully Visible 6-Petal Blossoms Sitting Cleanly Outside the Vine!
-          const flowerCols = [0xff8fab, 0xfdba74, 0x9333ea, 0x38bdf8, 0x67e8f9, 0xf97316];
-          for (let fi = 0; fi <= 10; fi++) {
-            const ang = 0.08 + (fi / 10) * (Math.PI - 0.16);
-            const fx = Math.cos(ang) * 2.68, fy = 2.68 + Math.sin(ang) * 2.68;
-            // Two dainty flat teardrop leaves flanking each blossom
-            for (const lSide of [-1, 1]) {
-              const lf = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), leafMat);
-              lf.scale.set(0.48, 1.35, 0.14);
-              lf.position.set(fx + Math.cos(ang + lSide * 0.14) * 0.18, fy + Math.sin(ang + lSide * 0.14) * 0.18, lSide * 0.24);
-              lf.rotation.z = ang + lSide * 0.7;
-              aGrp.add(lf);
-            }
-            // Fully visible 6-petal flowers facing cleanly outward on both sides!
-            const flFront = buildSixPetalFlower(flowerCols[fi % flowerCols.length], 1.15);
-            flFront.position.set(fx, fy, 0.44);
-            const flBack = buildSixPetalFlower(flowerCols[(fi + 2) % flowerCols.length], 1.15);
-            flBack.position.set(fx, fy, -0.44); flBack.rotation.y = Math.PI;
-            aGrp.add(flFront, flBack);
-          }
-          G.zoneGroup.add(aGrp);
-        }
-        if (G.state.upgrades.includes('fairy_lanterns')) {
-          // Magical Festival Paper Lanterns & Glowing 5-Pointed Star Lanterns (inspired by reference!)
-          const lCoords = [[-6.8, -4.8], [6.8, -4.8], [6.8, 6.8], [-6.8, 6.8]];
-          const postWood = plushMat(0x7c533e);
-          const makePaperLantern = (rad, hScale, colHex) => {
-            const g = new THREE.Group();
-            const globe = new THREE.Mesh(new THREE.SphereGeometry(rad, 14, 12), new THREE.MeshBasicMaterial({ color: colHex }));
-            globe.scale.set(1.0, hScale, 1.0);
-            const rib1 = new THREE.Mesh(new THREE.TorusGeometry(rad * 0.96, 0.018, 6, 16), plushMat(0xd97706)); rib1.rotation.x = Math.PI / 2;
-            const rib2 = rib1.clone(); rib2.position.y = rad * 0.35 * hScale; rib2.scale.setScalar(0.86);
-            const rib3 = rib1.clone(); rib3.position.y = -rad * 0.35 * hScale; rib3.scale.setScalar(0.86);
-            const capTop = new THREE.Mesh(new THREE.CylinderGeometry(rad * 0.45, rad * 0.52, 0.10, 10), plushMat(0x92400e)); capTop.position.y = rad * hScale;
-            const capBot = capTop.clone(); capBot.position.y = -rad * hScale;
-            const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 6), plushMat(0xf43f5e)); tassel.position.y = -rad * hScale - 0.16;
-            g.add(globe, rib1, rib2, rib3, capTop, capBot, tassel);
-            return g;
-          };
-          const makeStarLantern = (sc = 1.0) => {
-            const shape = new THREE.Shape();
-            for (let i = 0; i < 10; i++) {
-              const r = (i % 2 === 0 ? 0.36 : 0.16) * sc;
-              const a = (i / 10) * Math.PI * 2 + Math.PI / 2;
-              if (i === 0) shape.moveTo(Math.cos(a) * r, Math.sin(a) * r); else shape.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-            }
-            shape.closePath();
-            return new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: 0.10, bevelEnabled: false }), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-          };
-          lCoords.forEach(([lx, lz]) => {
-            const lg = new THREE.Group(); lg.position.set(lx, 0, lz);
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.10, 3.6, 8), postWood); pole.position.y = 1.8;
-            const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.9, 6), postWood); arm.rotation.z = Math.PI / 2.2; arm.position.set(0.38, 3.45, 0);
-            const mainL = makePaperLantern(0.38, 0.92, 0xffb347); mainL.position.set(0.75, 2.92, 0);
-            const pt = new THREE.PointLight(0xffb347, 0.85, 12); pt.position.set(0.75, 2.9, 0);
-            lg.add(pole, arm, mainL, pt); G.zoneGroup.add(lg);
-          });
-          // Overhead festival strings draped with alternating glowing paper lanterns & 5-pointed star lanterns!
-          for (let ei = 0; ei < 4; ei++) {
-            const [x1, z1] = lCoords[ei], [x2, z2] = lCoords[(ei + 1) % 4];
-            for (let bi = 1; bi <= 5; bi++) {
-              const u = bi / 6, sag = Math.sin(u * Math.PI) * 0.72;
-              const px = x1 + (x2 - x1) * u, py = 3.55 - sag, pz = z1 + (z2 - z1) * u;
-              const item = (bi % 2 === 0) ? makeStarLantern(0.95) : makePaperLantern(0.24, 1.15, bi === 3 ? 0xff9f43 : 0xfde047);
-              item.position.set(px, py - 0.25, pz);
-              G.zoneGroup.add(item);
-            }
-          }
-        }
-        if (G.state.upgrades.includes('tea_gazebo')) {
-          // Complete Adorable Berry Blossom Tea Gazebo (Deck, Steps, 6 Carved Pillars, Railings, Scalloped Roof & Tea Table!)
-          const gaz = new THREE.Group(); gaz.position.set(5.2, 0, -11.5);
-          const creamMat = plushMat(0xfffdf7);
-          const deck = new THREE.Mesh(new THREE.CylinderGeometry(3.5, 3.7, 0.42, 8), plushMat(0xf4d7b5)); deck.position.y = 0.21; deck.receiveShadow = true;
-          const step = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.22, 0.9), plushMat(0xe6c39c)); step.position.set(0, 0.11, 3.7);
-          const trimRing = new THREE.Mesh(new THREE.TorusGeometry(3.3, 0.14, 8, 24), creamMat); trimRing.rotation.x = Math.PI / 2; trimRing.position.y = 3.25;
-          const roof = new THREE.Mesh(new THREE.ConeGeometry(4.0, 2.0, 8), plushMat(0xff9ebb)); roof.position.y = 4.25; roof.castShadow = true;
-          const roofCap = new THREE.Mesh(new THREE.ConeGeometry(1.3, 0.7, 8), plushMat(0xc084fc)); roofCap.position.y = 5.1;
-          const finial = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), plushMat(0xfef08a)); finial.position.y = 5.55;
-          gaz.add(deck, step, trimRing, roof, roofCap, finial);
-          // 6 Sturdy Carved White Pillars + Cozy Railings (leaving front open for entry!)
-          for (let pi = 0; pi < 6; pi++) {
-            const ang = (pi / 6) * Math.PI * 2 + Math.PI / 6;
-            const px = Math.cos(ang) * 3.05, pz = Math.sin(ang) * 3.05;
-            const col = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 2.95, 10), creamMat);
-            col.position.set(px, 1.85, pz); col.castShadow = true;
-            const pBase = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.24, 0.42), creamMat); pBase.position.set(px, 0.52, pz);
-            gaz.add(col, pBase);
-            if (pi !== 1) {
-              const nextAng = ((pi + 1) / 6) * Math.PI * 2 + Math.PI / 6;
-              const nx = Math.cos(nextAng) * 3.05, nz = Math.sin(nextAng) * 3.05;
-              const rail = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.12, 0.12), creamMat);
-              rail.position.set((px + nx) / 2, 1.15, (pz + nz) / 2);
-              rail.rotation.y = -Math.atan2(nz - pz, nx - px);
-              gaz.add(rail);
-            }
-          }
-          // Cute Pastel Tea Table & Teapot right in the center!
-          const tLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.24, 0.85, 8), creamMat); tLeg.position.y = 0.82;
-          const tTop = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.12, 16), plushMat(0xfef3c7)); tTop.position.y = 1.28;
-          const pot = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), plushMat(0x60a5fa)); pot.position.y = 1.52;
-          gaz.add(tLeg, tTop, pot);
-          G.zoneGroup.add(gaz);
-          // Make the Gazebo deck & front step solidly walkable so you can step right inside!
-          G.platforms.push({ x: 5.2, z: -11.5, r: 3.45, h: 0.42 }, { x: 5.2, z: -7.8, r: 1.35, h: 0.22 });
-        }
+        });
 
         G.state.farmPlots.forEach((pl, idx) => {
           const col = idx % 3, row = Math.floor(idx / 3);
@@ -2275,6 +2864,9 @@
         if (guardian) spawnAnimalInScene(guardian, 0, -6, false);
       }
 
+      // Spawn any active rare Wild Tulips / Orchids in this zone
+      (G.state.wildFlowers || []).filter(w => w.zoneId === zoneId).forEach(w => spawnWildFlowerInCurrentScene(w));
+
       // Zone Gates
       zone.gates.forEach(g => {
         const grp = new THREE.Group(); grp.position.set(g.x, 0, g.z);
@@ -2308,11 +2900,23 @@
       while (pm.sprout.children.length) pm.sprout.remove(pm.sprout.children[0]);
       if (!pl.seedId) return;
       if (pl.ready) {
-        const col = pl.seedId === 'seed_carrot' ? 0xf97316 : (pl.seedId === 'seed_strawberry' ? 0xf43f5e : 0x4ade80);
-        for (let i = -1; i <= 1; i++) {
-          const f = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), plushMat(col)); f.position.set(i * 0.65, 0.32, (i % 2) * 0.35);
-          const l = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.32, 6), plushMat(0x22c55e)); l.position.set(i * 0.65, 0.62, (i % 2) * 0.35);
-          pm.sprout.add(f, l);
+        const seedItem = ITEMS[pl.seedId];
+        if (seedItem && seedItem.type === 'flower_seed') {
+          const positions = [[-0.65, -0.45], [0.65, -0.45], [0, 0.1], [-0.55, 0.58], [0.55, 0.58]];
+          positions.forEach(([ox, oz], fi) => {
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.68, 6), plushMat(0x22c55e));
+            stem.position.set(ox, 0.34, oz);
+            const fl = buildSixPetalFlower(seedItem.petalHex || 0xf472b6, 0.92);
+            fl.position.set(ox, 0.72, oz); fl.rotation.x = -Math.PI / 3.2; fl.rotation.z = fi * 0.7;
+            pm.sprout.add(stem, fl);
+          });
+        } else {
+          const col = pl.seedId === 'seed_carrot' ? 0xf97316 : (pl.seedId === 'seed_strawberry' ? 0xf43f5e : 0x4ade80);
+          for (let i = -1; i <= 1; i++) {
+            const f = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), plushMat(col)); f.position.set(i * 0.65, 0.32, (i % 2) * 0.35);
+            const l = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.32, 6), plushMat(0x22c55e)); l.position.set(i * 0.65, 0.62, (i % 2) * 0.35);
+            pm.sprout.add(f, l);
+          }
         }
       } else {
         for (let i = -1; i <= 1; i++) {
@@ -2487,6 +3091,7 @@
       const fav = ITEMS[a.favFood];
       const hasFav = (G.state.inventory[a.favFood] || 0) > 0;
       const hasComb = (G.state.inventory.soft_comb || 0) > 0;
+      const ownedFlowers = Object.values(ITEMS).filter(i => i.type === 'flower' && (G.state.inventory[i.id] || 0) > 0);
       const onFarmAlready = G.state.farmFriends.includes(animalId);
       const canInvite = !a.isGuardian && fr >= 80 && !onFarmAlready;
       const canPlay = (isOnFarm && onFarmAlready) || (a.isGuardian && fr >= 80);
@@ -2518,6 +3123,7 @@
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
           <button id="btn-feed" class="btn btn-peach" ${hasFav ? '' : 'disabled'}>${fav.icon} Feed ${fav.name} (${G.state.inventory[a.favFood] || 0})</button>
           <button id="btn-comb" class="btn btn-mint" ${hasComb ? '' : 'disabled'}>🪮 Groom (+10 ♥)</button>
+          ${ownedFlowers.length > 0 ? `<button id="btn-gift-flower" class="btn btn-pink">💐 Gift ${ownedFlowers[0].icon} ${ownedFlowers[0].name} (+${ownedFlowers[0].giftBonus} ♥)</button>` : ''}
           ${a.rescueMiniGame ? `<button id="btn-help-mg" class="btn btn-sky">🎮 Help Mini-Game</button>` : ''}
           ${canInvite ? `<button id="btn-invite-farm" class="btn btn-pink">🏡 Invite to My Farm!</button>` : ''}
           ${canPlay ? `<button id="btn-play-cut" class="btn btn-pink">🎀 Play Together!</button>` : ''}
@@ -2606,6 +3212,16 @@
         if ((G.state.inventory.soft_comb || 0) <= 0) return;
         AudioSys.sfx('heart'); addFriendship(animalId, 10); toast(`🪮 ${a.name} looks extra fluffy! (+10 ♥)`); openAnimalModal(animalId, isOnFarm);
       });
+      const gfBtn = document.getElementById('btn-gift-flower');
+      if (gfBtn && ownedFlowers.length > 0) gfBtn.addEventListener('click', () => {
+        const fl = ownedFlowers[0];
+        if ((G.state.inventory[fl.id] || 0) <= 0) return;
+        G.state.inventory[fl.id]--;
+        const gain = a.isGuardian ? Math.round(fl.giftBonus * 0.8) : fl.giftBonus;
+        addFriendship(animalId, gain); closeModal();
+        const fm = G.animalMeshes[animalId];
+        if (fm) startCutscene(`${a.name} adores your fresh ${fl.name}! (+${gain} ♥)`, `${a.name} 好喜歡你送的${fl.zh}！（好感度 +${gain}）`, fm, 'spin', 2.0, fl.petalHex || 0xf472b6);
+      });
       const mgBtn = document.getElementById('btn-help-mg');
       if (mgBtn) mgBtn.addEventListener('click', () => openMiniGame(a.rescueMiniGame));
       const invBtn = document.getElementById('btn-invite-farm');
@@ -2637,28 +3253,42 @@
     }
 
     function openPlotModal(plotIdx) {
-      showTutorialOnce('farm', 'Cozy Farming', 'Plant seeds, water them, and harvest! Crops sell for few coins—gifting them to animals builds huge friendship!', '種下種子、澆水並收成！農作物賣價偏低，送給動物更能快速增進友誼！');
+      showTutorialOnce('farm', 'Cozy Farming & Flowers', 'Plant crops or flowers from Flora’s Flower Shop! Blooming flowers can stay as decor, be sold for profit, or gifted to animal friends!', '可以種植農作物或芙蘿拉花店的花朵！盛開的花朵能留在農地欣賞、賣出賺取利潤，或摘下送給動物朋友！');
       const pl = G.state.farmPlots[plotIdx];
-      const seedIds = ['seed_carrot', 'seed_strawberry', 'seed_melon', 'seed_bamboo'];
+      const cropSeeds = Object.values(ITEMS).filter(i => i.type === 'seed');
+      const flowerSeeds = Object.values(ITEMS).filter(i => i.type === 'flower_seed');
       let body = '';
       if (!pl.seedId) {
-        body = `<div style="display:flex; flex-direction:column; gap:8px;">
-          ${seedIds.map(sid => {
-            const it = ITEMS[sid], cnt = G.state.inventory[sid] || 0;
-            return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:9px 12px; border-radius:14px; border:1.5px solid #ead6c1;">
-              <div><strong>${it.icon} ${it.name}</strong> ${G.state.zhHints ? `<span style="color:#0369a1; font-size:12px;">(${it.zh})</span>` : ''}<div style="font-size:11px; color:var(--ink-soft);">Owned: ${cnt} · Grows in ${it.growSec}s</div></div>
-              <button class="btn btn-mint btn-sm" data-plant="${sid}" ${cnt > 0 ? '' : 'disabled'}>Plant</button>
-            </div>`;
-          }).join('')}
+        const renderSeedRows = (arr, borderCol) => arr.map(it => {
+          const cnt = G.state.inventory[it.id] || 0;
+          const out = ITEMS[it.growsInto];
+          return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; border-radius:14px; border:1.5px solid ${borderCol};">
+            <div><strong>${it.icon} ${it.name}</strong> ${G.state.zhHints ? `<span style="color:#0369a1; font-size:12px;">(${it.zh})</span>` : ''}<div style="font-size:11px; color:var(--ink-soft);">Owned: ${cnt} · ${it.growSec}s${it.type === 'flower_seed' ? ` · Sells ${out.sellPrice}c / Gift +${out.giftBonus}♥` : ''}</div></div>
+            <button class="btn ${it.type === 'flower_seed' ? 'btn-pink' : 'btn-mint'} btn-sm" data-plant="${it.id}" ${cnt > 0 ? '' : 'disabled'}>Plant</button>
+          </div>`;
+        }).join('');
+        body = `<div style="max-height:54vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <div style="font-size:12px; font-weight:800; color:#be185d; margin-bottom:5px;">🌸 FLOWER SEEDS (Buy at Flora’s Flower Shop)</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">${renderSeedRows(flowerSeeds, '#fbcfe8')}</div>
+          </div>
+          <div>
+            <div style="font-size:12px; font-weight:800; color:#2fa67a; margin-bottom:5px;">🥕 CROP SEEDS (Buy at Pippa’s General Store)</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">${renderSeedRows(cropSeeds, '#ead6c1')}</div>
+          </div>
         </div>`;
       } else if (pl.ready) {
-        const crop = ITEMS[ITEMS[pl.seedId].growsInto];
+        const seedItem = ITEMS[pl.seedId];
+        const crop = ITEMS[seedItem.growsInto];
+        const isFlower = seedItem.type === 'flower_seed';
         body = `<div style="text-align:center; padding:8px 0;">
           <div style="font-size:44px;">${crop.icon}</div>
-          <p style="font-size:15px; font-weight:800;">Your ${crop.name} is ready!</p>
-          <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
-            <button id="btn-harvest-keep" class="btn btn-peach">🧺 Harvest to Gift (+1 ${crop.name})</button>
-            <button id="btn-harvest-sell" class="btn btn-ghost">🪙 Sell (+${crop.sellPrice}c — Low Return)</button>
+          <p style="font-size:15px; font-weight:800;">Your ${crop.name} ${isFlower ? 'is in full bloom!' : 'is ready!'}</p>
+          ${isFlower ? `<p style="font-size:12.5px; color:var(--ink-soft); margin:4px 0 10px;">Leave it blooming in this plot, pick it to gift to any animal (+${crop.giftBonus} ♥), or sell it for a sweet profit!</p>` : ''}
+          <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:10px;">
+            <button id="btn-harvest-keep" class="btn ${isFlower ? 'btn-pink' : 'btn-peach'}">${isFlower ? `💐 Pick to Gift (+1 ${crop.name})` : `🧺 Harvest to Gift (+1 ${crop.name})`}</button>
+            <button id="btn-harvest-sell" class="btn ${isFlower ? 'btn-mint' : 'btn-ghost'}">🪙 ${isFlower ? `Pick & Sell (+${crop.sellPrice}c Profit!)` : `Sell (+${crop.sellPrice}c — Low Return)`}</button>
+            ${isFlower ? `<button id="btn-leave-bloom" class="btn btn-ghost">✨ Keep Blooming in Plot</button>` : ''}
           </div>
         </div>`;
       } else {
@@ -2685,6 +3315,8 @@
         pl.seedId = null; pl.watered = false; pl.ready = false; AudioSys.sfx('heart'); saveGame(); updatePlotVisual(plotIdx); closeModal();
         toast(`🧺 Harvested ${ITEMS[cid].name}!`);
       });
+      const lb = document.getElementById('btn-leave-bloom');
+      if (lb) lb.addEventListener('click', () => { closeModal(); toast('🌸 Left your flowers blooming prettily on the farm!'); });
       const hs = document.getElementById('btn-harvest-sell');
       if (hs) hs.addEventListener('click', () => {
         const crop = ITEMS[ITEMS[pl.seedId].growsInto]; G.state.coins += crop.sellPrice; G.state.totalCoinsEarned += crop.sellPrice; G.state.cropsHarvested++;
@@ -2848,6 +3480,124 @@
         if (won) { AudioSys.speak(mg.answer); setTimeout(() => finishMiniGame(mg), 500); }
       }
       draw();
+    }
+
+    function openFlowerShopModal() {
+      const fSeeds = Object.values(ITEMS).filter(i => i.type === 'flower_seed');
+      const ownedBlooms = Object.values(ITEMS).filter(i => i.type === 'flower' && (G.state.inventory[i.id] || 0) > 0);
+      openModal(`
+        <div class="modal-head">
+          <div><h2 class="modal-title">🌸 Flora’s Flower Shop</h2><div class="modal-sub">Coins: 🪙 ${G.state.coins} · Plant flowers in your farm plots to decorate, sell for profit, or gift to animals!</div></div>
+          <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div style="font-size:12px; font-weight:800; color:#be185d; margin-bottom:6px;">FLOWER SEEDS (7 VARIETIES · 7種花朵種子)</div>
+        <div style="display:flex; flex-direction:column; gap:6px; max-height:42vh; overflow-y:auto; margin-bottom:12px;">
+          ${fSeeds.map(it => {
+            const bloom = ITEMS[it.growsInto];
+            return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; border-radius:14px; border:1.5px solid #fbcfe8;">
+              <div>
+                <strong>${it.icon} ${it.name}</strong> ${G.state.zhHints ? `<span style="color:#0369a1; font-size:12px;">(${it.zh})</span>` : ''}
+                <div style="font-size:11px; color:var(--ink-soft);">Owned: ${G.state.inventory[it.id] || 0} · Grows in ${it.growSec}s · Sells for 🪙 ${bloom.sellPrice}c · Gift +${bloom.giftBonus} ♥</div>
+              </div>
+              <button class="btn btn-pink btn-sm" data-buyfl="${it.id}" ${G.state.coins >= it.price ? '' : 'disabled'}>Buy (${it.price}c)</button>
+            </div>`;
+          }).join('')}
+        </div>
+        ${ownedBlooms.length > 0 ? `
+          <div style="font-size:12px; font-weight:800; color:#2fa67a; margin-bottom:6px;">SELL PICKED FLOWERS (收購新鮮花朵)</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${ownedBlooms.map(fl => `<div style="display:flex; justify-content:space-between; align-items:center; background:#f0fdf4; padding:8px 12px; border-radius:14px; border:1.5px solid #86efac;">
+              <div><strong>${fl.icon} ${fl.name} ×${G.state.inventory[fl.id]}</strong></div>
+              <button class="btn btn-mint btn-sm" data-sellfl="${fl.id}">Sell 1 (+${fl.sellPrice}c)</button>
+            </div>`).join('')}
+          </div>` : ''}
+      `, true);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-buyfl]').forEach(btn => btn.addEventListener('click', () => {
+        const it = ITEMS[btn.dataset.buyfl]; if (G.state.coins < it.price) return;
+        G.state.coins -= it.price; G.state.inventory[it.id] = (G.state.inventory[it.id] || 0) + 1;
+        AudioSys.sfx('coin'); saveGame(); updateHUD(); openFlowerShopModal();
+      }));
+      document.querySelectorAll('[data-sellfl]').forEach(btn => btn.addEventListener('click', () => {
+        const fl = ITEMS[btn.dataset.sellfl]; if ((G.state.inventory[fl.id] || 0) <= 0) return;
+        G.state.inventory[fl.id]--; G.state.coins += fl.sellPrice; G.state.totalCoinsEarned += fl.sellPrice;
+        AudioSys.sfx('coin'); saveGame(); updateHUD(); openFlowerShopModal();
+        toast(`🪙 Sold ${fl.name} for ${fl.sellPrice} Coins!`);
+      }));
+    }
+
+    function openDecorShopModal(tab = 'decor') {
+      const ownedColors = G.state.ownedHouseColors || ['strawberry'];
+      openModal(`
+        <div class="modal-head">
+          <div><h2 class="modal-title">🏡🔨 Maple’s Home &amp; Decor Studio</h2><div class="modal-sub">Coins: 🪙 ${G.state.coins} · Purchased decorations go into your Farm House Treasure Chest!</div></div>
+          <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+          <button id="dt-decor" class="btn ${tab === 'decor' ? 'btn-mint' : 'btn-ghost'} btn-sm">🎀 Farm Decorations (9)</button>
+          <button id="dt-house" class="btn ${tab === 'house' ? 'btn-peach' : 'btn-ghost'} btn-sm">🏡 House Upgrade &amp; Paint</button>
+        </div>
+        ${tab === 'house' ? `
+          <div style="background:#fff; padding:12px 14px; border-radius:16px; border:2px solid #ff9f7f; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div>
+              <strong>🏡 Storybook Cottage Upgrade</strong> ${G.state.zhHints ? '<span style="color:#0369a1; font-size:12px;">(童話小屋升級)</span>' : ''}
+              <div style="font-size:12px; color:var(--ink-soft);">Adds a cozy porch, chimney with smoke, dormer window, scalloped trim &amp; blooming flowerboxes!</div>
+            </div>
+            <button id="btn-buy-house-upg" class="btn ${G.state.houseUpgraded ? 'btn-ghost' : 'btn-peach'} btn-sm" ${G.state.houseUpgraded || G.state.coins < HOUSE_UPGRADE_PRICE ? 'disabled' : ''}>${G.state.houseUpgraded ? '✅ Upgraded' : `Upgrade (${HOUSE_UPGRADE_PRICE}c)`}</button>
+          </div>
+          <div style="font-size:12px; font-weight:800; color:#c2410c; margin-bottom:6px;">HOUSE PAINT COLORS (小屋油漆顏色)</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px;">
+            ${Object.values(HOUSE_COLORS).map(c => {
+              const owned = ownedColors.includes(c.id);
+              const active = (G.state.houseColor || 'strawberry') === c.id;
+              return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:9px 12px; border-radius:14px; border:2px solid ${active ? c.css : '#ead6c1'};">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span style="width:20px; height:20px; border-radius:50%; background:${c.css}; display:inline-block; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.2);"></span>
+                  <div><strong style="font-size:13px;">${c.name}</strong>${G.state.zhHints ? `<div style="font-size:11px; color:#0369a1;">${c.zh}</div>` : ''}</div>
+                </div>
+                <button class="btn ${active ? 'btn-mint' : (owned ? 'btn-sky' : 'btn-peach')} btn-sm" data-hcol="${c.id}" ${!owned && G.state.coins < c.price ? 'disabled' : ''}>${active ? '✓ Active' : (owned ? 'Apply' : `Buy (${c.price}c)`)}</button>
+              </div>`;
+            }).join('')}
+          </div>
+        ` : `
+          <div style="display:flex; flex-direction:column; gap:6px; max-height:48vh; overflow-y:auto;">
+            ${Object.values(FARM_UPGRADES).map(u => {
+              const owned = G.state.upgrades.includes(u.id);
+              return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:9px 12px; border-radius:14px; border:1.5px solid #86efac;">
+                <div><strong>${u.icon} ${u.name}</strong> ${G.state.zhHints ? `<span style="color:#0369a1; font-size:12px;">(${u.zh})</span>` : ''}<div style="font-size:11.5px; color:var(--ink-soft);">${u.desc}</div></div>
+                <button class="btn ${owned ? 'btn-ghost' : 'btn-mint'} btn-sm" data-buydecor="${u.id}" ${owned || G.state.coins < u.price ? 'disabled' : ''}>${owned ? '🧰 In Chest' : `Buy (${u.price}c)`}</button>
+              </div>`;
+            }).join('')}
+          </div>
+        `}
+      `, true);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.getElementById('dt-decor').addEventListener('click', () => openDecorShopModal('decor'));
+      document.getElementById('dt-house').addEventListener('click', () => openDecorShopModal('house'));
+      const hu = document.getElementById('btn-buy-house-upg');
+      if (hu) hu.addEventListener('click', () => {
+        if (G.state.houseUpgraded || G.state.coins < HOUSE_UPGRADE_PRICE) return;
+        G.state.coins -= HOUSE_UPGRADE_PRICE; G.state.houseUpgraded = true;
+        AudioSys.sfx('heart'); saveGame(); updateHUD(); openDecorShopModal('house');
+        toast('🏡 Upgraded to the Storybook Cottage! Visit My Cozy Farm to see it!');
+      });
+      document.querySelectorAll('[data-hcol]').forEach(btn => btn.addEventListener('click', () => {
+        const c = HOUSE_COLORS[btn.dataset.hcol]; if (!c) return;
+        if (!G.state.ownedHouseColors) G.state.ownedHouseColors = ['strawberry'];
+        if (!G.state.ownedHouseColors.includes(c.id)) {
+          if (G.state.coins < c.price) return;
+          G.state.coins -= c.price; G.state.ownedHouseColors.push(c.id);
+        }
+        G.state.houseColor = c.id;
+        AudioSys.sfx('heart'); saveGame(); updateHUD(); openDecorShopModal('house');
+        toast(`🎨 Painted your cottage ${c.name}!`);
+      }));
+      document.querySelectorAll('[data-buydecor]').forEach(btn => btn.addEventListener('click', () => {
+        const u = FARM_UPGRADES[btn.dataset.buydecor]; if (!u || G.state.coins < u.price || G.state.upgrades.includes(u.id)) return;
+        G.state.coins -= u.price; G.state.upgrades.push(u.id);
+        AudioSys.sfx('heart'); saveGame(); updateHUD(); openDecorShopModal('decor');
+        toast(`🧰 ${u.name} added to your Farm House Treasure Chest!`);
+      }));
     }
 
     function openBoutiqueModal() {
@@ -3172,6 +3922,662 @@
       const s = document.getElementById('vb-surf'); if (s) s.addEventListener('click', () => toggleVehicle('surf'));
     }
 
+    // =========================================================================
+    // FARM DECORATION 3D BUILDERS (9 ITEMS) & INTERACTIVE FARM DESIGN MODE
+    // =========================================================================
+    function buildFarmDecorMesh(decorId) {
+      const grp = new THREE.Group();
+      if (decorId === 'flower_arch') {
+        const whiteWood = plushMat(0xfffdf7), vineMat = plushMat(0x34a853), leafMat = plushMat(0x4ade80);
+        for (const side of [-1, 1]) {
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.48, 0.34, 10), plushMat(0xe2e8f0)); base.position.set(side * 2.55, 0.17, 0);
+          const p1 = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.105, 2.6, 8), whiteWood); p1.position.set(side * 2.55, 1.45, -0.32);
+          const p2 = p1.clone(); p2.position.z = 0.32;
+          for (let r = 0; r < 4; r++) {
+            const rung = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.07, 0.66), whiteWood);
+            rung.position.set(side * 2.55, 0.65 + r * 0.54, 0); grp.add(rung);
+          }
+          grp.add(base, p1, p2);
+        }
+        const arch1 = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.10, 10, 28, Math.PI), whiteWood); arch1.position.set(0, 2.65, -0.30);
+        const arch2 = arch1.clone(); arch2.position.z = 0.30;
+        const aPts = [];
+        for (let k = 0; k <= 36; k++) {
+          const u = k / 36, theta = u * Math.PI, sp = u * Math.PI * 10;
+          const rr = 2.56 + Math.cos(sp) * 0.14;
+          aPts.push(new THREE.Vector3(Math.cos(theta) * rr, 2.65 + Math.sin(theta) * rr, Math.sin(sp) * 0.34));
+        }
+        const archVine = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(aPts), 52, 0.052, 6, false), vineMat);
+        grp.add(arch1, arch2, archVine);
+        const flowerCols = [0xff8fab, 0xfdba74, 0x9333ea, 0x38bdf8, 0x67e8f9, 0xf97316];
+        for (let fi = 0; fi <= 8; fi++) {
+          const ang = 0.12 + (fi / 8) * (Math.PI - 0.24);
+          const fx = Math.cos(ang) * 2.68, fy = 2.68 + Math.sin(ang) * 2.68;
+          const flFront = buildSixPetalFlower(flowerCols[fi % flowerCols.length], 1.1); flFront.position.set(fx, fy, 0.42);
+          const flBack = buildSixPetalFlower(flowerCols[(fi + 2) % flowerCols.length], 1.1); flBack.position.set(fx, fy, -0.42); flBack.rotation.y = Math.PI;
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), leafMat); lf.scale.set(0.5, 1.3, 0.15); lf.position.set(fx, fy + 0.16, 0.22);
+          grp.add(flFront, flBack, lf);
+        }
+      } else if (decorId === 'fairy_lanterns') {
+        const postWood = plushMat(0x7c533e);
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 3.6, 8), postWood); pole.position.y = 1.8;
+        const cross = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 2.1, 8), postWood); cross.rotation.z = Math.PI / 2; cross.position.y = 3.35;
+        grp.add(pole, cross);
+        for (const sx of [-0.95, 0.95]) {
+          const globe = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 10), new THREE.MeshBasicMaterial({ color: sx < 0 ? 0xffb347 : 0xfef08a }));
+          globe.position.set(sx, 2.86, 0);
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.12, 8), plushMat(0x92400e)); cap.position.set(sx, 3.22, 0);
+          const tassel = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 6), plushMat(0xf43f5e)); tassel.position.set(sx, 2.38, 0);
+          grp.add(globe, cap, tassel);
+        }
+        const pt = new THREE.PointLight(0xffb347, 0.9, 12); pt.position.set(0, 3.0, 0); grp.add(pt);
+      } else if (decorId === 'tea_gazebo') {
+        const creamMat = plushMat(0xfffdf7);
+        const deck = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.5, 0.42, 8), plushMat(0xf4d7b5)); deck.position.y = 0.21; deck.receiveShadow = true;
+        const trimRing = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.14, 8, 24), creamMat); trimRing.rotation.x = Math.PI / 2; trimRing.position.y = 3.2;
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(3.8, 1.9, 8), plushMat(0xff9ebb)); roof.position.y = 4.2; roof.castShadow = true;
+        const finial = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), plushMat(0xfef08a)); finial.position.y = 5.3;
+        grp.add(deck, trimRing, roof, finial);
+        for (let pi = 0; pi < 6; pi++) {
+          const ang = (pi / 6) * Math.PI * 2 + Math.PI / 6;
+          const col = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.15, 2.9, 10), creamMat);
+          col.position.set(Math.cos(ang) * 2.85, 1.8, Math.sin(ang) * 2.85); grp.add(col);
+        }
+        const tTop = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.12, 16), plushMat(0xfef3c7)); tTop.position.y = 1.25;
+        const tLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.22, 0.85, 8), creamMat); tLeg.position.y = 0.8;
+        const pot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), plushMat(0x60a5fa)); pot.position.y = 1.48;
+        grp.add(tTop, tLeg, pot);
+      } else if (decorId === 'wishing_well') {
+        const stone = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.28, 1.05, 12), plushMat(0x94a3b8)); stone.position.y = 0.52; stone.castShadow = true;
+        const water = new THREE.Mesh(new THREE.CircleGeometry(0.95, 14), new THREE.MeshBasicMaterial({ color: 0x38bdf8 })); water.rotation.x = -Math.PI / 2; water.position.y = 0.96;
+        for (const sx of [-0.95, 0.95]) {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 2.1, 8), plushMat(0x9c6644)); post.position.set(sx, 1.9, 0); grp.add(post);
+        }
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.15, 4), plushMat(0xf472b6)); roof.position.y = 3.3; roof.rotation.y = Math.PI / 4; roof.castShadow = true;
+        const bucket = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.18, 0.34, 8), plushMat(0xd4a373)); bucket.position.set(0, 1.65, 0);
+        grp.add(stone, water, roof, bucket);
+      } else if (decorId === 'picnic_set') {
+        const blanket = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.08, 2.6), plushMat(0xffccd5)); blanket.position.y = 0.05;
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(3.22, 0.09, 0.7), plushMat(0xffffff)); stripe.position.y = 0.055;
+        const basket = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.62), plushMat(0xd4a373)); basket.position.set(-0.7, 0.35, -0.45); basket.castShadow = true;
+        const handle = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.05, 6, 12, Math.PI), plushMat(0x9c6644)); handle.position.set(-0.7, 0.62, -0.45);
+        const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.06, 12), plushMat(0xffffff)); plate.position.set(0.55, 0.12, 0.25);
+        const cake = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.24, 12), plushMat(0xfef08a)); cake.position.set(0.55, 0.26, 0.25);
+        const berry = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), plushMat(0xf43f5e)); berry.position.set(0.55, 0.42, 0.25);
+        grp.add(blanket, stripe, basket, handle, plate, cake, berry);
+      } else if (decorId === 'windmill') {
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.45, 4.4, 8), plushMat(0xfff8eb)); tower.position.y = 2.2; tower.castShadow = true;
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.2, 8), plushMat(0x60a5fa)); cap.position.y = 4.9;
+        const door = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.15), plushMat(0xa47148)); door.position.set(0, 0.6, 1.32);
+        const hub = new THREE.Group(); hub.position.set(0, 3.9, 1.05);
+        const axle = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 10), plushMat(0xfef08a)); hub.add(axle);
+        for (let i = 0; i < 4; i++) {
+          const blade = new THREE.Mesh(new THREE.BoxGeometry(0.34, 2.2, 0.08), plushMat(0xfbcfe8));
+          const a = (i / 4) * Math.PI * 2;
+          blade.position.set(Math.cos(a) * 1.15, Math.sin(a) * 1.15, 0); blade.rotation.z = a + Math.PI / 2;
+          hub.add(blade);
+        }
+        grp.userData.windmillHub = hub;
+        grp.add(tower, cap, door, hub);
+      } else if (decorId === 'birdbath') {
+        const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 0.25, 12), plushMat(0xe2e8f0)); base.position.y = 0.12;
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 1.15, 10), plushMat(0xf1f5f9)); stem.position.y = 0.78;
+        const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.55, 0.34, 16), plushMat(0xe2e8f0)); bowl.position.y = 1.42; bowl.castShadow = true;
+        const water = new THREE.Mesh(new THREE.CircleGeometry(0.82, 16), new THREE.MeshBasicMaterial({ color: 0x7dd3fc })); water.rotation.x = -Math.PI / 2; water.position.y = 1.60;
+        const bird = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), plushMat(0x38bdf8)); bird.position.set(0.72, 1.72, 0);
+        grp.add(base, stem, bowl, water, bird);
+      } else if (decorId === 'mushroom_bench') {
+        for (const sx of [-0.9, 0.9]) {
+          const st = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.26, 0.65, 10), plushMat(0xfffbeb)); st.position.set(sx, 0.32, 0); grp.add(st);
+        }
+        const seat = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 1.85, 10, 14), plushMat(0xf472b6));
+        seat.rotation.z = Math.PI / 2; seat.scale.set(0.65, 1.0, 1.15); seat.position.set(0, 0.75, 0); seat.castShadow = true;
+        for (let di = -2; di <= 2; di++) {
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), plushMat(0xffffff));
+          dot.position.set(di * 0.42, 0.96, (di % 2) * 0.18); grp.add(dot);
+        }
+        grp.add(seat);
+      } else if (decorId === 'flower_fence') {
+        const wMat = plushMat(0xffffff);
+        const rail1 = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 0.12), wMat); rail1.position.set(0, 0.45, 0);
+        const rail2 = rail1.clone(); rail2.position.y = 0.92;
+        grp.add(rail1, rail2);
+        for (let i = -3; i <= 3; i++) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 0.14), wMat); post.position.set(i * 0.54, 0.62, 0); post.castShadow = true;
+          grp.add(post);
+          if (i % 2 === 0) {
+            const fl = buildSixPetalFlower([0xf472b6, 0xfef08a, 0x38bdf8, 0xa78bfa][Math.abs(i) % 4], 0.68);
+            fl.position.set(i * 0.54, 0.36, 0.24); grp.add(fl);
+          }
+        }
+      }
+      return grp;
+    }
+
+    const FARM_RESTRICTED_ZONES = [
+      { shape: 'rect', x: -4.0, z: -12.0, w: 9.2, d: 8.6, label: 'Farm House' },
+      { shape: 'rect', x: 0.0,  z: 0.0,   w: 12.6, d: 8.6, label: 'Crop Plots' },
+      { shape: 'circle', x: 15.0, z: 14.0, r: 7.4, label: 'Farm Pond' },
+      { shape: 'circle', x: -16.2, z: -16.2, r: 8.8, label: 'Mountain Corner' },
+      { shape: 'circle', x: -16.0, z: 14.0, r: 6.4, label: 'Beach Corner' },
+      { shape: 'circle', x: 15.0, z: -15.0, r: 5.5, label: 'Forest Corner' },
+      { shape: 'circle', x: 15.5, z: 0.0,   r: 4.5, label: 'Flower Corner' },
+      { shape: 'circle', x: 0.0,  z: 13.5,  r: 4.2, label: 'Plains Area' },
+      { shape: 'circle', x: 0.0,  z: -25.5, r: 4.2, label: 'North Gate' },
+      { shape: 'circle', x: -25.5, z: 0.0,  r: 4.2, label: 'West Gate' },
+      { shape: 'circle', x: 25.5, z: 0.0,   r: 4.2, label: 'East Gate' }
+    ];
+
+    function isDecorPlacementValid(x, z, radius = 1.8) {
+      if (Math.abs(x) > 23.5 || Math.abs(z) > 23.5) return false;
+      for (const rz of FARM_RESTRICTED_ZONES) {
+        if (rz.shape === 'circle') {
+          if (Math.hypot(x - rz.x, z - rz.z) < rz.r + radius * 0.65) return false;
+        } else {
+          if (Math.abs(x - rz.x) < rz.w / 2 + radius * 0.65 && Math.abs(z - rz.z) < rz.d / 2 + radius * 0.65) return false;
+        }
+      }
+      for (const pd of (G.state.placedDecor || [])) {
+        const otherR = (FARM_UPGRADES[pd.id]?.radius || 1.8);
+        if (Math.hypot(x - pd.x, z - pd.z) < (radius + otherR) * 0.72) return false;
+      }
+      return true;
+    }
+
+    function openDesignChestModal() {
+      const owned = G.state.upgrades || [];
+      const placedIds = new Set((G.state.placedDecor || []).map(p => p.id));
+      openModal(`
+        <div class="modal-head">
+          <div><h2 class="modal-title">🧰 Farm Design Treasure Chest</h2><div class="modal-sub">Manage your farm decorations, place them anywhere valid, and choose their rotation!</div></div>
+          <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        ${owned.length === 0 ? `
+          <div style="text-align:center; padding:14px 6px;">
+            <div style="font-size:42px;">🧰</div>
+            <p style="font-size:14.5px; font-weight:700;">Your design chest is empty!</p>
+            <p style="font-size:13px; color:var(--ink-soft);">Visit <strong>🏡 Maple’s Home &amp; Decor Studio</strong> in Cloverbrook Town to purchase cute arches, gazebos, windmills, wishing wells, and more!</p>
+          </div>
+        ` : `
+          <div style="display:flex; flex-direction:column; gap:7px; max-height:42vh; overflow-y:auto; margin-bottom:12px;">
+            ${owned.map(id => {
+              const u = FARM_UPGRADES[id]; if (!u) return '';
+              const isPlaced = placedIds.has(id);
+              return `<div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:9px 12px; border-radius:14px; border:1.5px solid ${isPlaced ? '#86efac' : '#f5cba7'};">
+                <div><strong>${u.icon} ${u.name}</strong> ${G.state.zhHints ? `<span style="color:#0369a1; font-size:12px;">(${u.zh})</span>` : ''}<div style="font-size:11px; color:var(--ink-soft);">${isPlaced ? '✅ Placed on Farm' : '🧰 Stored in Chest'}</div></div>
+                ${isPlaced ? `<button class="btn btn-ghost btn-sm" data-stow="${id}">Stow in Chest</button>` : `<span style="font-size:11.5px; font-weight:800; color:#c2410c;">Ready to place</span>`}
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="display:flex; gap:10px; justify-content:center;">
+            <button id="btn-launch-design" class="btn btn-peach" style="padding:11px 22px;">🎨 Open Farm Design Mode</button>
+          </div>
+        `}
+      `, true);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-stow]').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.dataset.stow;
+        G.state.placedDecor = (G.state.placedDecor || []).filter(p => p.id !== id);
+        saveGame(); AudioSys.sfx('pop'); openDesignChestModal();
+        toast(`🧰 Returned ${FARM_UPGRADES[id]?.name || id} to your chest!`);
+      }));
+      const ld = document.getElementById('btn-launch-design');
+      if (ld) ld.addEventListener('click', () => { closeModal(); enterFarmDesignMode(); });
+    }
+
+    function enterFarmDesignMode() {
+      if (G.state.currentZoneId !== 'farm') {
+        G.state.currentZoneId = 'farm';
+        G.playerMesh.position.set(-4, 0, -8.5);
+        buildZone('farm'); updateHUD();
+      }
+      G.designMode = true;
+      G.designSelectedId = null;
+      G.designCursorX = -5; G.designCursorZ = 6; G.designRotY = 0;
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('design-hud').classList.remove('hidden');
+
+      // Render translucent RED restricted-zone blocks over all reserved farm areas!
+      if (G.designRedGroup) G.zoneGroup.remove(G.designRedGroup);
+      G.designRedGroup = new THREE.Group();
+      const redFill = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.34, side: THREE.DoubleSide });
+      const redEdge = new THREE.MeshBasicMaterial({ color: 0xdc2626, wireframe: true });
+      FARM_RESTRICTED_ZONES.forEach(rz => {
+        const geo = rz.shape === 'circle'
+          ? new THREE.CylinderGeometry(rz.r, rz.r, 0.35, 24)
+          : new THREE.BoxGeometry(rz.w, 0.35, rz.d);
+        const m = new THREE.Mesh(geo, redFill); m.position.set(rz.x, 0.22, rz.z);
+        const w = new THREE.Mesh(geo, redEdge); w.position.set(rz.x, 0.24, rz.z);
+        G.designRedGroup.add(m, w);
+      });
+      G.zoneGroup.add(G.designRedGroup);
+
+      // Auto-select first unplaced decoration if available
+      const placedIds = new Set((G.state.placedDecor || []).map(p => p.id));
+      const firstUnplaced = (G.state.upgrades || []).find(id => !placedIds.has(id));
+      renderDesignPalette();
+      if (firstUnplaced) selectDesignItem(firstUnplaced);
+    }
+
+    function clearDesignGhost() {
+      if (G.designGhost && G.zoneGroup) G.zoneGroup.remove(G.designGhost);
+      if (G.designGhostRing && G.zoneGroup) G.zoneGroup.remove(G.designGhostRing);
+      G.designGhost = null; G.designGhostRing = null;
+    }
+
+    function selectDesignItem(decorId) {
+      clearDesignGhost();
+      G.designSelectedId = decorId;
+      if (!decorId) { renderDesignPalette(); updateDesignGhost(); return; }
+      const u = FARM_UPGRADES[decorId];
+      const ghost = buildFarmDecorMesh(decorId);
+      ghost.traverse(o => {
+        if (o.isMesh && o.material) {
+          o.material = o.material.clone();
+          o.material.transparent = true; o.material.opacity = 0.72;
+        }
+      });
+      const r = u?.radius || 1.8;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(r * 0.72, r * 0.92, 28), new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.14;
+      G.designGhost = ghost; G.designGhostRing = ring;
+      G.zoneGroup.add(ghost, ring);
+      renderDesignPalette();
+      updateDesignGhost();
+    }
+
+    function updateDesignGhost() {
+      const st = document.getElementById('design-status');
+      if (!G.designSelectedId || !G.designGhost) {
+        if (st) { st.textContent = 'Pick a decoration from your chest below'; st.className = 'design-status'; }
+        return;
+      }
+      const u = FARM_UPGRADES[G.designSelectedId];
+      const valid = isDecorPlacementValid(G.designCursorX, G.designCursorZ, u?.radius || 1.8);
+      G.designGhost.position.set(G.designCursorX, 0, G.designCursorZ);
+      G.designGhost.rotation.y = G.designRotY;
+      G.designGhostRing.position.set(G.designCursorX, 0.14, G.designCursorZ);
+      G.designGhostRing.material.color.setHex(valid ? 0x22c55e : 0xef4444);
+      if (st) {
+        const deg = Math.round(((G.designRotY * 180 / Math.PI) % 360 + 360) % 360);
+        st.textContent = valid ? `✅ Valid spot (${deg}°) — Click or press Place` : `⛔ Blocked (Red Reserved Area!)`;
+        st.className = valid ? 'design-status' : 'design-status invalid';
+      }
+    }
+
+    function placeSelectedDecor() {
+      if (!G.designMode || !G.designSelectedId) return;
+      const u = FARM_UPGRADES[G.designSelectedId];
+      if (!isDecorPlacementValid(G.designCursorX, G.designCursorZ, u?.radius || 1.8)) {
+        AudioSys.sfx('wrong'); toast('⛔ Cannot place over a red restricted farm zone!'); return;
+      }
+      if (!G.state.placedDecor) G.state.placedDecor = [];
+      G.state.placedDecor = G.state.placedDecor.filter(p => p.id !== G.designSelectedId);
+      const entry = { id: G.designSelectedId, x: Number(G.designCursorX.toFixed(1)), z: Number(G.designCursorZ.toFixed(1)), rotY: G.designRotY };
+      G.state.placedDecor.push(entry);
+      saveGame(); AudioSys.sfx('heart');
+      const placedId = G.designSelectedId;
+      clearDesignGhost();
+      G.designSelectedId = null;
+      // Rebuild farm decor cleanly while keeping design mode active!
+      const dMesh = buildFarmDecorMesh(entry.id);
+      dMesh.position.set(entry.x, 0, entry.z); dMesh.rotation.y = entry.rotY;
+      G.zoneGroup.add(dMesh);
+      G.decorMeshes.push({ pd: entry, mesh: dMesh });
+      renderDesignPalette(); updateDesignGhost();
+      toast(`✨ Placed ${FARM_UPGRADES[placedId]?.name}!`);
+    }
+
+    function renderDesignPalette() {
+      const pal = document.getElementById('design-palette'); if (!pal) return;
+      const owned = G.state.upgrades || [];
+      const placedMap = {};
+      (G.state.placedDecor || []).forEach(p => { placedMap[p.id] = p; });
+      if (owned.length === 0) {
+        pal.innerHTML = `<span style="font-size:13px; color:var(--ink-soft); font-weight:700;">No decorations owned yet — buy some at Maple’s Home &amp; Decor Studio!</span>`;
+        return;
+      }
+      pal.innerHTML = owned.map(id => {
+        const u = FARM_UPGRADES[id]; if (!u) return '';
+        const isSel = G.designSelectedId === id;
+        const isPlaced = !!placedMap[id];
+        return `<div style="display:inline-flex; align-items:center; gap:4px; background:#fff; padding:4px 8px; border-radius:999px; border:2px solid ${isSel ? '#ec4899' : (isPlaced ? '#86efac' : '#f5cba7')};">
+          <button class="btn ${isSel ? 'btn-pink' : 'btn-ghost'} btn-sm" style="padding:4px 10px;" data-dpick="${id}">${u.icon} ${u.name}${isPlaced ? ' (Move)' : ''}</button>
+          ${isPlaced ? `<button class="btn btn-ghost btn-sm" style="padding:3px 7px;" title="Stow back in chest" data-dstow="${id}">🧰</button>` : ''}
+        </div>`;
+      }).join('');
+      pal.querySelectorAll('[data-dpick]').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.dataset.dpick;
+        // If already placed, temporarily pick it up from the farm to reposition!
+        if (placedMap[id]) {
+          G.state.placedDecor = G.state.placedDecor.filter(p => p.id !== id);
+          const idx = G.decorMeshes.findIndex(x => x.pd.id === id);
+          if (idx >= 0) { G.zoneGroup.remove(G.decorMeshes[idx].mesh); G.decorMeshes.splice(idx, 1); }
+          saveGame();
+        }
+        selectDesignItem(id);
+      }));
+      pal.querySelectorAll('[data-dstow]').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.dataset.dstow;
+        G.state.placedDecor = (G.state.placedDecor || []).filter(p => p.id !== id);
+        const idx = G.decorMeshes.findIndex(x => x.pd.id === id);
+        if (idx >= 0) { G.zoneGroup.remove(G.decorMeshes[idx].mesh); G.decorMeshes.splice(idx, 1); }
+        if (G.designSelectedId === id) { clearDesignGhost(); G.designSelectedId = null; }
+        saveGame(); AudioSys.sfx('pop'); renderDesignPalette(); updateDesignGhost();
+        toast(`🧰 Stowed ${FARM_UPGRADES[id]?.name} back into your chest!`);
+      }));
+    }
+
+    function exitFarmDesignMode() {
+      clearDesignGhost();
+      if (G.designRedGroup && G.zoneGroup) G.zoneGroup.remove(G.designRedGroup);
+      G.designRedGroup = null; G.designMode = false; G.designSelectedId = null;
+      document.getElementById('design-hud').classList.add('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+      buildZone('farm');
+      saveGame(); AudioSys.sfx('pop');
+      toast('🏡 Farm layout saved!');
+    }
+
+    // =========================================================================
+    // 10-MINUTE TIMED TOWN ENGLISH EVENTS (4 INTERACTIVE MINI-GAMES + MIC/AUDIO)
+    // =========================================================================
+    const TOWN_EVENTS = [
+      {
+        id: 'evt_carpenter', icon: '🔨', title: 'Carpenter’s Workshop', zhTitle: '木匠工坊挑戰',
+        rewardText: '🪙 +55 Coins', desc: 'Help Barnaby build cozy valley furniture! Listen to spoken English carpentry orders & try the optional microphone bonus!',
+        zhDesc: '幫木匠打造溫馨家具！聆聽英文指示選擇正確步驟，還有可選的麥克風口說加分題！'
+      },
+      {
+        id: 'evt_blacksmith', icon: '⚒️', title: 'Cozy Blacksmith’s Forge', zhTitle: '鐵匠打鐵聽力工坊',
+        rewardText: '🪙 +60 Coins', desc: 'Listen carefully to the spoken English craft word and forge the glowing letters on the anvil!',
+        zhDesc: '仔細聽英文單字發音，敲擊發光的鐵砧字母完成鍛造！'
+      },
+      {
+        id: 'evt_florist', icon: '💐', title: 'Flora’s Bouquet Rush', zhTitle: '花店花束聽力與口說挑戰',
+        rewardText: '🌷 +2 Flower Seeds & 🪙 +35c', desc: 'Listen to town customers order flower bouquets in English, assemble their order, and speak a friendly greeting!',
+        zhDesc: '聽聽鎮民用英文點什麼花束，搭配正確花朵並練習一句親切英文問候！'
+      },
+      {
+        id: 'evt_bakery', icon: '🥐', title: 'Harvest Bakery Festival', zhTitle: '收成烘焙坊聽力派對',
+        rewardText: '🥕 +3 Crop Seeds & 🪙 +40c', desc: 'Listen to the valley baker’s English harvest requests and pack the right fresh ingredients!',
+        zhDesc: '聆聽烘焙師的英文食材需求，打包正確的新鮮農作物！'
+      }
+    ];
+
+    function startSpeechRecognition(expectedKeywords, onResult, onStatus) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        if (onStatus) onStatus('Microphone speech recognition is not supported in this browser — no worries, you can skip or click to continue!');
+        return null;
+      }
+      try {
+        const rec = new SR();
+        rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 3;
+        AudioSys.duckBGM(true, 9000);
+        if (onStatus) onStatus('🎤 Listening… speak clearly in English! (BGM lowered)');
+        rec.onresult = (e) => {
+          AudioSys.duckBGM(false);
+          const transcripts = Array.from(e.results[0]).map(r => r.transcript.toLowerCase());
+          const heard = transcripts[0] || '';
+          const matched = expectedKeywords.some(kw => transcripts.some(t => t.includes(kw.toLowerCase())));
+          onResult(matched, heard);
+        };
+        rec.onerror = () => { AudioSys.duckBGM(false); if (onStatus) onStatus('🎤 Could not hear clearly — try again or continue without penalty!'); };
+        rec.onend = () => { AudioSys.duckBGM(false); };
+        rec.start();
+        return rec;
+      } catch {
+        AudioSys.duckBGM(false);
+        if (onStatus) onStatus('Microphone unavailable — you can continue without penalty!');
+        return null;
+      }
+    }
+
+    function maybeTriggerTimedEvent() {
+      if (!G.state || G.modalOpen || G.cutscene || G.designMode) return;
+      if (G.state.lastEventSec === undefined) G.state.lastEventSec = 0;
+      if (G.state.playSeconds - G.state.lastEventSec < 600) return;
+      G.state.lastEventSec = G.state.playSeconds;
+      const idx = (G.state.nextEventIdx || 0) % TOWN_EVENTS.length;
+      G.state.nextEventIdx = (idx + 1) % TOWN_EVENTS.length;
+      saveGame();
+      openEventPromptModal(TOWN_EVENTS[idx]);
+    }
+
+    function openEventPromptModal(evt) {
+      AudioSys.sfx('heart');
+      openModal(`
+        <div style="text-align:center; padding:6px 4px;">
+          <div style="font-size:46px;">${evt.icon}</div>
+          <div style="font-size:11.5px; font-weight:800; color:#be185d; letter-spacing:1px;">✨ SPECIAL TOWN EVENT · 每10分鐘限定活動 ✨</div>
+          <h2 class="modal-title" style="margin-top:4px;">${evt.title}</h2>
+          <div style="font-size:12.5px; color:#0369a1; font-weight:700;">${G.state.zhHints ? evt.zhTitle : ''}</div>
+          <p style="font-size:14px; font-weight:700; margin:10px 0;">${evt.desc}</p>
+          <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}" style="text-align:left;">${evt.zhDesc}</div>
+          <div style="margin:12px 0; font-size:13.5px; font-weight:800; color:#c2410c;">Reward: ${evt.rewardText}</div>
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+            <button id="evt-join" class="btn btn-peach">🎉 Join Mini-Game!</button>
+            <button id="evt-skip" class="btn btn-ghost">Skip (No Penalty)</button>
+          </div>
+        </div>
+      `);
+      document.getElementById('evt-skip').addEventListener('click', () => { closeModal(); toast('🌸 No problem! Continue exploring at your own pace.'); });
+      document.getElementById('evt-join').addEventListener('click', () => runTownEventGame(evt.id));
+    }
+
+    function openEventsHubModal() {
+      const rem = Math.max(0, Math.ceil(600 - (G.state.playSeconds - (G.state.lastEventSec || 0))));
+      const m = Math.floor(rem / 60), s = rem % 60;
+      openModal(`
+        <div class="modal-head">
+          <div><h2 class="modal-title">🎪 Cloverbrook Town Events</h2><div class="modal-sub">A special event pops up every 10 minutes (next in ${m}m ${String(s).padStart(2,'0')}s) — or try any event now!</div></div>
+          <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:10px;">
+          ${TOWN_EVENTS.map(e => `
+            <button class="reply-btn" data-runevt="${e.id}">
+              <div style="font-size:15px;">${e.icon} <strong>${e.title}</strong></div>
+              <div style="font-size:11.5px; color:#0369a1;">${G.state.zhHints ? e.zhTitle : ''}</div>
+              <div style="font-size:11.5px; color:var(--ink-soft); margin-top:4px;">Reward: ${e.rewardText}</div>
+            </button>`).join('')}
+        </div>
+      `, true);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-runevt]').forEach(btn => btn.addEventListener('click', () => runTownEventGame(btn.dataset.runevt)));
+    }
+
+    function runTownEventGame(evtId) {
+      if (evtId === 'evt_carpenter') runCarpenterEvent();
+      else if (evtId === 'evt_blacksmith') runBlacksmithEvent();
+      else if (evtId === 'evt_florist') runFloristEvent();
+      else runBakeryEvent();
+    }
+
+    function runCarpenterEvent() {
+      const steps = [
+        { spoken: 'Please saw the wooden plank cleanly.', zh: '請把木板整齊鋸好。', answer: 'saw', opts: [{ id: 'saw', lbl: '🪚 Saw the wooden plank' }, { id: 'paint', lbl: '🎨 Paint the roof pink' }, { id: 'water', lbl: '💧 Water the garden' }] },
+        { spoken: 'Now hammer the shiny nail into the table.', zh: '現在把閃亮的釘子敲進桌子裡。', answer: 'hammer', opts: [{ id: 'hammer', lbl: '🔨 Hammer the shiny nail' }, { id: 'bake', lbl: '🥐 Bake a honey bun' }, { id: 'brush', lbl: '🪮 Brush the bunny' }] },
+        { spoken: 'Finally, polish the cozy wooden chair!', zh: '最後，把溫馨的木椅擦亮！', answer: 'polish', opts: [{ id: 'polish', lbl: '✨ Polish the wooden chair' }, { id: 'dig', lbl: '⛏️ Dig a deep hole' }, { id: 'swim', lbl: '🏄 Surf the ocean' }] }
+      ];
+      let idx = 0, bonus = 0;
+      function draw() {
+        if (idx >= steps.length) {
+          // Optional Speaking Bonus Round!
+          openModal(`
+            <div style="text-align:center; padding:8px 0;">
+              <div style="font-size:44px;">🪑</div>
+              <h2 class="modal-title">Chair Built! Optional Speaking Bonus 🎤</h2>
+              <p style="font-size:14px; font-weight:700;">Say: <strong>“The wooden chair is ready!”</strong> (+15 Bonus Coins!)</p>
+              <div id="mic-stat" style="font-size:12.5px; color:#0369a1; font-weight:700; min-height:24px; margin:8px 0;">Click Speak to practice with your microphone (BGM auto-lowers).</div>
+              <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                <button id="btn-mic-go" class="btn btn-sky">🎤 Speak Now</button>
+                <button id="btn-mic-done" class="btn btn-peach">Claim 🪙 ${55 + bonus} Coins!</button>
+              </div>
+            </div>
+          `);
+          document.getElementById('btn-mic-go').addEventListener('click', () => {
+            startSpeechRecognition(['chair', 'wooden', 'ready'], (ok, heard) => {
+              const st = document.getElementById('mic-stat');
+              if (ok) { bonus = 15; AudioSys.sfx('heart'); if (st) st.textContent = `🎉 Great pronunciation! Heard: "${heard}" (+15c bonus!)`; document.getElementById('btn-mic-done').textContent = `Claim 🪙 ${55 + bonus} Coins!`; }
+              else if (st) st.textContent = `Heard "${heard}" — try saying "The wooden chair is ready!"`;
+            }, msg => { const st = document.getElementById('mic-stat'); if (st) st.textContent = msg; });
+          });
+          document.getElementById('btn-mic-done').addEventListener('click', () => {
+            finishMiniGame({ rewardCoins: 55 + bonus, friendTarget: null });
+          });
+          return;
+        }
+        const stp = steps[idx];
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">🔨 Carpenter’s Workshop (${idx + 1}/${steps.length})</h2><div class="modal-sub">Listen to Barnaby’s spoken English order!</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div style="text-align:center; margin:10px 0;">
+            <button id="carp-play" class="btn btn-sky">🔊 Listen to Instruction (BGM Auto-Lowers)</button>
+            <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}" style="margin-top:8px;">提示：${stp.zh}</div>
+          </div>
+          <div class="reply-list">${stp.opts.map(o => `<button class="reply-btn" data-co="${o.id}">${o.lbl}</button>`).join('')}</div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('carp-play').addEventListener('click', () => AudioSys.speak(stp.spoken));
+        setTimeout(() => AudioSys.speak(stp.spoken), 180);
+        document.querySelectorAll('[data-co]').forEach(btn => btn.addEventListener('click', () => {
+          if (btn.dataset.co === stp.answer) { AudioSys.sfx('heart'); idx++; draw(); }
+          else { AudioSys.sfx('wrong'); toast('🔊 Listen again carefully!'); AudioSys.speak(stp.spoken); }
+        }));
+      }
+      draw();
+    }
+
+    function runBlacksmithEvent() {
+      const words = [
+        { word: 'BELL', hint: 'A shiny brass instrument that rings warmly.', zh: '會發出清脆聲音的鈴鐺（4個字母）。' },
+        { word: 'STAR', hint: 'A glowing five-pointed shape forged in gold.', zh: '金色五角星星（4個字母）。' },
+        { word: 'IRON', hint: 'A strong metal heated at the cozy forge.', zh: '在鐵匠鋪加熱鍛造的堅固金屬「鐵」（4個字母）。' }
+      ];
+      const pick = words[Math.floor(Math.random() * words.length)];
+      const letters = pick.word.split('');
+      const shuffled = [...letters, 'A', 'E', 'O', 'M'].slice(0, 8).sort(() => Math.random() - 0.5);
+      let built = '';
+      function draw() {
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">⚒️ Cozy Blacksmith’s Forge</h2><div class="modal-sub">Listen to the spoken word and strike the anvil letters in order!</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div style="text-align:center; margin:8px 0;">
+            <button id="bs-play" class="btn btn-sky">🔊 Hear Word to Forge</button>
+            <p style="font-size:13.5px; font-weight:700; margin:8px 0 4px;">${pick.hint}</p>
+            <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}">${pick.zh}</div>
+            <div style="display:flex; gap:10px; justify-content:center; margin:14px 0;">
+              ${letters.map((_, i) => `<div style="width:44px; height:48px; border-radius:12px; background:#fff; border:2.5px solid #f59e0b; display:flex; align-items:center; justify-content:center; font-family:'Fredoka',sans-serif; font-size:24px; color:#b45309;">${built[i] || ''}</div>`).join('')}
+            </div>
+            <div class="kb-grid">${shuffled.map((ch, i) => `<button class="kb-key" style="width:44px; height:44px; font-size:16px;" data-bsk="${ch}">${ch}</button>`).join('')}</div>
+            <button id="bs-clear" class="btn btn-ghost btn-sm" style="margin-top:6px;">↺ Clear Anvil</button>
+          </div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('bs-play').addEventListener('click', () => AudioSys.speak(pick.word));
+        document.getElementById('bs-clear').addEventListener('click', () => { built = ''; draw(); });
+        document.querySelectorAll('[data-bsk]').forEach(btn => btn.addEventListener('click', () => {
+          const ch = btn.dataset.bsk;
+          if (ch === letters[built.length]) {
+            built += ch; AudioSys.tone(660 + built.length * 110, 0.14, 'triangle', 0.45);
+            if (built === pick.word) { AudioSys.speak(pick.word); setTimeout(() => finishMiniGame({ rewardCoins: 60, friendTarget: null }), 450); }
+            else draw();
+          } else {
+            AudioSys.sfx('wrong'); toast('⚒️ Try the next letter of the spoken word!');
+          }
+        }));
+      }
+      draw();
+      setTimeout(() => AudioSys.speak(pick.word), 200);
+    }
+
+    function runFloristEvent() {
+      const orders = [
+        { spoken: 'I would like one Pink Tulip and one Sunny Sunflower, please!', zh: '我想要一朵粉紅鬱金香和一朵向日葵，謝謝！', need: ['tulip', 'sunflower'] },
+        { spoken: 'May I have one Royal Orchid and one Golden Daisy, please?', zh: '請問可以給我一朵皇家蘭花和一朵陽光雛菊嗎？', need: ['orchid', 'daisy'] }
+      ];
+      const ord = orders[Math.floor(Math.random() * orders.length)];
+      const choices = [
+        { id: 'tulip', lbl: '🌷 Pink Tulip' }, { id: 'sunflower', lbl: '🌻 Sunny Sunflower' },
+        { id: 'orchid', lbl: '🌺 Royal Orchid' }, { id: 'daisy', lbl: '🌼 Golden Daisy' },
+        { id: 'lavender', lbl: '🪻 Lavender Sprig' }
+      ];
+      const picked = new Set();
+      function draw() {
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">💐 Flora’s Bouquet Rush</h2><div class="modal-sub">Listen to the customer’s spoken order and pick the 2 flowers!</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div style="text-align:center; margin:8px 0;">
+            <button id="fl-play" class="btn btn-sky">🔊 Listen to Customer Order</button>
+            <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}" style="margin-top:8px;">${ord.zh}</div>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:12px 0;">
+            ${choices.map(c => `<button class="btn ${picked.has(c.id) ? 'btn-pink' : 'btn-ghost'} btn-sm" data-flc="${c.id}">${c.lbl}${picked.has(c.id) ? ' ✓' : ''}</button>`).join('')}
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            <button id="fl-submit" class="btn btn-peach" ${picked.size === 2 ? '' : 'disabled'}>💐 Wrap Bouquet!</button>
+          </div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('fl-play').addEventListener('click', () => AudioSys.speak(ord.spoken));
+        document.querySelectorAll('[data-flc]').forEach(btn => btn.addEventListener('click', () => {
+          const id = btn.dataset.flc;
+          if (picked.has(id)) picked.delete(id); else if (picked.size < 2) picked.add(id);
+          AudioSys.sfx('pop'); draw();
+        }));
+        document.getElementById('fl-submit').addEventListener('click', () => {
+          const ok = ord.need.every(n => picked.has(n));
+          if (ok) {
+            G.state.inventory.seed_tulip = (G.state.inventory.seed_tulip || 0) + 1;
+            G.state.inventory.seed_orchid = (G.state.inventory.seed_orchid || 0) + 1;
+            toast('🌷 Bonus Reward: +1 Pink Tulip Seed & +1 Royal Orchid Seed!');
+            finishMiniGame({ rewardCoins: 35, friendTarget: null });
+          } else {
+            AudioSys.sfx('wrong'); toast('💐 Not quite right—listen to the customer’s order again!');
+            AudioSys.speak(ord.spoken);
+          }
+        });
+      }
+      draw();
+      setTimeout(() => AudioSys.speak(ord.spoken), 200);
+    }
+
+    function runBakeryEvent() {
+      const rounds = [
+        { spoken: 'Please bring fresh honey carrots for our carrot cake!', zh: '請帶新鮮的蜂蜜胡蘿蔔來做胡蘿蔔蛋糕！', ans: 'carrot', opts: [{ id: 'carrot', lbl: '🥕 Honey Carrots' }, { id: 'melon', lbl: '🍈 Juicy Melon' }, { id: 'bamboo', lbl: '🎋 Sweet Bamboo' }] },
+        { spoken: 'We need sweet red strawberries for the berry pie!', zh: '我們需要甜甜的紅草莓來做莓果派！', ans: 'strawberry', opts: [{ id: 'strawberry', lbl: '🍓 Sweet Strawberries' }, { id: 'carrot', lbl: '🥕 Honey Carrots' }, { id: 'bamboo', lbl: '🎋 Sweet Bamboo' }] }
+      ];
+      let idx = 0;
+      function draw() {
+        const r = rounds[idx];
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">🥐 Harvest Bakery Festival (${idx + 1}/${rounds.length})</h2><div class="modal-sub">Listen to the baker’s spoken English request!</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div style="text-align:center; margin:8px 0;">
+            <button id="bk-play" class="btn btn-sky">🔊 Listen to Baker</button>
+            <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}" style="margin-top:8px;">${r.zh}</div>
+          </div>
+          <div class="reply-list">${r.opts.map(o => `<button class="reply-btn" data-bko="${o.id}">${o.lbl}</button>`).join('')}</div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('bk-play').addEventListener('click', () => AudioSys.speak(r.spoken));
+        setTimeout(() => AudioSys.speak(r.spoken), 180);
+        document.querySelectorAll('[data-bko]').forEach(btn => btn.addEventListener('click', () => {
+          if (btn.dataset.bko === r.ans) {
+            AudioSys.sfx('heart'); idx++;
+            if (idx < rounds.length) draw();
+            else {
+              G.state.inventory.seed_carrot = (G.state.inventory.seed_carrot || 0) + 2;
+              G.state.inventory.seed_strawberry = (G.state.inventory.seed_strawberry || 0) + 1;
+              toast('🌱 Bonus Reward: +2 Honey Carrot Seeds & +1 Sweet Strawberry Seed!');
+              finishMiniGame({ rewardCoins: 40, friendTarget: null });
+            }
+          } else {
+            AudioSys.sfx('wrong'); toast('🥐 Listen again to the baker’s ingredient!');
+            AudioSys.speak(r.spoken);
+          }
+        }));
+      }
+      draw();
+    }
+
     function openMapModal() {
       const ordered = Object.values(ZONES).filter(z => !z.indoor).sort((a, b) => (a.gy - b.gy) || (a.gx - b.gx));
       openModal(`
@@ -3339,9 +4745,13 @@
       if (it.kind === 'animal') openAnimalModal(it.animalId, it.isOnFarm);
       else if (it.kind === 'shop') openShopModal('food');
       else if (it.kind === 'boutique') openBoutiqueModal();
+      else if (it.kind === 'flower_shop') openFlowerShopModal();
+      else if (it.kind === 'decor_shop') openDecorShopModal();
+      else if (it.kind === 'wild_flower') pluckWildFlower(it.wfId, it.wfKind);
       else if (it.kind === 'door') travelToZone(it.target, it.spawn);
       else if (it.kind === 'mirror') openMirrorModal();
       else if (it.kind === 'tv') openTVModal();
+      else if (it.kind === 'design_chest') openDesignChestModal();
       else if (it.kind === 'plot') openPlotModal(it.plotIdx);
       else if (it.kind === 'town_board') {
         const idx = (G.state.townBoardIdx || 0) % TOWN_BOARD_POOL.length;
@@ -3401,6 +4811,8 @@
 
       if (!startOpen && G.state) {
         G.state.playSeconds += dt;
+        maybeSpawnWildFlower();
+        maybeTriggerTimedEvent();
         G.state.farmPlots.forEach((pl, i) => {
           if (pl.seedId && pl.watered && !pl.ready && (Date.now() - pl.plantedAt) / 1000 >= ITEMS[pl.seedId].growSec) {
             pl.ready = true; if (G.state.currentZoneId === 'farm') updatePlotVisual(i);
@@ -3412,6 +4824,7 @@
       G.clouds.forEach((cl, i) => { cl.position.x += Math.sin(t * 0.1 + i) * 0.008; });
       G.waterTexList.forEach(wt => { wt.offset.x += dt * 0.09; wt.offset.y += dt * 0.05; });
       if (G.sparkles) G.sparkles.rotation.y += dt * 0.12;
+      (G.decorMeshes || []).forEach(d => { if (d.mesh.userData.windmillHub) d.mesh.userData.windmillHub.rotation.z -= dt * 1.4; });
 
       Object.values(G.animalMeshes).forEach((m, idx) => {
         const u = m.userData; if (!u || !u.bodyGroup) return;
@@ -3451,7 +4864,19 @@
         return false;
       };
 
-      if (!startOpen && !G.modalOpen && !G.cutscene) {
+      if (G.designMode) {
+        const sp = 14 * dt;
+        let moved = false;
+        if (G.keys.KeyW || G.keys.ArrowUp) { G.designCursorZ -= sp; moved = true; }
+        if (G.keys.KeyS || G.keys.ArrowDown) { G.designCursorZ += sp; moved = true; }
+        if (G.keys.KeyA || G.keys.ArrowLeft) { G.designCursorX -= sp; moved = true; }
+        if (G.keys.KeyD || G.keys.ArrowRight) { G.designCursorX += sp; moved = true; }
+        if (moved) {
+          G.designCursorX = Math.max(-23, Math.min(23, G.designCursorX));
+          G.designCursorZ = Math.max(-23, Math.min(23, G.designCursorZ));
+          updateDesignGhost();
+        }
+      } else if (!startOpen && !G.modalOpen && !G.cutscene) {
         let mx = 0, mz = 0;
         if (G.keys.KeyW || G.keys.ArrowUp) mz -= 1; if (G.keys.KeyS || G.keys.ArrowDown) mz += 1;
         if (G.keys.KeyA || G.keys.ArrowLeft) mx -= 1; if (G.keys.KeyD || G.keys.ArrowRight) mx += 1;
@@ -3557,6 +4982,9 @@
         G.camera.position.lerp(new THREE.Vector3(fm.position.x + Math.sin(ang) * 4.4, 2.2, fm.position.z - Math.cos(ang) * 4.4), 0.18);
         G.camera.lookAt(fm.position.x, 1.1, fm.position.z);
         if (c.timer <= 0) endCutscene();
+      } else if (G.designMode) {
+        G.camera.position.lerp(new THREE.Vector3(0, 32, 26), 0.14);
+        G.camera.lookAt(0, 0, 0);
       } else if (G.mirrorPreview) {
         G.playerMesh.rotation.y = Math.sin(t * 1.1) * 0.55 + Math.PI;
         G.camera.position.lerp(new THREE.Vector3(G.playerMesh.position.x + 1.1, G.playerMesh.position.y + 1.6, G.playerMesh.position.z + 3.2), 0.16);
@@ -3590,7 +5018,7 @@
       });
       G.nearest = best;
       const pill = document.getElementById('interact-pill');
-      if (best && !G.modalOpen && !startOpen && !G.cutscene) { pill.textContent = `[E] ${best.prompt}`; pill.classList.remove('hidden'); }
+      if (best && !G.modalOpen && !startOpen && !G.cutscene && !G.designMode) { pill.textContent = `[E] ${best.prompt}`; pill.classList.remove('hidden'); }
       else pill.classList.add('hidden');
 
       drawMinimap();
@@ -3599,6 +5027,10 @@
 
     function startPlay(state) {
       if (!state.outfitStyle) state.outfitStyle = 'tunic';
+      if (!state.placedDecor) state.placedDecor = [];
+      if (!state.ownedHouseColors) state.ownedHouseColors = ['strawberry'];
+      if (!state.houseColor) state.houseColor = 'strawberry';
+      if (!state.wildFlowers) state.wildFlowers = [];
       if (!state.ownedOutfits) state.ownedOutfits = ['tunic'];
       if (state.activeVehicle === undefined) state.activeVehicle = null;
       if (state.volume === undefined) state.volume = 0.80;
@@ -3664,6 +5096,10 @@
       document.getElementById('btn-bag').addEventListener('click', openBagModal);
       document.getElementById('btn-friends').addEventListener('click', () => openFriendsBookModal('all'));
       document.getElementById('btn-cert').addEventListener('click', openCertificateModal);
+      document.getElementById('btn-events').addEventListener('click', openEventsHubModal);
+      document.getElementById('btn-design-rot').addEventListener('click', () => { G.designRotY = (G.designRotY + Math.PI / 4) % (Math.PI * 2); AudioSys.sfx('pop'); updateDesignGhost(); });
+      document.getElementById('btn-design-place').addEventListener('click', placeSelectedDecor);
+      document.getElementById('btn-design-exit').addEventListener('click', exitFarmDesignMode);
       document.getElementById('interact-pill').addEventListener('click', interactNearest);
       document.getElementById('cutscene-overlay').addEventListener('click', endCutscene);
       document.getElementById('btn-zh-toggle').addEventListener('click', () => { G.state.zhHints = !G.state.zhHints; saveGame(); updateHUD(); buildZone(G.state.currentZoneId); });
@@ -3681,6 +5117,12 @@
         AudioSys.init(); G.keys[e.code] = true;
         if (G.cutscene && (e.code === 'Space' || e.code === 'Escape' || e.code === 'Enter')) { endCutscene(); return; }
         if (!document.getElementById('start-screen').classList.contains('hidden')) return;
+        if (G.designMode) {
+          if (e.code === 'KeyR') { G.designRotY = (G.designRotY + Math.PI / 4) % (Math.PI * 2); AudioSys.sfx('pop'); updateDesignGhost(); }
+          else if (e.code === 'Enter') placeSelectedDecor();
+          else if (e.code === 'Escape') exitFarmDesignMode();
+          return;
+        }
         if (e.code === 'KeyE') interactNearest();
         else if (e.code === 'Digit1' && !G.modalOpen) toggleVehicle('bike');
         else if (e.code === 'Digit2' && !G.modalOpen) toggleVehicle('surf');
@@ -3692,8 +5134,24 @@
       window.addEventListener('keyup', e => { G.keys[e.code] = false; });
 
       const canvas = document.getElementById('game-canvas');
-      canvas.addEventListener('mousedown', e => { if (G.modalOpen || G.cutscene) return; G.isDragging = true; G.lastX = e.clientX; G.lastY = e.clientY; });
+      const raycastDesignGround = (clientX, clientY) => {
+        G.mouseNDC.x = (clientX / window.innerWidth) * 2 - 1;
+        G.mouseNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+        G.raycaster.setFromCamera(G.mouseNDC, G.camera);
+        const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const hit = new THREE.Vector3();
+        if (G.raycaster.ray.intersectPlane(plane, hit)) {
+          G.designCursorX = Math.max(-23, Math.min(23, Math.round(hit.x)));
+          G.designCursorZ = Math.max(-23, Math.min(23, Math.round(hit.z)));
+          updateDesignGhost();
+        }
+      };
+      canvas.addEventListener('mousedown', e => {
+        if (G.designMode) { raycastDesignGround(e.clientX, e.clientY); if (G.designSelectedId) placeSelectedDecor(); return; }
+        if (G.modalOpen || G.cutscene) return; G.isDragging = true; G.lastX = e.clientX; G.lastY = e.clientY;
+      });
       window.addEventListener('mousemove', e => {
+        if (G.designMode && G.designSelectedId) { raycastDesignGround(e.clientX, e.clientY); return; }
         if (!G.isDragging) return;
         G.camYaw -= (e.clientX - G.lastX) * 0.007; G.camPitch = Math.max(0.18, Math.min(1.0, G.camPitch + (e.clientY - G.lastY) * 0.005));
         G.lastX = e.clientX; G.lastY = e.clientY;
