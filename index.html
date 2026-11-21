@@ -9,8 +9,8 @@
   <!-- Primary Search Engine Optimization (SEO) -->
   <title>TLCP@Games | Free CEFR Language Learning Browser Games</title>
   <meta name="title" content="TLCP@Games | Free CEFR Language Learning Browser Games">
-  <meta name="description" content="Free, open-source educational browser games mapped to CEFR proficiency levels (Pre-A1, A1-B1, B2+). Master English and Mandarin Chinese vocabulary, grammar, and pronunciation through interactive play.">
-  <meta name="keywords" content="TLCP, TLCP Games, CEFR games, language learning games, learn Mandarin online, ESL browser games, free educational games, English language acquisition, Chinese pinyin game, open source educational games, Pre-A1, A1, B1, B2">
+  <meta name="description" content="Free, open-source educational browser games mapped to CEFR proficiency levels (Pre-A1, A1-B1, B2+). Master English, Mandarin Chinese, and Japanese vocabulary, grammar, and pronunciation through interactive play.">
+  <meta name="keywords" content="TLCP, TLCP Games, CEFR games, language learning games, learn Mandarin online, learn Japanese online, ESL browser games, free educational games, English language acquisition, Chinese pinyin game, Japanese learning game, open source educational games, Pre-A1, A1, B1, B2">
   <meta name="robots" content="index, follow">
   <meta name="author" content="TLCP Project">
   <link rel="canonical" href="https://github.com/Jayb-cyber/tlcp-games">
@@ -22,13 +22,13 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://github.com/Jayb-cyber/tlcp-games">
   <meta property="og:title" content="TLCP@Games | Free CEFR Educational Video Games">
-  <meta property="og:description" content="Play free browser games engineered for English and Mandarin language acquisition, calibrated across CEFR benchmarks.">
+  <meta property="og:description" content="Play free browser games engineered for English, Mandarin, and Japanese language acquisition, calibrated across CEFR benchmarks.">
   <meta property="og:image" content="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/preview-card.png">
 
   <!-- Twitter / X Cards -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="TLCP@Games | Free CEFR Language Learning Games">
-  <meta name="twitter:description" content="Free browser games designed for English and Mandarin learners across CEFR Pre-A1 to B2+.">
+  <meta name="twitter:description" content="Free browser games designed for English, Mandarin, and Japanese learners across CEFR Pre-A1 to B2+.">
   <meta name="twitter:image" content="https://YOUR_GITHUB_USERNAME.github.io/tlcp-games/preview-card.png">
 
   <!-- Google Structured Data (Schema.org) for Rich Results -->
@@ -39,10 +39,10 @@
     "name": "TLCP@Games",
     "applicationCategory": "EducationalGame",
     "operatingSystem": "Any modern web browser",
-    "inLanguage": ["en", "zh-Hant", "zh-Hans"],
+    "inLanguage": ["en", "zh-Hant", "zh-Hans", "ja"],
     "isAccessibleForFree": true,
     "educationalLevel": ["CEFR Pre-A1", "CEFR A1", "CEFR A2", "CEFR B1", "CEFR B2"],
-    "description": "Open-source browser games structured for English and Mandarin language education across CEFR levels.",
+    "description": "Open-source browser games structured for English, Mandarin, and Japanese language education across CEFR levels.",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -51,10 +51,10 @@
   }
   </script>
 
-  <!-- Google Fonts: Plus Jakarta Sans & Noto Sans TC -->
+  <!-- Google Fonts: Plus Jakarta Sans, Noto Sans TC & Noto Sans JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -67,7 +67,7 @@
       --text-muted: #64748B;
       --accent: #2563EB;
       --accent-soft: rgba(37, 99, 235, 0.08);
-      --font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+      --font-family: 'Plus Jakarta Sans', 'Noto Sans TC', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -577,7 +577,7 @@
     .modal-dialog {
       position: relative;
       width: 100%;
-      max-width: 540px;
+      max-width: 580px;
       background: rgba(255, 255, 255, 0.96);
       border: 1px solid rgba(255, 255, 255, 0.95);
       border-radius: 30px;
@@ -689,6 +689,10 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
+    }
+
+    .lang-options.three-col {
+      grid-template-columns: repeat(3, 1fr);
     }
 
     .lang-choice {
@@ -826,7 +830,8 @@
       .modal-dialog {
         padding: 26px 20px 22px;
       }
-      .lang-options {
+      .lang-options,
+      .lang-options.three-col {
         grid-template-columns: 1fr;
       }
     }
@@ -853,7 +858,7 @@
     <section class="hero">
       <div class="hero-eyebrow" id="hero-eyebrow">Interactive CEFR Framework</div>
       <h1 id="hero-title">Language Learning, Leveled.</h1>
-      <p id="hero-subtitle">Free, browser-based games aligned with CEFR benchmarks. Designed for intuitive English and Mandarin acquisition.</p>
+      <p id="hero-subtitle">Free, browser-based games aligned with CEFR benchmarks. Designed for intuitive English, Mandarin, and Japanese acquisition.</p>
 
       <div class="filter-wrapper">
         <div class="segmented-control" role="tablist" id="level-tabs">
@@ -875,7 +880,7 @@
       <button type="button" class="modal-close" id="modal-close-btn" aria-label="Close">×</button>
 
       <div class="modal-header">
-        <div class="modal-pill">⚡ TLCP@Games · Bilingual Setup / 語言設定</div>
+        <div class="modal-pill">⚡ TLCP@Games · Language Setup / 語言設定</div>
         <h2 id="modal-heading">
           Choose Your Languages
           <span class="zh-sub">選擇您的學習語言組合</span>
@@ -907,7 +912,7 @@
           <span>2. I want to learn…</span>
           <span class="step-zh">2. 我想學習…</span>
         </div>
-        <div class="lang-options" id="target-options">
+        <div class="lang-options three-col" id="target-options">
           <button type="button" class="lang-choice" data-target="en" aria-pressed="false">
             <span class="choice-primary">English</span>
             <span class="choice-secondary">英文</span>
@@ -915,6 +920,10 @@
           <button type="button" class="lang-choice" data-target="zh" aria-pressed="false">
             <span class="choice-primary">中文（華語）</span>
             <span class="choice-secondary">Mandarin Chinese</span>
+          </button>
+          <button type="button" class="lang-choice" data-target="ja" aria-pressed="false">
+            <span class="choice-primary">日本語</span>
+            <span class="choice-secondary">Japanese / 日文</span>
           </button>
         </div>
       </div>
@@ -939,6 +948,7 @@
     // -------------------------------------------------------------------------
     // Each key matches a `<native>-to-<target>` language track:
     //   - 'zh-to-en': Mandarin speakers learning English (existing games)
+    //   - 'zh-to-ja': Mandarin speakers learning Japanese (add Japanese games here!)
     //   - 'en-to-zh': English speakers learning Mandarin (add flipped games here!)
     //
     // Required fields per game object:
@@ -1028,7 +1038,38 @@
           title: 'Mandarin Memory',
           desc: 'Auditory recognition game mapping basic phonics and Mandarin Pinyin initials to visual cues.',
           url: './games/Mandarin Memory/index.html'
+        }
+        {
+          level: 'a1-b1',
+          cefrLabel: 'A1–B1',
+          langLabel: 'English → Mandarin',
+          title: 'Mandarin Quest',
+          desc: 'RPG style game with mini-games to learn Mandarin.',
+          url: './games/Mandarin Quest/index.html'
+        }
+      ],
+
+      // Track 3: Native Mandarin -> Learning Japanese
+      // Uncomment and update entries below as you upload your Japanese learning games to GitHub!
+      'zh-to-ja': [
+        /*
+        {
+          level: 'pre-a1',
+          cefrLabel: 'Pre-A1',
+          langLabel: 'Mandarin → Japanese',
+          title: 'Japanese Memory',
+          desc: '透過聽覺與視覺配對練習日語五十音與基礎詞彙。',
+          url: './games/Japanese Memory/index.html'
         },
+        {
+          level: 'a1-b1',
+          cefrLabel: 'A1–B1',
+          langLabel: 'Mandarin → Japanese',
+          title: 'OG Japanese',
+          desc: '快節奏橫向捲軸動作遊戲，整合聽說讀寫四項日語技能訓練。',
+          url: './games/OG Japanese/index.html'
+        }
+        */
       ]
     };
 
@@ -1063,16 +1104,41 @@
         emptyFilterDesc: 'Try switching back to All Levels or choosing another language track.',
         switchBtn: 'Switch Languages / 切換語言',
         showAllBtn: 'Show All Levels'
+      },
+      'zh-to-ja': {
+        trackBadge: '中文 → 日本語',
+        eyebrow: 'CEFR 互動日語遊戲 · Interactive CEFR Japanese',
+        title: '玩遊戲，輕鬆學日語。',
+        subtitle: '專為華語母語者打造的免費 CEFR 日語學習網頁遊戲，涵蓋 Pre-A1 至 B2+。',
+        allTab: 'All Levels / 全部',
+        playBtn: 'Play Game / 開始遊戲',
+        emptyTrackTitle: '日語學習遊戲即將推出',
+        emptyTrackDesc: '我們正在為華語母語者製作全新的日語學習遊戲，敬請期待！您也可以先切換至其他語言組合遊玩。',
+        emptyFilterTitle: '此 CEFR 等級目前沒有遊戲',
+        emptyFilterDesc: '請切換至「All Levels」瀏覽目前所有可用的遊戲。',
+        switchBtn: 'Switch Languages / 切換語言',
+        showAllBtn: 'Show All Levels / 顯示全部'
       }
     };
 
     // =========================================================================
     // APPLICATION STATE & DOM REFERENCES
     // =========================================================================
+    const SUPPORTED_TARGETS = {
+      zh: ['en', 'ja'],
+      en: ['zh']
+    };
+
+    const CONFIRM_LABELS = {
+      'zh-to-en': '開始探索英語遊戲 · Start English Games →',
+      'zh-to-ja': '開始探索日語遊戲 · Start Japanese Games →',
+      'en-to-zh': 'Explore Mandarin Games · 探索華語遊戲 →'
+    };
+
     const state = {
       nativeLang: null,   // 'zh' | 'en'
-      targetLang: null,   // 'en' | 'zh'
-      activeTrack: null,  // 'zh-to-en' | 'en-to-zh'
+      targetLang: null,   // 'en' | 'zh' | 'ja'
+      activeTrack: null,  // 'zh-to-en' | 'zh-to-ja' | 'en-to-zh'
       activeLevel: 'all'
     };
 
@@ -1097,27 +1163,26 @@
         btn.setAttribute('aria-pressed', String(isSelected));
       });
 
+      const allowedTargets = state.nativeLang ? (SUPPORTED_TARGETS[state.nativeLang] || []) : null;
+
       targetBtns.forEach(btn => {
         const lang = btn.dataset.target;
-        const isSameAsNative = state.nativeLang !== null && lang === state.nativeLang;
-        const isSelected = lang === state.targetLang && !isSameAsNative;
-        btn.disabled = isSameAsNative;
+        const isAllowed = allowedTargets === null || allowedTargets.includes(lang);
+        const isSelected = lang === state.targetLang && isAllowed;
+        btn.disabled = !isAllowed;
         btn.classList.toggle('selected', isSelected);
         btn.setAttribute('aria-pressed', String(isSelected));
       });
 
-      const isValidPair =
-        Boolean(state.nativeLang) &&
-        Boolean(state.targetLang) &&
-        state.nativeLang !== state.targetLang;
+      const trackKey = state.nativeLang && state.targetLang
+        ? `${state.nativeLang}-to-${state.targetLang}`
+        : null;
+      const isValidPair = Boolean(trackKey && TRACK_UI[trackKey]);
 
       confirmLangBtn.disabled = !isValidPair;
 
       if (isValidPair) {
-        confirmLangBtn.textContent =
-          state.nativeLang === 'zh'
-            ? '開始探索英語遊戲 · Start English Games →'
-            : 'Explore Mandarin Games · 探索華語遊戲 →';
+        confirmLangBtn.textContent = CONFIRM_LABELS[trackKey] || 'Start Learning / 開始學習 →';
       } else {
         confirmLangBtn.textContent = 'Start Learning / 開始學習 →';
       }
@@ -1240,8 +1305,10 @@
       btn.addEventListener('click', () => {
         const chosenNative = btn.dataset.native;
         state.nativeLang = chosenNative;
-        // Automatically select the complementary target language so the user can confirm in one tap
-        state.targetLang = chosenNative === 'en' ? 'zh' : 'en';
+        const allowed = SUPPORTED_TARGETS[chosenNative] || [];
+        if (!allowed.includes(state.targetLang)) {
+          state.targetLang = allowed[0] || null;
+        }
         syncModalButtons();
       });
     });
@@ -1252,15 +1319,21 @@
         if (btn.disabled) return;
         const chosenTarget = btn.dataset.target;
         state.targetLang = chosenTarget;
-        if (!state.nativeLang || state.nativeLang === chosenTarget) {
-          state.nativeLang = chosenTarget === 'en' ? 'zh' : 'en';
+        if (
+          !state.nativeLang ||
+          !(SUPPORTED_TARGETS[state.nativeLang] || []).includes(chosenTarget)
+        ) {
+          state.nativeLang = chosenTarget === 'zh' ? 'en' : 'zh';
         }
         syncModalButtons();
       });
     });
 
     confirmLangBtn.addEventListener('click', () => {
-      if (state.nativeLang && state.targetLang && state.nativeLang !== state.targetLang) {
+      const trackKey = state.nativeLang && state.targetLang
+        ? `${state.nativeLang}-to-${state.targetLang}`
+        : null;
+      if (trackKey && TRACK_UI[trackKey]) {
         applyLanguageTrack(state.nativeLang, state.targetLang);
       }
     });
