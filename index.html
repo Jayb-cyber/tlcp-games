@@ -448,6 +448,25 @@
       transform: translateX(3px);
     }
 
+    .game-card.is-placeholder {
+      border-style: dashed;
+      border-color: rgba(148, 163, 184, 0.65);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .play-link.is-soon {
+      background: #E2E8F0;
+      color: #475569;
+      box-shadow: none;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .play-link.is-soon::after {
+      content: "";
+      display: none;
+    }
+
     /* Empty State Card (for Mandarin-learning track or empty CEFR filter) */
     .empty-state {
       grid-column: 1 / -1;
@@ -566,12 +585,14 @@
       -webkit-backdrop-filter: blur(12px);
       opacity: 0;
       visibility: hidden;
+      pointer-events: none;
       transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
     .modal-overlay.is-open {
       opacity: 1;
       visibility: visible;
+      pointer-events: auto;
     }
 
     .modal-dialog {
@@ -771,6 +792,21 @@
       font-size: 14.5px;
     }
 
+    .pair-preview {
+      text-align: center;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #1D4ED8;
+      background: rgba(37, 99, 235, 0.06);
+      border: 1px solid rgba(37, 99, 235, 0.14);
+      border-radius: 980px;
+      padding: 6px 14px;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .modal-hint {
       text-align: center;
       font-size: 12px;
@@ -929,6 +965,7 @@
       </div>
 
       <div class="modal-footer">
+        <div class="pair-preview" id="pair-preview">Select a language pair · 請選擇母語與目標語言</div>
         <button type="button" class="btn-primary modal-confirm-btn" id="confirm-lang-btn" disabled>
           Start Learning / 開始學習 →
         </button>
@@ -1050,8 +1087,17 @@
       ],
 
       // Track 3: Native Mandarin -> Learning Japanese
-      // Uncomment and update entries below as you upload your Japanese learning games to GitHub!
+      // Replace the placeholder below with your Japanese learning games as you upload them to GitHub!
       'zh-to-ja': [
+        {
+          level: 'pre-a1',
+          cefrLabel: 'Pre-A1 – B2+',
+          langLabel: 'Mandarin → Japanese',
+          title: '日語學習遊戲籌備中 · Japanese Games Coming Soon',
+          desc: '專為華語母語者打造的 CEFR 日語學習遊戲（五十音、基礎詞彙與情境冒險）正在開發中，敬請期待！',
+          url: null,
+          comingSoon: true
+        }
         /*
         {
           level: 'pre-a1',
@@ -1146,6 +1192,7 @@
     const modalCloseBtn = document.getElementById('modal-close-btn');
     const openModalBtn = document.getElementById('open-lang-modal-btn');
     const confirmLangBtn = document.getElementById('confirm-lang-btn');
+    const pairPreviewEl = document.getElementById('pair-preview');
     const activeTrackLabel = document.getElementById('active-track-label');
     const nativeBtns = Array.from(document.querySelectorAll('#native-options .lang-choice'));
     const targetBtns = Array.from(document.querySelectorAll('#target-options .lang-choice'));
@@ -1163,13 +1210,12 @@
         btn.setAttribute('aria-pressed', String(isSelected));
       });
 
-      const allowedTargets = state.nativeLang ? (SUPPORTED_TARGETS[state.nativeLang] || []) : null;
-
+      // Keep every target language clickable; selecting an option automatically pairs it
+      // with its compatible native language so visitors never hit a dead/greyed-out button.
       targetBtns.forEach(btn => {
         const lang = btn.dataset.target;
-        const isAllowed = allowedTargets === null || allowedTargets.includes(lang);
-        const isSelected = lang === state.targetLang && isAllowed;
-        btn.disabled = !isAllowed;
+        const isSelected = lang === state.targetLang;
+        btn.disabled = false;
         btn.classList.toggle('selected', isSelected);
         btn.setAttribute('aria-pressed', String(isSelected));
       });
@@ -1183,8 +1229,14 @@
 
       if (isValidPair) {
         confirmLangBtn.textContent = CONFIRM_LABELS[trackKey] || 'Start Learning / 開始學習 →';
+        if (pairPreviewEl) {
+          pairPreviewEl.textContent = `Selected / 目前選擇：${TRACK_UI[trackKey].trackBadge}`;
+        }
       } else {
         confirmLangBtn.textContent = 'Start Learning / 開始學習 →';
+        if (pairPreviewEl) {
+          pairPreviewEl.textContent = 'Select a language pair · 請選擇母語與目標語言';
+        }
       }
     }
 
@@ -1261,8 +1313,13 @@
       }
 
       gridEl.innerHTML = filteredGames
-        .map(game => `
-          <article class="game-card" data-level="${escapeHtml(game.level)}">
+        .map(game => {
+          const isSoon = Boolean(game.comingSoon || !game.url);
+          const actionHtml = isSoon
+            ? `<span class="play-link is-soon" aria-disabled="true">Coming Soon / 即將推出</span>`
+            : `<a href="${escapeHtml(game.url)}" class="play-link">${escapeHtml(copy.playBtn)}</a>`;
+          return `
+          <article class="game-card${isSoon ? ' is-placeholder' : ''}" data-level="${escapeHtml(game.level)}">
             <div>
               <div class="badge-row">
                 <span class="cefr-tag">${escapeHtml(game.cefrLabel)}</span>
@@ -1271,9 +1328,10 @@
               <h2 class="game-title">${escapeHtml(game.title)}</h2>
               <p class="game-desc">${escapeHtml(game.desc)}</p>
             </div>
-            <a href="${escapeHtml(game.url)}" class="play-link">${escapeHtml(copy.playBtn)}</a>
+            ${actionHtml}
           </article>
-        `)
+        `;
+        })
         .join('');
     }
 
@@ -1365,7 +1423,7 @@
     });
 
     // Initial Boot: Render background catalog and prompt user right away
-    (function init() {
+    function init() {
       let savedTrack = null;
       try {
         savedTrack = localStorage.getItem('tlcp_lang_track');
@@ -1385,7 +1443,13 @@
       renderGames();
       // Always prompt visitors to select their native and target language upon entry
       openLanguageModal(false);
-    })();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   </script>
 </body>
 </html>
