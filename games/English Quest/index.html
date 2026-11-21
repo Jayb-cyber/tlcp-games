@@ -1301,20 +1301,23 @@
     // =========================================================================
     const STORAGE_KEY = 'waystone_realm_save_v5';
     const AudioSys = {
-      ctx: null, musicFilter: null, musicBus: null, masterComp: null, muted: false, musicVol: 0.88, sfxVol: 0.85, timer: null, theme: '', step: 0,
+      ctx: null, musicFilter: null, musicBus: null, masterComp: null,
+      muted: false, musicVol: 0.56, sfxVol: 0.85,
+      timer: null, duckTimer: null, speakDelayTimer: null,
+      theme: '', step: 0, cachedVoice: null,
       init() {
         if (!this.ctx) {
           const AC = window.AudioContext || window.webkitAudioContext;
           if (AC) {
             this.ctx = new AC();
             this.masterComp = this.ctx.createDynamicsCompressor();
-            this.masterComp.threshold.value = -10;
+            this.masterComp.threshold.value = -12;
             this.masterComp.knee.value = 18;
-            this.masterComp.ratio.value = 6;
+            this.masterComp.ratio.value = 5;
             this.masterComp.connect(this.ctx.destination);
             this.musicFilter = this.ctx.createBiquadFilter();
             this.musicFilter.type = 'lowpass';
-            this.musicFilter.frequency.value = 3400;
+            this.musicFilter.frequency.value = 3800;
             this.musicBus = this.ctx.createGain();
             this.musicBus.gain.value = this.muted ? 0 : this.musicVol;
             this.musicFilter.connect(this.musicBus);
@@ -1322,24 +1325,69 @@
           }
         }
         if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-        if (this.musicBus) this.musicBus.gain.value = this.muted ? 0 : this.musicVol;
+        if (this.musicBus && !this.duckTimer) {
+          this.musicBus.gain.setTargetAtTime(this.muted ? 0 : this.musicVol, this.ctx.currentTime, 0.04);
+        }
+        this.loadEnglishVoice();
+      },
+      loadEnglishVoice() {
+        if (!window.speechSynthesis || !window.speechSynthesis.getVoices) return;
+        const voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length > 0) {
+          this.cachedVoice = voices.find(v =>
+            v.lang.toLowerCase().startsWith('en') &&
+            (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Karen'))
+          ) || voices.find(v => v.lang.toLowerCase().startsWith('en-us'))
+            || voices.find(v => v.lang.toLowerCase().startsWith('en'))
+            || null;
+        }
       },
       setMuted(flag) {
         this.muted = flag;
-        if (this.musicBus) this.musicBus.gain.value = flag ? 0 : this.musicVol;
+        if (this.musicBus && this.ctx) {
+          this.musicBus.gain.cancelScheduledValues(this.ctx.currentTime);
+          this.musicBus.gain.setTargetAtTime(flag ? 0 : this.musicVol, this.ctx.currentTime, 0.03);
+        }
         if (flag && window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch {} }
       },
-      speak(text) {
+      duckMusic(isDucked) {
+        if (!this.ctx || !this.musicBus || this.muted) return;
+        if (this.duckTimer) { clearTimeout(this.duckTimer); this.duckTimer = null; }
+        const now = this.ctx.currentTime;
+        const target = isDucked ? 0.05 : this.musicVol;
+        this.musicBus.gain.cancelScheduledValues(now);
+        this.musicBus.gain.setTargetAtTime(target, now, isDucked ? 0.03 : 0.14);
+        if (isDucked) {
+          this.duckTimer = setTimeout(() => {
+            this.duckTimer = null;
+            this.duckMusic(false);
+          }, 3600);
+        }
+      },
+      speak(text, delayMs = 60) {
         if (this.muted || !text || !window.speechSynthesis) return;
-        try {
-          window.speechSynthesis.cancel();
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = 'en-US';
-          u.rate = 0.90;
-          u.pitch = 1.02;
-          u.volume = 1.0;
-          window.speechSynthesis.speak(u);
-        } catch {}
+        this.init();
+        this.duckMusic(true);
+        if (this.speakDelayTimer) { clearTimeout(this.speakDelayTimer); this.speakDelayTimer = null; }
+        try { window.speechSynthesis.cancel(); } catch {}
+        this.speakDelayTimer = setTimeout(() => {
+          this.speakDelayTimer = null;
+          if (this.muted) return;
+          try {
+            const u = new SpeechSynthesisUtterance(String(text));
+            u.lang = 'en-US';
+            u.rate = 0.88;
+            u.pitch = 1.02;
+            u.volume = 1.0;
+            if (!this.cachedVoice) this.loadEnglishVoice();
+            if (this.cachedVoice) u.voice = this.cachedVoice;
+            u.onend = () => this.duckMusic(false);
+            u.onerror = () => this.duckMusic(false);
+            window.speechSynthesis.speak(u);
+          } catch {
+            this.duckMusic(false);
+          }
+        }, delayMs);
       },
       tone(freq, dur, type, vol, toMusicBus = false) {
         if (this.muted || !this.ctx || this.ctx.state !== 'running' || !freq) return;
@@ -1350,28 +1398,61 @@
           o.type = type;
           o.frequency.setValueAtTime(freq, now);
           g.gain.setValueAtTime(0.0001, now);
-          g.gain.linearRampToValueAtTime(vol, now + 0.015);
-          g.gain.setValueAtTime(vol * 0.82, now + Math.min(dur * 0.45, 0.14));
+          g.gain.linearRampToValueAtTime(vol, now + 0.014);
+          g.gain.setValueAtTime(vol * 0.8, now + Math.min(dur * 0.45, 0.14));
           g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
           o.connect(g);
           g.connect(toMusicBus && this.musicFilter ? this.musicFilter : (this.masterComp || this.ctx.destination));
           o.start(now); o.stop(now + dur + 0.02);
         } catch {}
       },
+      perc(kind, vol) {
+        if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+        try {
+          const now = this.ctx.currentTime;
+          const o = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          if (kind === 'kick') {
+            o.type = 'sine';
+            o.frequency.setValueAtTime(135, now);
+            o.frequency.exponentialRampToValueAtTime(42, now + 0.11);
+            g.gain.setValueAtTime(vol, now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+            o.connect(g); g.connect(this.musicBus || this.masterComp);
+            o.start(now); o.stop(now + 0.14);
+          } else if (kind === 'wood') {
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(840, now);
+            o.frequency.exponentialRampToValueAtTime(420, now + 0.045);
+            g.gain.setValueAtTime(vol * 0.7, now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+            o.connect(g); g.connect(this.musicBus || this.masterComp);
+            o.start(now); o.stop(now + 0.06);
+          } else if (kind === 'anvil') {
+            o.type = 'square';
+            o.frequency.setValueAtTime(1240, now);
+            o.frequency.exponentialRampToValueAtTime(620, now + 0.08);
+            g.gain.setValueAtTime(vol * 0.45, now);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+            o.connect(g); g.connect(this.musicFilter || this.musicBus);
+            o.start(now); o.stop(now + 0.1);
+          }
+        } catch {}
+      },
       sfx(k) {
         this.init();
-        const v = this.sfxVol * 0.58;
+        const v = this.sfxVol * 0.56;
         if (k === 'swing') { this.tone(240, 0.07, 'sine', v); setTimeout(() => this.tone(170, 0.08, 'triangle', v), 35); }
         else if (k === 'heavy') { this.tone(145, 0.2, 'sawtooth', v); setTimeout(() => this.tone(92, 0.24, 'triangle', v), 60); }
         else if (k === 'hit') this.tone(125, 0.12, 'sawtooth', v);
         else if (k === 'block') { this.tone(520, 0.1, 'triangle', v); setTimeout(() => this.tone(680, 0.14, 'sine', v), 45); }
         else if (k === 'heal') { this.tone(523, 0.15, 'sine', v); setTimeout(() => this.tone(659, 0.2, 'sine', v), 90); }
-        else if (k === 'pickup') this.tone(587, 0.12, 'triangle', v);
-        else if (k === 'correct') { this.tone(523, 0.11, 'triangle', v); setTimeout(() => this.tone(659, 0.13, 'triangle', v), 90); setTimeout(() => this.tone(784, 0.22, 'triangle', v), 180); }
+        else if (k === 'pickup') this.tone(587, 0.10, 'triangle', v * 0.75);
+        else if (k === 'correct') { this.tone(523, 0.09, 'triangle', v * 0.75); setTimeout(() => this.tone(659, 0.10, 'triangle', v * 0.75), 75); setTimeout(() => this.tone(784, 0.16, 'triangle', v * 0.75), 145); }
         else if (k === 'wrong') { this.tone(210, 0.16, 'sawtooth', v); setTimeout(() => this.tone(175, 0.2, 'sawtooth', v), 110); }
         else if (k === 'portal') { this.tone(330, 0.2, 'sine', v); setTimeout(() => this.tone(495, 0.25, 'sine', v), 110); }
         else if (k === 'victory') {
-          [523.3, 659.3, 784.0, 1046.5].forEach((n, i) => setTimeout(() => this.tone(n, 0.35, 'triangle', v * 1.15), i * 115));
+          [523.3, 659.3, 784.0, 1046.5].forEach((n, i) => setTimeout(() => this.tone(n, 0.35, 'triangle', v * 1.1), i * 115));
         }
       },
       playTheme(theme) {
@@ -1379,61 +1460,89 @@
         this.theme = theme;
         this.step = 0;
         if (this.timer) clearInterval(this.timer);
-        // 8 Original Multi-Voice Compositions (Melody + Bass + Warm Chord Harmony)
+        // 8 Distinctive Multi-Voice Compositions (Melody + Counter-Arpeggio + Bass + Regional Percussion)
         const SONGS = {
-          // Hearthmere: Chill, happy, pastoral C-major folk town melody
+          // Hearthmere: Cozy pastoral 3/4 folk flute & plucked lute waltz in C major
           village: {
-            ms: 290, leadType: 'triangle', bassType: 'sine', leadVol: 0.48, bassVol: 0.36,
-            mel: [523.3, 0, 659.3, 587.3, 523.3, 0, 392.0, 440.0, 523.3, 587.3, 659.3, 784.0, 659.3, 0, 587.3, 0,
-                  523.3, 0, 440.0, 523.3, 587.3, 0, 659.3, 523.3, 440.0, 392.0, 440.0, 523.3, 523.3, 0, 0, 0],
-            bass: [130.8, 0, 196.0, 0, 174.6, 0, 196.0, 0, 130.8, 0, 196.0, 0, 146.8, 0, 196.0, 0,
-                   174.6, 0, 130.8, 0, 146.8, 0, 196.0, 0, 174.6, 0, 196.0, 0, 130.8, 0, 196.0, 0]
+            ms: 265, leadType: 'sine', arpType: 'triangle', bassType: 'sine',
+            leadVol: 0.38, arpVol: 0.20, bassVol: 0.30, percKind: 'wood', percEvery: 6,
+            mel: [523.3, 0, 659.3, 784.0, 659.3, 587.3, 523.3, 0, 440.0, 523.3, 587.3, 0,
+                  659.3, 784.0, 880.0, 784.0, 659.3, 587.3, 523.3, 587.3, 659.3, 0, 523.3, 0],
+            arp: [0, 329.6, 392.0, 0, 392.0, 440.0, 0, 261.6, 329.6, 0, 293.7, 392.0,
+                  0, 329.6, 440.0, 0, 392.0, 493.9, 0, 293.7, 392.0, 0, 261.6, 329.6],
+            bass: [130.8, 0, 0, 196.0, 0, 0, 174.6, 0, 0, 196.0, 0, 0,
+                   130.8, 0, 0, 164.8, 0, 0, 146.8, 0, 0, 196.0, 0, 0]
           },
-          // Sunmeadow / Broken Road: Bright, breezy G-major adventure stride
+          // Sunmeadow / Broken Road: Upbeat G-major adventure stride with crisp acoustic bounce
           meadow: {
-            ms: 250, leadType: 'triangle', bassType: 'sine', leadVol: 0.46, bassVol: 0.34,
-            mel: [392.0, 493.9, 587.3, 0, 659.3, 587.3, 493.9, 440.0, 392.0, 440.0, 493.9, 587.3, 659.3, 0, 587.3, 0,
-                  784.0, 0, 659.3, 587.3, 493.9, 587.3, 659.3, 0, 587.3, 493.9, 440.0, 493.9, 392.0, 0, 0, 0],
-            bass: [196.0, 0, 146.8, 0, 164.8, 0, 196.0, 0, 130.8, 0, 146.8, 0, 196.0, 0, 146.8, 0,
-                   130.8, 0, 196.0, 0, 164.8, 0, 146.8, 0, 130.8, 0, 146.8, 0, 196.0, 0, 146.8, 0]
+            ms: 215, leadType: 'triangle', arpType: 'sine', bassType: 'triangle',
+            leadVol: 0.40, arpVol: 0.22, bassVol: 0.30, percKind: 'kick', percEvery: 4,
+            mel: [392.0, 493.9, 587.3, 0, 784.0, 659.3, 587.3, 493.9, 523.3, 587.3, 659.3, 0, 587.3, 493.9, 440.0, 0,
+                  392.0, 493.9, 587.3, 784.0, 880.0, 784.0, 659.3, 587.3, 523.3, 493.9, 440.0, 493.9, 392.0, 0, 0, 0],
+            arp: [293.7, 392.0, 493.9, 392.0, 329.6, 493.9, 587.3, 493.9, 261.6, 329.6, 392.0, 329.6, 293.7, 370.0, 440.0, 370.0,
+                  293.7, 392.0, 493.9, 392.0, 329.6, 392.0, 523.3, 392.0, 293.7, 370.0, 440.0, 370.0, 293.7, 392.0, 493.9, 392.0],
+            bass: [196.0, 0, 146.8, 0, 164.8, 0, 196.0, 0, 130.8, 0, 164.8, 0, 146.8, 0, 185.0, 0,
+                   196.0, 0, 146.8, 0, 130.8, 0, 164.8, 0, 146.8, 0, 185.0, 0, 196.0, 0, 146.8, 0]
           },
-          // Amberwood Forest: Mystical woodland Dorian harp
+          // Amberwood Forest / Mistfen: Mystical D-Dorian woodland harp & chime nocturne
           forest: {
-            ms: 310, leadType: 'sine', bassType: 'triangle', leadVol: 0.46, bassVol: 0.34,
-            mel: [440.0, 0, 523.3, 587.3, 659.3, 0, 587.3, 523.3, 493.9, 0, 440.0, 392.0, 440.0, 0, 0, 0,
-                  523.3, 0, 587.3, 659.3, 784.0, 0, 659.3, 587.3, 523.3, 493.9, 440.0, 0, 440.0, 0, 0, 0],
-            bass: [110.0, 0, 164.8, 0, 146.8, 0, 164.8, 0, 130.8, 0, 146.8, 0, 110.0, 0, 164.8, 0,
-                   130.8, 0, 146.8, 0, 164.8, 0, 146.8, 0, 130.8, 0, 123.5, 0, 110.0, 0, 164.8, 0]
+            ms: 295, leadType: 'sine', arpType: 'sine', bassType: 'triangle',
+            leadVol: 0.38, arpVol: 0.24, bassVol: 0.28, percKind: null, percEvery: 0,
+            mel: [587.3, 0, 659.3, 698.5, 880.0, 0, 784.0, 659.3, 587.3, 523.3, 440.0, 0, 493.9, 523.3, 587.3, 0,
+                  698.5, 0, 784.0, 880.0, 987.8, 0, 880.0, 698.5, 659.3, 587.3, 523.3, 493.9, 440.0, 0, 0, 0],
+            arp: [293.7, 440.0, 523.3, 698.5, 349.2, 440.0, 587.3, 784.0, 261.6, 392.0, 523.3, 659.3, 293.7, 440.0, 587.3, 659.3,
+                  349.2, 523.3, 698.5, 880.0, 329.6, 493.9, 659.3, 784.0, 261.6, 392.0, 523.3, 659.3, 293.7, 440.0, 587.3, 440.0],
+            bass: [146.8, 0, 0, 220.0, 174.6, 0, 0, 220.0, 130.8, 0, 0, 196.0, 146.8, 0, 220.0, 0,
+                   174.6, 0, 0, 261.6, 164.8, 0, 0, 246.9, 130.8, 0, 196.0, 0, 146.8, 0, 220.0, 0]
           },
-          // Copperdeep Mines: Echoing subterranean D-minor cavern pulse
+          // Copperdeep Mine: Cavernous D-minor underground groove with metallic anvil pings
           mine: {
-            ms: 280, leadType: 'triangle', bassType: 'sawtooth', leadVol: 0.42, bassVol: 0.30,
-            mel: [293.7, 0, 349.2, 0, 440.0, 392.0, 349.2, 0, 261.6, 0, 293.7, 0, 329.6, 0, 293.7, 0],
-            bass: [146.8, 146.8, 0, 110.0, 146.8, 0, 130.8, 0, 116.5, 0, 130.8, 0, 110.0, 0, 146.8, 0]
+            ms: 240, leadType: 'triangle', arpType: 'square', bassType: 'sawtooth',
+            leadVol: 0.36, arpVol: 0.14, bassVol: 0.28, percKind: 'anvil', percEvery: 8,
+            mel: [293.7, 0, 349.2, 329.6, 293.7, 0, 440.0, 415.3, 392.0, 0, 349.2, 329.6, 293.7, 261.6, 293.7, 0,
+                  587.3, 0, 523.3, 466.2, 440.0, 0, 349.2, 392.0, 440.0, 0, 415.3, 349.2, 329.6, 0, 293.7, 0],
+            arp: [0, 587.3, 0, 0, 0, 698.5, 0, 0, 0, 523.3, 0, 0, 0, 440.0, 0, 0,
+                  0, 587.3, 0, 698.5, 0, 880.0, 0, 0, 0, 659.3, 0, 0, 0, 587.3, 0, 0],
+            bass: [146.8, 146.8, 0, 110.0, 146.8, 0, 130.8, 130.8, 116.5, 0, 130.8, 0, 110.0, 110.0, 146.8, 0,
+                   146.8, 146.8, 0, 174.6, 164.8, 0, 130.8, 0, 116.5, 116.5, 0, 130.8, 110.0, 0, 146.8, 0]
           },
-          // Windbreak Highlands: Soaring heroic mountain breeze
+          // Windbreak Highlands: Brisk heroic mountain anthem with soaring brass & wind arpeggios
           highlands: {
-            ms: 235, leadType: 'triangle', bassType: 'sine', leadVol: 0.48, bassVol: 0.36,
-            mel: [659.3, 0, 784.0, 880.0, 784.0, 659.3, 587.3, 0, 659.3, 587.3, 493.9, 587.3, 659.3, 0, 0, 0,
-                  880.0, 0, 784.0, 659.3, 587.3, 659.3, 784.0, 0, 659.3, 587.3, 493.9, 0, 493.9, 0, 0, 0],
-            bass: [164.8, 0, 246.9, 0, 196.0, 0, 146.8, 0, 130.8, 0, 146.8, 0, 164.8, 0, 196.0, 0,
-                   130.8, 0, 196.0, 0, 146.8, 0, 164.8, 0, 130.8, 0, 146.8, 0, 164.8, 0, 123.5, 0]
+            ms: 205, leadType: 'sawtooth', arpType: 'triangle', bassType: 'triangle',
+            leadVol: 0.28, arpVol: 0.24, bassVol: 0.34, percKind: 'kick', percEvery: 4,
+            mel: [659.3, 0, 784.0, 987.8, 880.0, 784.0, 659.3, 587.3, 659.3, 784.0, 880.0, 0, 784.0, 659.3, 587.3, 0,
+                  987.8, 0, 880.0, 784.0, 659.3, 784.0, 880.0, 987.8, 1174.7, 987.8, 880.0, 784.0, 659.3, 0, 0, 0],
+            arp: [329.6, 493.9, 659.3, 493.9, 392.0, 587.3, 784.0, 587.3, 293.7, 440.0, 587.3, 440.0, 329.6, 493.9, 659.3, 493.9,
+                  392.0, 493.9, 784.0, 493.9, 329.6, 493.9, 659.3, 493.9, 293.7, 440.0, 587.3, 440.0, 329.6, 493.9, 659.3, 493.9],
+            bass: [164.8, 164.8, 246.9, 0, 196.0, 196.0, 146.8, 0, 130.8, 130.8, 196.0, 0, 146.8, 146.8, 164.8, 0,
+                   196.0, 196.0, 246.9, 0, 164.8, 164.8, 196.0, 0, 146.8, 146.8, 196.0, 0, 164.8, 0, 123.5, 0]
           },
-          // Tideglass Archive: Crystalline celesta library arpeggios
+          // Tideglass Archive: Crystalline Lydian glass-harp & celesta music-box arpeggios
           archive: {
-            ms: 270, leadType: 'sine', bassType: 'sine', leadVol: 0.46, bassVol: 0.34,
-            mel: [587.3, 659.3, 740.0, 880.0, 740.0, 659.3, 587.3, 0, 493.9, 587.3, 659.3, 740.0, 880.0, 0, 740.0, 0],
-            bass: [146.8, 0, 220.0, 0, 185.0, 0, 220.0, 0, 123.5, 0, 185.0, 0, 146.8, 0, 220.0, 0]
+            ms: 230, leadType: 'sine', arpType: 'sine', bassType: 'sine',
+            leadVol: 0.36, arpVol: 0.26, bassVol: 0.28, percKind: null, percEvery: 0,
+            mel: [740.0, 0, 880.0, 987.8, 1174.7, 0, 987.8, 880.0, 740.0, 659.3, 587.3, 0, 659.3, 740.0, 880.0, 0,
+                  1174.7, 0, 1108.7, 987.8, 880.0, 0, 740.0, 659.3, 740.0, 880.0, 987.8, 880.0, 740.0, 0, 0, 0],
+            arp: [293.7, 440.0, 587.3, 740.0, 370.0, 440.0, 659.3, 880.0, 246.9, 370.0, 493.9, 740.0, 293.7, 440.0, 587.3, 740.0,
+                  329.6, 493.9, 659.3, 987.8, 370.0, 554.4, 740.0, 880.0, 293.7, 440.0, 587.3, 740.0, 293.7, 440.0, 587.3, 440.0],
+            bass: [146.8, 0, 0, 220.0, 185.0, 0, 0, 220.0, 123.5, 0, 0, 185.0, 146.8, 0, 220.0, 0,
+                   164.8, 0, 0, 246.9, 185.0, 0, 0, 277.2, 146.8, 0, 220.0, 0, 146.8, 0, 0, 0]
           },
-          // Hollow Crown Citadel: Grand ominous gothic theme
+          // Hollow Crown Citadel: Grand ominous gothic cathedral organ in D harmonic minor
           citadel: {
-            ms: 255, leadType: 'sawtooth', bassType: 'triangle', leadVol: 0.34, bassVol: 0.38,
-            mel: [293.7, 0, 349.2, 440.0, 415.3, 0, 349.2, 329.6, 293.7, 0, 261.6, 293.7, 329.6, 0, 220.0, 0],
-            bass: [146.8, 0, 146.8, 130.8, 116.5, 0, 116.5, 110.0, 146.8, 0, 130.8, 0, 110.0, 110.0, 146.8, 0]
+            ms: 235, leadType: 'sawtooth', arpType: 'triangle', bassType: 'sawtooth',
+            leadVol: 0.28, arpVol: 0.22, bassVol: 0.28, percKind: 'kick', percEvery: 8,
+            mel: [587.3, 0, 554.4, 587.3, 698.5, 0, 659.3, 587.3, 466.2, 0, 440.0, 466.2, 554.4, 0, 440.0, 0,
+                  587.3, 698.5, 880.0, 0, 830.6, 698.5, 659.3, 587.3, 554.4, 587.3, 659.3, 554.4, 587.3, 0, 0, 0],
+            arp: [293.7, 349.2, 440.0, 587.3, 293.7, 349.2, 440.0, 587.3, 233.1, 293.7, 349.2, 466.2, 220.0, 277.2, 329.6, 440.0,
+                  293.7, 349.2, 440.0, 587.3, 261.6, 329.6, 392.0, 523.3, 220.0, 277.2, 329.6, 440.0, 293.7, 349.2, 440.0, 293.7],
+            bass: [146.8, 0, 146.8, 0, 130.8, 0, 130.8, 0, 116.5, 0, 116.5, 0, 110.0, 0, 110.0, 0,
+                   146.8, 0, 174.6, 0, 130.8, 0, 164.8, 0, 110.0, 0, 138.6, 0, 146.8, 0, 110.0, 0]
           },
-          // Classic RPG Boss Intro Cutscene & Boss Encounter Theme!
+          // Classic RPG Boss Intro Cutscene & Boss Encounter Theme (preserved as-is!)
           boss: {
-            ms: 175, leadType: 'sawtooth', bassType: 'square', leadVol: 0.38, bassVol: 0.30,
+            ms: 175, leadType: 'sawtooth', arpType: null, bassType: 'square',
+            leadVol: 0.38, arpVol: 0, bassVol: 0.30, percKind: null, percEvery: 0,
             mel: [440.0, 0, 440.0, 466.2, 523.3, 0, 466.2, 440.0, 392.0, 0, 440.0, 349.2, 329.6, 0, 440.0, 0,
                   587.3, 0, 587.3, 523.3, 466.2, 0, 440.0, 392.0, 440.0, 523.3, 587.3, 659.3, 587.3, 0, 0, 0],
             bass: [110.0, 110.0, 164.8, 110.0, 116.5, 116.5, 174.6, 116.5, 98.0, 98.0, 146.8, 98.0, 110.0, 110.0, 164.8, 110.0,
@@ -1446,14 +1555,22 @@
           const s = this.step;
           const mNote = song.mel[s % song.mel.length];
           const bNote = song.bass[s % song.bass.length];
+          const aNote = song.arp ? song.arp[s % song.arp.length] : 0;
           if (mNote) this.tone(mNote, song.ms / 1000 * 1.45, song.leadType, song.leadVol, true);
-          if (bNote) this.tone(bNote, song.ms / 1000 * 1.65, song.bassType, song.bassVol, true);
-          // Warm harmonic fifth/pad accent on downbeats
-          if (s % 4 === 0 && bNote) this.tone(bNote * 1.5, song.ms / 1000 * 3.2, 'sine', song.bassVol * 0.55, true);
+          if (aNote && song.arpType) this.tone(aNote, song.ms / 1000 * 0.95, song.arpType, song.arpVol, true);
+          if (bNote) this.tone(bNote, song.ms / 1000 * 1.75, song.bassType, song.bassVol, true);
+          if (song.percKind && song.percEvery > 0 && s % song.percEvery === 0) {
+            this.perc(song.percKind, 0.22);
+          }
+          if (s % 4 === 0 && bNote) this.tone(bNote * 1.5, song.ms / 1000 * 3.0, 'sine', song.bassVol * 0.48, true);
           this.step++;
         }, song.ms);
       }
     };
+
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = () => AudioSys.loadEnglishVoice();
+    }
 
     function createDefaultState(classId) {
       const cls = CLASSES[classId];
@@ -3706,30 +3823,90 @@
         });
         spawnFloatingText(G.playerMesh.position, '🌋 PURE RAGE!', '#f59e0b');
       } else if (cid === 'warrior') {
-        // ENCHANTED BLADE: 3-Pronged Expanding Crescent Wind-Energy Wave (Half-Zone ~44m, 1.0s duration)
+        // ENCHANTED BLADE: Three Fierce Jagged Razor-Energy Waves surging outward!
+        G.camShakeTimer = 0.45;
         AudioSys.sfx('heavy');
         const waveGrp = new THREE.Group();
-        waveGrp.position.set(px, py + 0.3, pz);
+        waveGrp.position.set(px, py + 0.15, pz);
         waveGrp.rotation.y = facingYaw;
         const prongs = [];
-        [-0.36, 0, 0.36].forEach(ang => {
-          const pMat = new THREE.MeshBasicMaterial({ color: ang === 0 ? 0xfef08a : 0x38bdf8, transparent: true, opacity: 0.92, side: THREE.DoubleSide });
-          const beam = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.6, 5.5), pMat);
-          beam.position.set(0, 1.2, -2.5);
+
+        // Custom fierce jagged energy-blade fin silhouette (ExtrudeGeometry)
+        const jagShape = new THREE.Shape();
+        jagShape.moveTo(0, 0);
+        jagShape.lineTo(1.8, 0.15);
+        jagShape.lineTo(3.4, 0.95);
+        jagShape.lineTo(4.3, 2.45);
+        jagShape.lineTo(3.5, 3.65);
+        jagShape.lineTo(2.4, 2.85);
+        jagShape.lineTo(2.7, 3.45);
+        jagShape.lineTo(1.3, 2.25);
+        jagShape.lineTo(1.6, 2.95);
+        jagShape.lineTo(-0.4, 1.75);
+        jagShape.lineTo(0.2, 2.35);
+        jagShape.lineTo(-2.1, 1.05);
+        jagShape.lineTo(-1.1, 0.55);
+        jagShape.lineTo(-3.1, 0.1);
+        jagShape.closePath();
+        const jagGeo = new THREE.ExtrudeGeometry(jagShape, { depth: 0.36, bevelEnabled: false });
+        jagGeo.translate(0, 0, -0.18);
+        jagGeo.rotateY(Math.PI / 2);
+
+        const coreShape = new THREE.Shape();
+        coreShape.moveTo(0.8, 0.08);
+        coreShape.lineTo(2.4, 0.45);
+        coreShape.lineTo(3.85, 1.45);
+        coreShape.lineTo(4.45, 2.5);
+        coreShape.lineTo(3.65, 3.55);
+        coreShape.lineTo(3.2, 2.35);
+        coreShape.lineTo(2.1, 1.25);
+        coreShape.closePath();
+        const coreGeo = new THREE.ExtrudeGeometry(coreShape, { depth: 0.44, bevelEnabled: false });
+        coreGeo.translate(0, 0, -0.22);
+        coreGeo.rotateY(Math.PI / 2);
+
+        [-0.38, 0, 0.38].forEach(ang => {
+          const isCenter = ang === 0;
+          const pMat = new THREE.MeshBasicMaterial({
+            color: isCenter ? 0xf59e0b : 0x0ea5e9,
+            transparent: true, opacity: 0.98, side: THREE.DoubleSide
+          });
+          const coreMat = new THREE.MeshBasicMaterial({
+            color: isCenter ? 0xffffff : 0xe0f2fe,
+            transparent: true, opacity: 1.0, side: THREE.DoubleSide
+          });
+          const trailMat = new THREE.MeshBasicMaterial({
+            color: isCenter ? 0xfde047 : 0x38bdf8,
+            transparent: true, opacity: 0.92, side: THREE.DoubleSide
+          });
+
+          const prongNode = new THREE.Group();
+          const fin = new THREE.Mesh(jagGeo, pMat);
+          const coreEdge = new THREE.Mesh(coreGeo, coreMat);
+          const wake = new THREE.Mesh(new THREE.ConeGeometry(0.85, 5.2, 4), trailMat);
+          wake.rotation.x = -Math.PI / 2;
+          wake.scale.set(1.0, 1.0, 0.25);
+          wake.position.set(0, 0.22, 1.6);
+
+          prongNode.add(fin, coreEdge, wake);
+          prongNode.position.set(0, 0, -2.0);
+          if (isCenter) prongNode.scale.set(1.18, 1.22, 1.15);
+
           const pivot = new THREE.Group();
           pivot.rotation.y = ang;
-          pivot.add(beam);
+          pivot.add(prongNode);
           waveGrp.add(pivot);
-          prongs.push({ pivot, beam, mat: pMat, ang });
+          prongs.push({ pivot, beam: prongNode, mat: pMat, coreMat, trailMat, ang, isCenter });
         });
-        const arcMat = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.65, side: THREE.DoubleSide });
-        const arcWave = new THREE.Mesh(new THREE.RingGeometry(1.6, 3.8, 24, 1, Math.PI * 0.15, Math.PI * 0.7), arcMat);
-        arcWave.rotation.x = -Math.PI / 2; arcWave.position.y = 0.4;
+
+        const arcMat = new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.88, side: THREE.DoubleSide });
+        const arcWave = new THREE.Mesh(new THREE.RingGeometry(1.8, 3.6, 12, 1, Math.PI * 0.12, Math.PI * 0.76), arcMat);
+        arcWave.rotation.x = -Math.PI / 2; arcWave.position.y = 0.25;
         waveGrp.add(arcWave);
         G.zoneGroup.add(waveGrp);
         G.ultEffects.push({
           kind: 'tri_wave', mesh: waveGrp, prongs, arcWave, arcMat,
-          originX: px, originZ: pz, fwd, life: 1.0, maxLife: 1.0, hitSet: new Set()
+          originX: px, originZ: pz, fwd, life: 1.05, maxLife: 1.05, hitSet: new Set()
         });
         spawnFloatingText(G.playerMesh.position, '⚔️ ENCHANTED BLADE!', '#fde047');
       } else if (cid === 'ranger') {
@@ -4075,7 +4252,7 @@
               if (cards[prev].id === cards[idx].id) {
                 cards[prev].matched = true; cards[idx].matched = true;
                 AudioSys.sfx('correct');
-                AudioSys.speak(cards[idx].word);
+                AudioSys.speak(cards[idx].word, 210);
                 draw();
                 if (cards.every(c => c.matched)) setTimeout(() => finishMiniGame(mg), 520);
               } else {
@@ -4188,7 +4365,7 @@
             const partObj = mg.parts.find(x => x.id === partId);
             AudioSys.sfx('correct');
             if (partObj) {
-              AudioSys.speak(partObj.label);
+              AudioSys.speak(partObj.label, 210);
               hintMsg = `🔊 "${partObj.label}" (${partObj.zh}) — Great match!`;
             }
             draw();
@@ -4361,7 +4538,7 @@
             if (btn.dataset.bank === activeWord.word) {
               solvedWords.add(activeWord.id);
               AudioSys.sfx('correct');
-              AudioSys.speak(activeWord.word);
+              AudioSys.speak(activeWord.word, 210);
               feedback = `🔊 Correct! ${activeWord.word}!`;
               const next = mg.words.find(w => !solvedWords.has(w.id));
               if (next) selectedWordId = next.id;
@@ -5307,14 +5484,18 @@
           fx.mat.opacity = Math.max(0, (1 - u) * 0.9);
         } else if (fx.kind === 'tri_wave') {
           const travel = u * 44;
-          const spread = 1 + u * 2.8;
+          const fade = u < 0.72 ? 1.0 : Math.max(0, 1 - (u - 0.72) / 0.28);
+          const jitter = 1 + Math.sin(t * 48) * 0.08;
           fx.prongs.forEach(pr => {
-            pr.beam.position.z = -2.5 - travel;
-            pr.beam.scale.set(spread * 0.75, 1 + u * 0.6, 1 + u * 0.8);
-            pr.mat.opacity = Math.max(0, (1 - u * 0.85) * 0.92);
+            const baseS = pr.isCenter ? 1.18 : 1.0;
+            pr.beam.position.z = -2.0 - travel;
+            pr.beam.scale.set(baseS * (1 + u * 0.95) * jitter, baseS * (1 + u * 0.85), baseS * (1 + u * 0.65));
+            pr.mat.opacity = 0.98 * fade;
+            if (pr.coreMat) pr.coreMat.opacity = 1.0 * fade;
+            if (pr.trailMat) pr.trailMat.opacity = 0.92 * fade;
           });
-          fx.arcWave.scale.setScalar(1 + u * 11.5);
-          fx.arcMat.opacity = Math.max(0, (1 - u) * 0.65);
+          fx.arcWave.scale.setScalar(1 + u * 12.0);
+          fx.arcMat.opacity = 0.85 * fade;
           // Damage any enemy caught in or between the 3 prongs as the wave spreads!
           G.enemies.forEach(en => {
             if (!en.alive || en.behavior === 'dummy' || fx.hitSet.has(en.id)) return;
