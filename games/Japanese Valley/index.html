@@ -300,6 +300,13 @@
       background: #dcfce7; color: #166534; border: 1.5px solid #86efac;
     }
     .design-status.invalid { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+    #challenge-banner {
+      position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 39;
+      background: rgba(255, 251, 244, 0.96); border: 2.5px solid #c084fc;
+      border-radius: 20px; padding: 10px 18px; box-shadow: 0 10px 28px rgba(72,47,80,0.22);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width: 92vw;
+    }
+    #challenge-banner.hidden { display: none !important; }
     #toast-container { position: fixed; bottom: 86px; right: 14px; z-index: 48; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
     .toast {
       background: var(--panel); border: 2px solid var(--mint); border-left-width: 6px;
@@ -445,6 +452,19 @@
     </div>
     <div class="design-bar" style="flex-direction:column; gap:8px;">
       <div id="design-palette" class="design-palette"></div>
+    </div>
+  </div>
+
+  <!-- Active 3D Challenge Banner (Guardian Special Modes & Scavenger Hunts) -->
+  <div id="challenge-banner" class="hidden">
+    <div>
+      <div id="cb-title" style="font-family:'Fredoka',sans-serif; font-size:15px; font-weight:800; color:#5b21b6;">🌟 Special Challenge</div>
+      <div id="cb-sub" style="font-size:12.5px; font-weight:700; color:var(--ink);"></div>
+    </div>
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button id="cb-audio" class="btn btn-sky btn-sm hidden">🔊 聞く</button>
+      <button id="cb-hint" class="btn btn-ghost btn-sm">💡 ヒント</button>
+      <button id="cb-cancel" class="btn btn-ghost btn-sm">✕ 終了</button>
     </div>
   </div>
 
@@ -618,6 +638,86 @@
       ['kiki', 'キキ', 'モモンガ', '小飛鼠', 'bamboo', 'trees', false, 'fox', 0xd6b490, 0xffffff, 'bell_collar', 'food_kiki', 'あまい栗大福', '甜栗子大福', '🍡', 17, '竹から竹へふわっと滑空すること', '從一根竹子輕輕滑翔到另一根竹子', null]
     ];
 
+    // 55 Distinctive Character Profiles: Shuffled CEFR (A1 / A2 / B1 / B2), Varied Everyday Hobbies & Unique Mini-Game IDs!
+    const CHARACTER_PROFILES = {
+      // --- 5 GUARDIANS (Each with a Legit Unique 3D / Interactive Guardian Game!) ---
+      celeste:  { cefr: 'B1', topic: '星座と天文学',     topicZh: '星座與天文學',   hobbyJp: '夜空の星座と天文学を研究すること',       hobbyZh: '研究夜空星座與天文學',       mgId: 'guardian_unicorn_stars',  quoteJp: '今夜は星がとてもきれいに並んでいますね。星の名前を一緒に覚えましょうか？', quoteZh: '今晚的星星排得好漂亮呢，要一起認識星星的日語嗎？' },
+      longwei:  { cefr: 'B2', topic: '世界の空と気候',   topicZh: '世界天空與氣候', hobbyJp: '雲の上から世界の気候と地形を観察すること', hobbyZh: '從雲端觀察世界各地的氣候與地形', mgId: 'guardian_dragon_hoops',   quoteJp: '高空の気流は実に奥深いものです。背中に乗って空のリングをくぐってみませんか？', quoteZh: '高空氣流非常奧妙喔。要不要騎上我的背，一起穿越天空光環呢？' },
+      koma:     { cefr: 'A2', topic: '日本の伝統文化',   topicZh: '日本傳統文化',   hobbyJp: '神社のお祭りや日本の伝統音楽を聴くこと', hobbyZh: '欣賞祭典與日本傳統音樂',     mgId: 'guardian_koma_petals',    quoteJp: '鈴の音に合わせて、丁寧な日本語の表現を聴き分けてみましょう！', quoteZh: '配合鈴鐺聲，一起來聽辨有禮貌的日語表達吧！' },
+      poko:     { cefr: 'A2', topic: 'かくれんぼと方角', topicZh: '捉迷藏與方位',   hobbyJp: '森や竹林でかくれんぼの達人になること',   hobbyZh: '在竹林裡當捉迷藏高手',       mgId: 'guardian_tanuki_hide',    quoteJp: '葉っぱで変身して隠れるのが得意なんだ！日本語のヒントで僕を見つけられるかな？', quoteZh: '我最擅長用葉子變身躲起來了！你能靠日語提示找到我嗎？' },
+      bramble:  { cefr: 'B1', topic: '陸上競技と自然',   topicZh: '田徑運動與自然', hobbyJp: '草原でマラソンと障害物競争をすること',   hobbyZh: '在草原練馬拉松與跨欄跑',     mgId: 'guardian_bramble_sprint', quoteJp: '風を切って走るのって最高だよ！草原チェックポイント競走に挑戦しない？', quoteZh: '迎著風奔跑最棒了！要不要挑戰草原打卡競速賽？' },
+
+      // --- PETAL MEADOW (Flowers Zone) ---
+      mochi:    { cefr: 'A1', topic: 'フルーツ',         topicZh: '新鮮水果',       hobbyJp: '季節のフルーツを集めて食べ比べること',   hobbyZh: '蒐集並品嚐各種季節水果',     mgId: 'mg_mochi',   quoteJp: 'りんごとイチゴとメロン、どのフルーツが一番好きですか？', quoteZh: '蘋果、草莓和哈密瓜，你最喜歡哪一種水果？' },
+      pip:      { cefr: 'A2', topic: '車とドライブ',     topicZh: '汽車與兜風',     hobbyJp: 'クラシックカーを集めてドライブすること', hobbyZh: '收藏經典汽車並開車兜風',     mgId: 'mg_pip',     quoteJp: '赤い車のエンジン音ってワクワクしますよね！ドライブに行きませんか？', quoteZh: '紅色汽車的引擎聲真讓人興奮！要不要去兜風？' },
+      bumble:   { cefr: 'A1', topic: 'パン作り',         topicZh: '手作麵包',       hobbyJp: 'あまいパンをやくこと',                   hobbyZh: '烤香甜的麵包',                 mgId: 'mg_bumble',  quoteJp: 'あたたかいパンが大好きです！いっしょに食べませんか？', quoteZh: '我最喜歡熱呼呼的麵包了！要不要一起吃呢？' },
+      willow:   { cefr: 'B2', topic: 'ヨーロッパ旅行',   topicZh: '歐洲旅遊',       hobbyJp: 'ヨーロッパの古い街並みを旅すること',     hobbyZh: '造訪歐洲古老城鎮與博物館',   mgId: 'mg_willow',  quoteJp: 'パリやウィーンの美術館を巡る旅を計画中なんです。おすすめはありますか？', quoteZh: '我正在規劃去巴黎和維也納逛美術館的旅行，你有推薦的嗎？' },
+      mimi:     { cefr: 'A1', topic: 'カフェと飲み物',   topicZh: '咖啡廳與飲品',   hobbyJp: 'おしゃれなカフェで紅茶やラテを飲むこと', hobbyZh: '在可愛咖啡廳喝紅茶與拿鐵',   mgId: 'mg_mimi',    quoteJp: 'あったかいカフェラテとケーキ、最高のおやつですね！', quoteZh: '溫熱的拿鐵配蛋糕，真是最棒的下午茶！' },
+
+      // --- SUNNY COVE (Beach Zone) ---
+      pebble:   { cefr: 'A2', topic: 'サーフィンと海',   topicZh: '衝浪與海洋',     hobbyJp: '朝の海でサーフィンと貝殻集めをすること', hobbyZh: '早上在海邊衝浪與撿貝殼',     mgId: 'mg_pebble',  quoteJp: '今日はいい波が来ていますよ！海のことばを一緒に練習しましょう。', quoteZh: '今天海浪很不錯喔！一起來練習跟海洋有關的日語吧。' },
+      lulu:     { cefr: 'A1', topic: '水泳とプール',     topicZh: '游泳與水上運動', hobbyJp: 'きれいな海やプールで泳ぐこと',           hobbyZh: '在清澈的大海與泳池游泳',     mgId: 'mg_lulu',    quoteJp: '泳ぐのはとっても楽しいよ！夏は毎日海に行きたいな。', quoteZh: '游泳超級好玩！夏天好想每天去海邊喔。' },
+      biscuit:  { cefr: 'A1', topic: 'サッカー',         topicZh: '足球運動',       hobbyJp: 'ボールをけってサッカーをすること',       hobbyZh: '踢足球',                       mgId: 'mg_biscuit', quoteJp: 'サッカーはとっても楽しいよ！いっしょにあそぼう！', quoteZh: '踢足球超好玩的！一起玩吧！' },
+      nori:     { cefr: 'A2', topic: 'お寿司と魚料理',   topicZh: '壽司與海鮮料理', hobbyJp: '新鮮な魚でお寿司を握ること',             hobbyZh: '用新鮮漁獲捏壽司',           mgId: 'mg_nori',    quoteJp: 'サーモンとマグロ、お寿司のネタではどちらが好きですか？', quoteZh: '鮭魚和鮪魚，壽司料裡你比較喜歡哪一個？' },
+      sunny:    { cefr: 'B2', topic: '海洋環境保護',     topicZh: '海洋環境保護',   hobbyJp: '美しいサンゴ礁と海の生態系を守ること',   hobbyZh: '守護美麗的珊瑚礁與海洋生態', mgId: 'mg_sunny',   quoteJp: 'プラスチックごみを減らすことが、海の生き物たちの未来につながりますね。', quoteZh: '減少塑膠垃圾，對海洋生物的未來非常重要呢。' },
+
+      // --- MIRROR LAKE (Lake Zone) ---
+      quackers: { cefr: 'A1', topic: '天気と季節',       topicZh: '天氣與四季',     hobbyJp: '毎日空を見上げて天気予報をすること',     hobbyZh: '每天看天空做天氣預報',       mgId: 'mg_quackers',quoteJp: '今日は晴れかな、雨かな？虹が出るとうれしいな！', quoteZh: '今天會是晴天還是雨天呢？出現彩虹的話就太開心了！' },
+      ribbit:   { cefr: 'A2', topic: 'ピアノと音楽',     topicZh: '鋼琴與音樂',     hobbyJp: '湖のほとりでピアノと歌を練習すること',   hobbyZh: '在湖邊彈鋼琴與練唱',         mgId: 'mg_ribbit',  quoteJp: '雨のリズムに合わせてメロディを作るのが大好きなんです！', quoteZh: '我最喜歡配合雨聲的節奏創作旋律了！' },
+      splash:   { cefr: 'A2', topic: 'でんしゃの旅',     topicZh: '電車與鐵道旅行', hobbyJp: 'でんしゃにのって旅をすること',           hobbyZh: '搭電車旅行',                   mgId: 'mg_splash',  quoteJp: 'でんしゃのまどから海や山を見るのが大好きです！', quoteZh: '我最喜歡從電車窗戶看海和山了！' },
+      swanee:   { cefr: 'B2', topic: 'バレエと舞台芸術', topicZh: '芭蕾與舞台藝術', hobbyJp: 'クラシックバレエとオーケストラを鑑賞すること', hobbyZh: '欣賞古典芭蕾與交響樂團', mgId: 'mg_swanee',  quoteJp: '音楽と動きが完璧に調和した瞬間、観客の心まで響く舞台になります。', quoteZh: '當音樂與動作完美融合的那一刻，就能成為觸動人心的舞台。' },
+      marsh:    { cefr: 'B1', topic: '建築と橋の設計',   topicZh: '建築與橋樑設計', hobbyJp: '丈夫で美しい木造の橋を設計すること',     hobbyZh: '設計堅固又美觀的木造橋樑',   mgId: 'mg_marsh',   quoteJp: '設計図を丁寧に描けば、嵐の日でも安心な橋が完成しますよ。', quoteZh: '只要仔細畫好設計圖，就能蓋出暴風雨也安心的橋喔。' },
+
+      // --- WHISPER FOREST (Forest Zone) ---
+      acorn:    { cefr: 'A1', topic: 'カメラと写真',     topicZh: '相機與攝影',     hobbyJp: '森の風景や動物をカメラで撮ること',       hobbyZh: '用相機拍下森林風景與動物',   mgId: 'mg_acorn',   quoteJp: 'はい、チーズ！きれいな写真が撮れるとワクワクしますね！', quoteZh: '看鏡頭笑一個！拍出漂亮照片時最讓人興奮了！' },
+      fern:     { cefr: 'A2', topic: 'ラーメンと中華料理', topicZh: '拉麵與美食',   hobbyJp: 'いろいろな味のラーメンを食べ歩くこと',   hobbyZh: '四處品嚐各種口味的拉麵',     mgId: 'mg_fern',    quoteJp: '醤油ラーメンと味噌ラーメン、寒い日はどっちが食べたいですか？', quoteZh: '醬油拉麵跟味噌拉麵，天冷時你想吃哪一種？' },
+      barnaby:  { cefr: 'B2', topic: 'ミステリー小説',   topicZh: '推理小說與閱讀', hobbyJp: '夜にミステリー小説と歴史書を読むこと',   hobbyZh: '在夜晚閱讀推理小說與歷史書', mgId: 'mg_barnaby', quoteJp: '伏線が最後にすべてつながる瞬間こそ、推理小説の面白さですね。', quoteZh: '伏筆在最後全部串連起來的瞬間，正是推理小說最迷人的地方呢。' },
+      hazel:    { cefr: 'A2', topic: 'キャンプと登山',   topicZh: '露營與登山',     hobbyJp: '週末にテントを張ってキャンプすること',   hobbyZh: '週末搭帳篷去森林露營',       mgId: 'mg_hazel',   quoteJp: '焚き火でマシュマロを焼いて、みんなで話すのが一番好き！', quoteZh: '我最喜歡在營火旁烤棉花糖跟大家聊天了！' },
+      clover_b: { cefr: 'B1', topic: 'ガーデニングと盆栽', topicZh: '園藝與盆栽',   hobbyJp: '庭のハーブや小さな盆栽を育てること',     hobbyZh: '種植庭園香草與迷你盆栽',     mgId: 'mg_clover_b',quoteJp: '毎日少しずつ水をあげて葉の様子を見るのが、植物を育てるコツです。', quoteZh: '每天適量澆水並觀察葉片狀態，就是照顧植物的秘訣。' },
+
+      // --- CLOUDPEAK MOUNTAINS (Mountains Zone) ---
+      summit:   { cefr: 'A2', topic: 'ハイキングと山登り', topicZh: '健行與登山',   hobbyJp: '高い山の頂上までハイキングすること',     hobbyZh: '健行爬上高山山頂',           mgId: 'mg_summit',  quoteJp: '頂上から見下ろす景色は本当に気持ちいいですよ！', quoteZh: '從山頂往下看的風景真的超級舒服喔！' },
+      choco:    { cefr: 'A1', topic: 'ボードゲーム',     topicZh: '桌遊與益智遊戲', hobbyJp: '友達とチェスやボードゲームをすること',   hobbyZh: '跟朋友玩西洋棋和桌遊',       mgId: 'mg_choco',   quoteJp: 'サイコロを振って進めよう！一緒にゲームしませんか？', quoteZh: '擲骰子前進吧！要不要一起玩桌遊？' },
+      misty:    { cefr: 'B1', topic: 'ファッションと裁縫', topicZh: '時尚與裁縫',   hobbyJp: '温かいマフラーやコートをデザインすること', hobbyZh: '設計保暖圍巾與大衣',       mgId: 'mg_misty',   quoteJp: '季節に合った色を選ぶと、毎日のコーディネートが楽しくなりますよ。', quoteZh: '挑選符合季節的顏色，每天穿搭都會變得很開心喔。' },
+      pippin:   { cefr: 'A2', topic: 'ハーブティー',     topicZh: '花草茶與調茶',   hobbyJp: '山の野草を乾かしてブレンド茶を作ること', hobbyZh: '曬乾山間野草調製花草茶',     mgId: 'mg_pippin',  quoteJp: 'カモミールとミントの香り、ほっと心が落ち着きますね。', quoteZh: '洋甘菊和薄荷的香氣，能讓人心情放鬆下來呢。' },
+      crag:     { cefr: 'B2', topic: '鉱石と地質学',     topicZh: '礦石與地質學',   hobbyJp: '珍しい水晶や鉱石を採集して調べること',   hobbyZh: '採集並研究稀有水晶與礦石',   mgId: 'mg_crag',    quoteJp: '何万年もの地殻変動が生み出した結晶には、地球の歴史が刻まれています。', quoteZh: '歷經數萬年地殼變動形成的結晶裡，刻畫著地球的歷史呢。' },
+
+      // --- FROSTBERRY ICE (Ice Zone) ---
+      flurry:   { cefr: 'A1', topic: 'スキーと冬スポーツ', topicZh: '滑雪與冬季運動', hobbyJp: '雪山でスキーと雪だるま作りをすること', hobbyZh: '在雪山滑雪與堆雪人',         mgId: 'mg_flurry',  quoteJp: '雪の上をすべるのって最高！手袋とマフラーを忘れずにね。', quoteZh: '在雪地上滑行最棒了！別忘了戴手套和圍巾喔。' },
+      frosty:   { cefr: 'A1', topic: 'えいが',           topicZh: '看電影',         hobbyJp: 'アニメやえいがを見ること',               hobbyZh: '看動畫和電影',                 mgId: 'mg_frosty',  quoteJp: 'あたたかいへやでえいがを見るのが好きです！', quoteZh: '我喜歡在溫暖的房間看電影！' },
+      puffin:   { cefr: 'A2', topic: '世界の旅行と飛行機', topicZh: '搭飛機環遊世界', hobbyJp: '飛行機に乗っていろんな国を旅すること',   hobbyZh: '搭飛機去世界各地旅行',       mgId: 'mg_puffin',  quoteJp: 'パスポートとスーツケースの準備はできた？次はどこの国へ行こうかな！', quoteZh: '護照和行李箱都準備好了嗎？下次要去哪個國家呢！' },
+      tusk:     { cefr: 'A1', topic: '温かいスープ料理', topicZh: '暖呼呼湯品料理', hobbyJp: '大きな鍋でシチューやスープを作ること',   hobbyZh: '用大鍋煮燉菜與濃湯',         mgId: 'mg_tusk',    quoteJp: '寒い日はあつあつのスープが一番おいしいよ！', quoteZh: '冷冷的天氣喝熱騰騰的濃湯最美味了！' },
+      snowy:    { cefr: 'B2', topic: '気象とオーロラ',   topicZh: '氣象與極光',     hobbyJp: 'オーロラの発生メカニズムを観測すること', hobbyZh: '觀測極光的形成原理',         mgId: 'mg_snowy',   quoteJp: '太陽風と大気が織りなすオーロラの光は、まさに自然の神秘ですね。', quoteZh: '太陽風與大氣交織出的極光，真是大自然的奧秘呢。' },
+
+      // --- SUNSTONE DESERT (Desert Zone) ---
+      sandy:    { cefr: 'A2', topic: 'サイクリング',     topicZh: '單車騎行',       hobbyJp: '風を感じながら自転車で遠出すること',     hobbyZh: '迎著微風騎腳踏車遠行',       mgId: 'mg_sandy',   quoteJp: '自転車があると、遠い町まであっという間に行けるよね！', quoteZh: '有腳踏車的話，一下就能騎到很遠的小鎮呢！' },
+      spike:    { cefr: 'A1', topic: '野球観戦',         topicZh: '棒球運動',       hobbyJp: '広場で野球のキャッチボールをすること',   hobbyZh: '在廣場打棒球傳接球',         mgId: 'mg_spike',   quoteJp: 'ホームランを打つのが夢なんだ！一緒にキャッチボールしよう！', quoteZh: '打出全壘打是我的夢想！一起來傳接球吧！' },
+      dune:     { cefr: 'B1', topic: '世界遺産と歴史',   topicZh: '世界遺產與歷史', hobbyJp: '古代遺跡や世界遺産の歴史を調べること',   hobbyZh: '研究古代遺跡與世界遺產歷史', mgId: 'mg_dune',    quoteJp: '砂漠のキャラバンが通った交易路の歴史を学ぶとロマンを感じますね。', quoteZh: '了解沙漠商隊走過的貿易古道歷史，總覺得好浪漫呢。' },
+      gecko:    { cefr: 'A2', topic: '水彩画とスケッチ', topicZh: '水彩畫與素描',   hobbyJp: '夕焼けや風景を水彩絵の具で描くこと',     hobbyZh: '用水彩畫下夕陽與風景',       mgId: 'mg_gecko',   quoteJp: 'オレンジとピンクを混ぜると、きれいな夕焼けの色になるよ！', quoteZh: '把橘色和粉紅色調在一起，就能畫出漂亮的夕陽顏色喔！' },
+      dusty:    { cefr: 'B1', topic: 'ロボットと電子工作', topicZh: '機器人與手作科技', hobbyJp: '便利なミニロボットを組み立てること',   hobbyZh: '組裝實用的迷你機器人',       mgId: 'mg_dusty',   quoteJp: '小さな歯車とセンサーを組み合わせれば、お手伝いロボットが作れるんだ！', quoteZh: '只要把小齒輪和感測器組合起來，就能做出幫忙機器人喔！' },
+
+      // --- BREEZE PLAINS (Grassy Plains Zone) ---
+      daisy:    { cefr: 'A1', topic: '朝ごはんと乳製品', topicZh: '早餐與乳製品',   hobbyJp: '新鮮な牛乳とチーズで朝ごはんを作ること', hobbyZh: '用新鮮牛奶與起司做早餐',     mgId: 'mg_daisy',   quoteJp: 'おいしい朝ごはんを食べると、一日中元気いっぱいになれますよ！', quoteZh: '吃頓美味的早餐，就能一整天都元氣滿滿喔！' },
+      woolly:   { cefr: 'A2', topic: '編み物と手芸',     topicZh: '編織與手作',     hobbyJp: 'ふわふわの毛糸でセーターを編むこと',     hobbyZh: '用蓬鬆毛線織毛衣',           mgId: 'mg_woolly',  quoteJp: 'ひと目ずつ丁寧に編むと、とても暖かいプレゼントになりますよ。', quoteZh: '一針一線細心編織，就能做出超溫暖的禮物喔。' },
+      trotter:  { cefr: 'B1', topic: 'テニス',           topicZh: '網球運動',       hobbyJp: '芝生のコートでテニスをプレイすること',   hobbyZh: '在草地球場打網球',           mgId: 'mg_trotter', quoteJp: '強いサーブを打ち返せたときの爽快感は格別ですね！', quoteZh: '成功回擊強力發球時的暢快感最棒了！' },
+      squeak:   { cefr: 'A1', topic: '野菜とサラダ',     topicZh: '新鮮蔬菜與沙拉', hobbyJp: 'カラフルな野菜でサラダを作ること',       hobbyZh: '用繽紛蔬菜做健康沙拉',       mgId: 'mg_squeak',  quoteJp: 'トマト、レタス、パプリカ！野菜はシャキシャキでおいしいね！', quoteZh: '番茄、生菜、甜椒！蔬菜清脆又好吃呢！' },
+      chirp:    { cefr: 'A1', topic: '歌とコーラス',     topicZh: '唱歌與合唱',     hobbyJp: '朝いちばんに元気な歌をうたうこと',       hobbyZh: '一大早唱元氣滿滿的歌',       mgId: 'mg_chirp',   quoteJp: 'おはよう！今日も楽しく歌いながら日本語を覚えようね！', quoteZh: '早安！今天也一邊開心唱歌一邊學日語吧！' },
+
+      // --- STARLIGHT GLADE (Magical Zone) ---
+      puff:     { cefr: 'A2', topic: 'お菓子作り',       topicZh: '甜點烘焙',       hobbyJp: 'マカロンやパフェなど甘いお菓子を作ること', hobbyZh: '製作馬卡龍與聖代等甜點',   mgId: 'mg_puff',    quoteJp: 'ふわふわのクリームをのせたら、とびきり可愛いパフェの完成です！', quoteZh: '擠上蓬鬆鮮奶油，超可愛的水果聖代就完成囉！' },
+      wisp:     { cefr: 'B1', topic: '宇宙とロケット',   topicZh: '宇宙與火箭',     hobbyJp: 'ロケットや惑星の本を読むこと',           hobbyZh: '閱讀火箭與行星百科',         mgId: 'mg_wisp',    quoteJp: 'いつか宇宙船に乗って、土星の輪っかを間近で見てみたいですね。', quoteZh: '真希望有一天能搭太空船，近距離看看土星光環呢。' },
+      glimmer:  { cefr: 'B2', topic: '美術館と色彩学',   topicZh: '美術館與色彩學', hobbyJp: '光の反射と色彩の調和を研究すること',     hobbyZh: '研究光影折射與色彩美學',     mgId: 'mg_glimmer', quoteJp: '淡い紫と金色を組み合わせると、幻想的な雰囲気を演出できますよ。', quoteZh: '把淡紫色和金色搭配在一起，就能營造出夢幻氛圍喔。' },
+      nova:     { cefr: 'A2', topic: 'ひこうき',         topicZh: '飛機與機場',     hobbyJp: 'そらをとぶひこうきを見ること',           hobbyZh: '看飛上天空的飛機',             mgId: 'mg_nova',    quoteJp: 'ひこうきがそらへとぶとき、とてもかっこいいですね！', quoteZh: '飛機飛上天空的時候超帥氣的呢！' },
+      twinkle:  { cefr: 'A2', topic: 'バイオリンとクラシック', topicZh: '小提琴與古典樂', hobbyJp: '静かな夜にバイオリンを演奏すること', hobbyZh: '在寧靜夜晚演奏小提琴',       mgId: 'mg_twinkle', quoteJp: 'やさしいバイオリンの音色を聴くと、星まで瞬く気がします。', quoteZh: '聽著溫柔的小提琴聲，感覺連星星都在眨眼呢。' },
+
+      // --- BAMBOO GROVE (Bonus Zone) ---
+      bao:      { cefr: 'A1', topic: '和食とお弁当',     topicZh: '日式料理與便當', hobbyJp: 'おにぎりや卵焼きでお弁当を作ること',     hobbyZh: '做飯糰與玉子燒便當',         mgId: 'mg_bao',     quoteJp: '竹の皮に包んだおにぎり、ピクニックにぴったりだよ！', quoteZh: '用竹葉包起來的飯糰，最適合帶去野餐了！' },
+      miso:     { cefr: 'A2', topic: '茶道と抹茶',       topicZh: '茶道與抹茶',     hobbyJp: '抹茶を点てて和菓子と一緒に楽しむこと',   hobbyZh: '刷抹茶搭配和菓子品嚐',       mgId: 'mg_miso',    quoteJp: 'ほろ苦い抹茶と甘い和菓子の組み合わせは最高ですね！', quoteZh: '微苦的抹茶配上香甜的和菓子真是絕配呢！' },
+      taro:     { cefr: 'B1', topic: '温泉旅行',         topicZh: '日本溫泉旅行',   hobbyJp: '日本各地の有名な温泉を巡ること',         hobbyZh: '造訪日本各地知名溫泉',       mgId: 'mg_taro',    quoteJp: '旅の疲れを癒やすなら、露天風呂に入ってゆっくりするのが一番です！', quoteZh: '想消除旅途疲勞的話，泡個露天溫泉放鬆最棒了！' },
+      yuzu:     { cefr: 'B2', topic: '書道と俳句',       topicZh: '書法與俳句',     hobbyJp: '筆で美しい文字を書き、季節の俳句を詠むこと', hobbyZh: '用毛筆寫書法並創作季節俳句', mgId: 'mg_yuzu', quoteJp: '五・七・五の短い言葉に季節の移ろいを込めるのが俳句の美しさですね。', quoteZh: '在短短五七五的音節裡融入季節更迭，就是俳句的美呢。' },
+      kiki:     { cefr: 'A2', topic: '折り紙と工作',     topicZh: '摺紙與手工藝',   hobbyJp: '色紙で鶴や紙飛行機を折ること',           hobbyZh: '用色紙摺紙鶴與紙飛機',       mgId: 'mg_kiki',    quoteJp: 'きれいに折った紙飛行機、どこまで遠くへ飛ぶかな？', quoteZh: '摺得整齊的紙飛機，究竟能飛多遠呢？' }
+    };
+
     const ANIMALS = {};
     CREATURE_ROWS.forEach(r => {
       const [id, name, species, zhSpecies, zoneId, farmBiome, isGuardian, shape, color, accent, accessory, favFoodId, favFoodName, favFoodZh, favIcon, favPrice, hobbyEn, hobbyZh, rescueMiniGame] = r;
@@ -626,17 +726,22 @@
         type: isGuardian ? 'mythical_food' : 'food',
         price: favPrice, sellPrice: isGuardian ? 12 : 6, icon: favIcon
       };
+      const prof = CHARACTER_PROFILES[id] || { cefr: 'A1', topic: '日常会話', topicZh: '日常會話', hobbyJp: hobbyEn, hobbyZh, mgId: 'mg_' + id, quoteJp: `こんにちは！${name}です。`, quoteZh: `你好！我是${name}。` };
+      const hJp = prof.hobbyJp || hobbyEn;
+      const hZh = prof.hobbyZh || hobbyZh;
       ANIMALS[id] = {
         id, name, species, zhSpecies, zoneId, farmBiome, isGuardian, shape, color, accent, accessory,
-        favFood: favFoodId, rescueMiniGame,
+        cefr: prof.cefr, topic: prof.topic, topicZh: prof.topicZh,
+        hobbyJp: hJp, hobbyZh: hZh, quoteJp: prof.quoteJp, quoteZh: prof.quoteZh,
+        favFood: favFoodId, rescueMiniGame: prof.mgId,
         chats: [
           {
             en: isGuardian
-              ? `ようこそ、やさしい旅人さん。この地を守る${name}です。普段は${hobbyEn}を楽しんでいます。`
-              : `はじめまして！${name}といいます。${hobbyEn}が大好きなんです！${favFoodName}は好きですか？`,
+              ? `ようこそ、旅人さん。この地を守る${name}です。${prof.quoteJp}`
+              : `はじめまして！${name}といいます。趣味は${hJp}です。${prof.quoteJp}`,
             zh: isGuardian
-              ? `歡迎你，溫柔的旅人。我是守護這片土地的${name}，平時喜歡${hobbyZh}。`
-              : `初次見面！我叫${name}，最喜歡${hobbyZh}！你喜歡${favFoodZh}嗎？`,
+              ? `歡迎你，旅人。我是守護這片土地的${name}。${prof.quoteZh}`
+              : `初次見面！我叫${name}，興趣是${hZh}。${prof.quoteZh}`,
             replies: [
               { en: `はじめまして、${name}さん！とても優しそうですね。`, zh: `初次見面，${name}！你看起來好溫柔親切。`, bonus: isGuardian ? 6 : 8 },
               { en: `こんにちは！今度${favFoodName}を持ってきますね！`, zh: `你好！下次我帶${favFoodZh}給你吃喔！`, bonus: isGuardian ? 6 : 7 }
@@ -645,12 +750,12 @@
           {
             en: isGuardian
               ? `動物たちへの優しさが伝わってきます。守護者なので${favFoodName}しか食べませんが、こうして日本語でお話しできるのが嬉しいです。`
-              : `おかえりなさい！${hobbyEn}も楽しいですが、一緒に日本語でおしゃべりすると午後がもっと楽しくなりますね。`,
+              : `おかえりなさい！${hJp}って本当に面白いですよ。今日は「${prof.topic}」の日本語も一緒に練習しましょうか？`,
             zh: isGuardian
               ? `能感受到你對動物們的溫柔。身為守護者我只吃${favFoodZh}，但很開心能這樣用日語聊天！`
-              : `歡迎回來！${hobbyZh}雖然有趣，但和你一起用日語聊天，讓每個午後都更開心了呢。`,
+              : `歡迎回來！${hZh}真的很有趣喔。今天要一起練習「${prof.topicZh}」相關的日語嗎？`,
             replies: [
-              { en: `${hobbyEn}について、もっと教えてもらえますか？`, zh: `可以多告訴我關於${hobbyZh}的事嗎？`, bonus: isGuardian ? 7 : 9 },
+              { en: `${hJp}について、もっと教えてもらえますか？`, zh: `可以多告訴我關於${hZh}的事嗎？`, bonus: isGuardian ? 7 : 9 },
               { en: `一緒におしゃべりすると、いつも元気が出ます！`, zh: `每次跟你聊天都覺得充滿活力！`, bonus: isGuardian ? 7 : 8 }
             ]
           },
@@ -680,7 +785,8 @@
         id: 'mg_town_riddle', type: 'riddle', rewardCoins: 34, friendTarget: null,
         title: '掲示板 #1 — ほのぼの日本語クイズ', zhTitle: '小鎮布告欄 #1：溫馨日語單字謎題',
         prompt: 'ニンジンやイチゴを育てたり、仲良しの動物を招待したりする場所（ひらがな4文字）。',
-        zhPrompt: '種植胡蘿蔔、草莓並邀請動物好朋友居住的地方（平假名 4 字，中文是「牧場」：ぼくじょう）。',
+        zhPrompt: '種植胡蘿蔔、草莓並邀請動物好朋友居住的地方（提示：4 個平假名）。',
+        hint: '最初の音は「ぼ」、最後是「う」（ひら假名 4 字，想想「牧」的日語音讀）。',
         answer: 'ぼくじょう'
       },
       mg_town_2: {
@@ -702,7 +808,8 @@
         id: 'mg_town_4', type: 'riddle', rewardCoins: 35, friendTarget: null,
         title: '掲示板 #4 — 自然のことばクイズ', zhTitle: '小鎮布告欄 #4：自然日語猜謎',
         prompt: '色とりどりのお花がたくさん咲いている明るい場所（ひらがな4文字）。',
-        zhPrompt: '開滿繽紛花朵的明亮園地（平假名 4 字，中文是「花園」：はなぞの）。',
+        zhPrompt: '開滿繽紛花朵的明亮園地（提示：4 個平假名）。',
+        hint: '前半是「はな（花）」、後半 2 個平假名表示園地喔！',
         answer: 'はなぞの'
       },
       mg_town_5: {
@@ -724,7 +831,8 @@
         id: 'mg_town_7', type: 'riddle', rewardCoins: 36, friendTarget: null,
         title: '掲示板 #7 — のりものクイズ', zhTitle: '小鎮布告欄 #7：交通工具日語猜謎',
         prompt: 'ペダルをこいで陸の上を速く走れる二輪の乗り物（ひらがな5文字）。',
-        zhPrompt: '用雙腳踩踏、能在陸地上快速移動的兩輪交通工具（平假名 5 字，中文是「腳踏車」：じてんしゃ）。',
+        zhPrompt: '用雙腳踩踏、能在陸地上快速移動的兩輪交通工具（提示：5 個平假名）。',
+        hint: '第一個假名是「じ」、最後的音是「しゃ」。',
         answer: 'じてんしゃ'
       },
       mg_petal_memory: {
@@ -746,7 +854,8 @@
         id: 'mg_forest_riddle', type: 'riddle', rewardCoins: 40, friendTarget: 'acorn',
         title: 'エイコーンをお手伝い — 森のことばクイズ', zhTitle: '幫助橡果：森林日語猜謎',
         prompt: 'リスたちが暮らす、たくさんの木が集まった緑の場所（ひらがな4文字）。',
-        zhPrompt: '松鼠們居住、長滿大樹的翠綠森林（平假名 4 字，中文是「森林」：しんりん）。',
+        zhPrompt: '松鼠們居住、長滿大樹的翠綠樹林（提示：4 個平假名）。',
+        hint: '第一個假名是「し」，中間跟最後都有「ん」。',
         answer: 'しんりん'
       },
       mg_ice_memory: {
@@ -772,6 +881,451 @@
         pairs: [{ word: 'ほし（星）', zh: '星星', icon: '⭐' }, { word: 'くも（雲）', zh: '雲朵', icon: '☁️' }, { word: 'にじ（虹）', zh: '彩虹', icon: '🌈' }, { word: 'ともだち', zh: '朋友', icon: '💖' }]
       }
     };
+
+
+    // 50 UNIQUE NPC MINI-GAMES (1 Unique Game per Regular Animal, Shuffled CEFR A1-B2, 6 Interactive Types, Zero Answer Giveaways!)
+    const NPC_MINIGAMES = {
+      // --- PETAL MEADOW ---
+      mg_mochi: {
+        id: 'mg_mochi', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'mochi',
+        title: 'モチのフルーツ合わせ', zhTitle: '麻糬的水果日語配對（A1）',
+        prompt: 'フルーツの日本語と絵をペアにしましょう！', zhPrompt: '將水果的日語單字與圖示配對！',
+        pairs: [{ word: 'りんご', zh: '蘋果', icon: '🍎' }, { word: 'いちご', zh: '草莓', icon: '🍓' }, { word: 'ぶどう', zh: '葡萄', icon: '🍇' }, { word: 'もも', zh: '桃子', icon: '🍑' }]
+      },
+      mg_pip: {
+        id: 'mg_pip', type: 'object_puzzle', cefr: 'A2', rewardCoins: 36, friendTarget: 'pip',
+        title: 'ピップのクラシックカー組み立て', zhTitle: '皮普的復古汽車組裝拼圖（A2）',
+        prompt: '車のパーツを正しい順番で組み立てましょう！', zhPrompt: '依序組裝汽車的 4 個日語零件，完成經典紅車！',
+        objectIcon: '🚗', objectName: '赤いクラシックカー（經典紅車）',
+        parts: [
+          { jp: 'タイヤ', hint: '地面に接してくるくる回る丸い部品です。', icon: '🛞' },
+          { jp: 'エンジン', hint: '車を動かすための大切な動力（どうりょく）です。', icon: '⚙️' },
+          { jp: 'ハンドル', hint: '運転するときに両手で握る丸い部品です。', icon: '⭕' },
+          { jp: 'ライト', hint: '暗い夜道を明るく照らす部品です。', icon: '💡' }
+        ]
+      },
+      mg_bumble: {
+        id: 'mg_bumble', type: 'scramble', cefr: 'A1', rewardCoins: 30, friendTarget: 'bumble',
+        title: 'バンブルのパンことば', zhTitle: '蜂蜜小熊的麵包日語重組（A1）',
+        prompt: 'あまいパンをいっしょに食べる文を並べ替えましょう！', zhPrompt: '排好邀請一起吃香甜麵包的簡單日語！',
+        zhSentence: '「一起吃甜甜的麵包吧！」',
+        words: ['あまい', 'パンを', 'いっしょに', 'たべましょう！']
+      },
+      mg_willow: {
+        id: 'mg_willow', type: 'scramble', cefr: 'B2', rewardCoins: 48, friendTarget: 'willow',
+        title: 'ウィローのヨーロッパ旅行計画', zhTitle: '小鹿薇洛的歐洲旅遊句子重組（B2）',
+        prompt: 'ヨーロッパ旅行の計画を伝える文を完成させましょう！', zhPrompt: '重組規劃歐洲旅行的進階日語句子！',
+        zhSentence: '「明年秋天我想搭火車走訪歐洲的美術館。」',
+        words: ['来年の秋、', '列車で', 'ヨーロッパの', '美術館を', '巡りたいです。']
+      },
+      mg_mimi: {
+        id: 'mg_mimi', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'mimi',
+        title: 'ミミのカフェメニュー合わせ', zhTitle: '小貓咪咪的咖啡廳飲品配對（A1）',
+        prompt: 'カフェの飲み物とスイーツをペアにしましょう！', zhPrompt: '配對咖啡廳飲品與甜點的日語單字！',
+        pairs: [{ word: 'コーヒー', zh: '咖啡', icon: '☕' }, { word: 'こうちゃ', zh: '紅茶', icon: '🍵' }, { word: 'ケーキ', zh: '蛋糕', icon: '🍰' }, { word: 'ぎゅうにゅう', zh: '牛奶', icon: '🥛' }]
+      },
+
+      // --- SUNNY COVE ---
+      mg_pebble: {
+        id: 'mg_pebble', type: 'scramble', cefr: 'A2', rewardCoins: 36, friendTarget: 'pebble',
+        title: 'ペブルの海辺トーク', zhTitle: '海獺小石頭的衝浪日語重組（A2）',
+        prompt: '海でのサーフィンを誘う文を並べ替えましょう！', zhPrompt: '重組邀請去海邊衝浪的日語句子！',
+        zhSentence: '「今天海浪很好，一起去衝浪吧！」',
+        words: ['今日は', '波がいいので、', '一緒に', 'サーフィンを', 'しましょう！']
+      },
+      mg_lulu: {
+        id: 'mg_lulu', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'lulu',
+        title: 'ルルの水泳グッズ合わせ', zhTitle: '小海豹露露的游泳單字配對（A1）',
+        prompt: '海やプールで使う言葉を合わせましょう！', zhPrompt: '配對海邊與游泳相關的基礎日語！',
+        pairs: [{ word: 'うみ', zh: '大海', icon: '🌊' }, { word: 'およぐ', zh: '游泳', icon: '🏊' }, { word: 'かいがら', zh: '貝殼', icon: '🐚' }, { word: 'たいよう', zh: '太陽', icon: '☀️' }]
+      },
+      mg_biscuit: {
+        id: 'mg_biscuit', type: 'memory', cefr: 'A1', rewardCoins: 30, friendTarget: 'biscuit',
+        title: 'ビスケットのサッカー合わせ', zhTitle: '柯基餅乾的足球單字配對（A1）',
+        prompt: 'サッカーのことばと絵をペアにしましょう！', zhPrompt: '配對足球相關的基礎日語！',
+        pairs: [{ word: 'ボール', zh: '球', icon: '⚽' }, { word: 'はしる', zh: '跑步', icon: '🏃' }, { word: 'ゴール', zh: '球門', icon: '🥅' }, { word: 'チーム', zh: '隊伍', icon: '👕' }]
+      },
+      mg_nori: {
+        id: 'mg_nori', type: 'object_puzzle', cefr: 'A2', rewardCoins: 36, friendTarget: 'nori',
+        title: 'ノリの特製お寿司づくり', zhTitle: '企鵝諾里的壽司組裝拼圖（A2）',
+        prompt: 'お寿司を作る手順を正しい順番で選びましょう！', zhPrompt: '依序組合製作壽司的 4 個步驟！',
+        objectIcon: '🍣', objectName: '特製サーモン寿司（特製鮭魚壽司）',
+        parts: [
+          { jp: 'すめし', hint: 'お酢（おす）を混ぜた土台のごはんです。', icon: '🍚' },
+          { jp: 'わさび', hint: '緑色で少しピリッとする薬味（やくみ）です。', icon: '🌿' },
+          { jp: 'サーモン', hint: 'オレンジ色の新鮮な魚のネタです。', icon: '🐟' },
+          { jp: 'しょうゆ', hint: '食べる前に少しだけつける調味料です。', icon: '🫙' }
+        ]
+      },
+      mg_sunny: {
+        id: 'mg_sunny', type: 'speak_mic', cefr: 'B2', rewardCoins: 48, friendTarget: 'sunny',
+        title: 'サニーの海洋保護スピーチ', zhTitle: '小海龜桑尼的海洋環保口說挑戰（B2）',
+        prompt: 'きれいな海を守るメッセージを日本語で発音しましょう！', zhPrompt: '聽示範發音後，用麥克風（或練習按鈕）說出保護海洋的日語！',
+        spoken: '美しい海とサンゴ礁をみんなで守りましょう。',
+        zhSentence: '「讓我們一起守護美麗的大海與珊瑚礁。」',
+        keywords: ['海', 'うみ', '守', 'まも', 'サンゴ'],
+        hint: '讀音：u-tsu-ku-shi-i u-mi to sa-n-go-sho-u wo mi-n-na de ma-mo-ri-ma-sho-u。'
+      },
+
+      // --- MIRROR LAKE ---
+      mg_quackers: {
+        id: 'mg_quackers', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'quackers',
+        title: 'クワッカーズの天気予報', zhTitle: '小鴨子的天氣日語配對（A1）',
+        prompt: '天気の日本語とマークを合わせましょう！', zhPrompt: '將天氣日語單字與圖示配對！',
+        pairs: [{ word: 'はれ', zh: '晴天', icon: '☀️' }, { word: 'あめ', zh: '下雨', icon: '🌧️' }, { word: 'くもり', zh: '陰天', icon: '☁️' }, { word: 'にじ', zh: '彩虹', icon: '🌈' }]
+      },
+      mg_ribbit: {
+        id: 'mg_ribbit', type: 'riddle', cefr: 'A2', rewardCoins: 36, friendTarget: 'ribbit',
+        title: 'リビットの音楽クイズ', zhTitle: '樹蛙的音樂日語猜謎（A2）',
+        prompt: '白い鍵盤と黒い鍵盤を指で弾いて美しい音を出す楽器（ひらがな3文字）。',
+        zhPrompt: '用手指彈奏黑白琴鍵發出美妙樂聲的樂器（提示：3 個平假名）。',
+        answer: 'ぴあの', hint: '第一個假名是「ぴ」（外來語，3 個音節）。'
+      },
+      mg_splash: {
+        id: 'mg_splash', type: 'object_puzzle', cefr: 'A2', rewardCoins: 36, friendTarget: 'splash',
+        title: 'スプラッシュの鉄道模型づくり', zhTitle: '鴨嘴獸的電車組裝拼圖（A2）',
+        prompt: '新幹線が走るためのパーツを順番に組み立てましょう！', zhPrompt: '依序組裝新幹線出發所需的 4 個鐵道元件！',
+        objectIcon: '🚄', objectName: 'ひかり新幹線（高速新幹線）',
+        parts: [
+          { jp: 'せんろ', hint: 'まず列車が走るための鉄の道を用意します。', icon: '🛤️' },
+          { jp: 'でんしゃ', hint: 'お客さんが乗って走る本体を置きます。', icon: '🚆' },
+          { jp: 'きっぷ', hint: '駅の改札（かいさつ）を通るために必要なものです。', icon: '🎫' },
+          { jp: 'えきべん', hint: '車窓を見ながら食べる旅のお楽しみです！', icon: '🍱' }
+        ]
+      },
+      mg_swanee: {
+        id: 'mg_swanee', type: 'scramble', cefr: 'B2', rewardCoins: 48, friendTarget: 'swanee',
+        title: 'スワニーの舞台芸術レビュー', zhTitle: '小天鵝的芭蕾舞台句子重組（B2）',
+        prompt: 'バレエ公演の感想を伝える丁寧な文を並べ替えましょう！', zhPrompt: '重組分享芭蕾舞劇感想的進階日語！',
+        zhSentence: '「昨晚的芭蕾舞演出令人感動得難以忘懷。」',
+        words: ['昨夜の', 'バレエ公演は', '忘れられないほど', '感動的', 'でした。']
+      },
+      mg_marsh: {
+        id: 'mg_marsh', type: 'object_puzzle', cefr: 'B1', rewardCoins: 42, friendTarget: 'marsh',
+        title: 'マーシュの木造橋づくり', zhTitle: '河狸的木造橋樑組裝拼圖（B1）',
+        prompt: '湖に架ける丈夫な木の橋を順番に組み立てましょう！', zhPrompt: '依序完成木造橋樑的 4 個建築步驟！',
+        objectIcon: '🌉', objectName: '鏡の湖の木造橋（明鏡湖木橋）',
+        parts: [
+          { jp: 'せっけいず', hint: '工事を始める前に描く計画の図面（ずめん）です。', icon: '📐' },
+          { jp: 'はしら', hint: '橋全体を下からしっかり支える土台です。', icon: '🪵' },
+          { jp: 'いた', hint: '人や動物が上を歩くための平らな木材です。', icon: '🪜' },
+          { jp: 'てすり', hint: '落ちないように両側につける安全バーです。', icon: '🚧' }
+        ]
+      },
+
+      // --- WHISPER FOREST ---
+      mg_acorn: {
+        id: 'mg_acorn', type: 'object_puzzle', cefr: 'A1', rewardCoins: 30, friendTarget: 'acorn',
+        title: 'エイコーンのカメラ組み立て', zhTitle: '紅松鼠的相機組裝拼圖（A1）',
+        prompt: '写真を撮るためのカメラを組み立てましょう！', zhPrompt: '依序組裝森之相機的 4 個零件！',
+        objectIcon: '📷', objectName: '森のカメラ（森林相機）',
+        parts: [
+          { jp: 'ほんたい', hint: 'まずは中心になる四角いボディを用意します。', icon: '⬛' },
+          { jp: 'レンズ', hint: '光を集めて景色を写す丸いガラス部品です。', icon: '🔍' },
+          { jp: 'シャッター', hint: '撮る瞬間に指でカチッと押すボタンです。', icon: '🔘' },
+          { jp: 'ストラップ', hint: '落とさないように首からかけるひもです。', icon: '🎗️' }
+        ]
+      },
+      mg_fern: {
+        id: 'mg_fern', type: 'riddle', cefr: 'A2', rewardCoins: 36, friendTarget: 'fern',
+        title: 'ファーンのラーメンクイズ', zhTitle: '小熊貓的拉麵日語猜謎（A2）',
+        prompt: '温かいスープと麺で作る、日本で大人気の料理（ひらがな4文字）。',
+        zhPrompt: '用熱湯與麵條煮成、在日本超受歡迎的料理（提示：4 個字元，含長音）。',
+        answer: 'らーめん', hint: '第一個假名是「ら」，最後是「ん」。'
+      },
+      mg_barnaby: {
+        id: 'mg_barnaby', type: 'scramble', cefr: 'B2', rewardCoins: 48, friendTarget: 'barnaby',
+        title: 'バーナビーの推理小説クラブ', zhTitle: '倉鴞的推理小說日語重組（B2）',
+        prompt: '小説の面白さを説明する文を並べ替えましょう！', zhPrompt: '重組討論推理小說魅力的進階日語！',
+        zhSentence: '「越讀越好奇結局，讓人停不下來。」',
+        words: ['読めば読むほど', '結末が', '気になって', '止まらなく', 'なります。']
+      },
+      mg_hazel: {
+        id: 'mg_hazel', type: 'object_puzzle', cefr: 'A2', rewardCoins: 36, friendTarget: 'hazel',
+        title: 'ヘーゼルのキャンプ設営', zhTitle: '花栗鼠的露營營地拼圖（A2）',
+        prompt: '森のキャンプ場を順番に準備しましょう！', zhPrompt: '依序準備露營所需的 4 項裝備！',
+        objectIcon: '⛺', objectName: '森のキャンプサイト（森林營地）',
+        parts: [
+          { jp: 'テント', hint: 'まず夜に眠るための屋根つきスペースを張ります。', icon: '🏕️' },
+          { jp: 'たきび', hint: '薪（まき）を組んで温かい火を起こします。', icon: '🔥' },
+          { jp: 'ランタン', hint: '暗くなったキャンプ場を照らす明かりです。', icon: '🏮' },
+          { jp: 'マシュマロ', hint: '最後に火であぶって食べるふわふわのおやつ！', icon: '🍡' }
+        ]
+      },
+      mg_clover_b: {
+        id: 'mg_clover_b', type: 'scavenger_hunt', cefr: 'B1', rewardCoins: 44, friendTarget: 'clover_b',
+        title: 'クローバーの盆栽さがし', zhTitle: '小獾的 3D 森林盆栽尋寶（B1）',
+        clueJp: '森の東側にある大きな木の近くに、大切な「小さな盆栽鉢」を置いてきちゃった！見つけてきてくれる？',
+        clueZh: '我把心愛的「迷你盆栽」放在森林東側大樹附近了！能幫我找回來嗎？',
+        hint: '往目前地圖的東邊（右側，x 大約 +14、z 大約 -4）尋找閃閃發光的盆栽！',
+        targetPos: { x: 14, z: -4 }, itemIcon: '🪴', itemName: '小さな盆栽（迷你盆栽）',
+        checkQ: '見つけた盆栽を元気に育てるために毎日必要なことは？',
+        checkOpts: [{ ok: true, lbl: 'まいにち すこしずつ みずを あげること' }, { ok: false, lbl: 'れいとうこに いれること' }]
+      },
+
+      // --- CLOUDPEAK MOUNTAINS ---
+      mg_summit: {
+        id: 'mg_summit', type: 'riddle', cefr: 'A2', rewardCoins: 36, friendTarget: 'summit',
+        title: 'サミットの登山クイズ', zhTitle: '高山羊的登山日語猜謎（A2）',
+        prompt: '山のてっぺん、いちばん高い場所を日本語で何というでしょう？（ひらがな4文字）',
+        zhPrompt: '爬到高山的最頂端、最高的地方（提示：5 個平假名）。',
+        answer: 'さんちょう', hint: '前半 2 個假名是「さん」，想想「頂」的日語音讀！'
+      },
+      mg_choco: {
+        id: 'mg_choco', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'choco',
+        title: 'チョコのボードゲーム合わせ', zhTitle: '土撥鼠的桌遊日語配對（A1）',
+        prompt: 'ゲームで使う言葉をペアにしましょう！', zhPrompt: '配對玩桌遊常用的基礎日語！',
+        pairs: [{ word: 'サイコロ', zh: '骰子', icon: '🎲' }, { word: 'カード', zh: '卡牌', icon: '🃏' }, { word: 'かち', zh: '勝利', icon: '🏆' }, { word: 'ともだち', zh: '朋友', icon: '🤝' }]
+      },
+      mg_misty: {
+        id: 'mg_misty', type: 'speak_mic', cefr: 'B1', rewardCoins: 42, friendTarget: 'misty',
+        title: 'ミスティのファッション発音', zhTitle: '雪豹的時尚穿搭口說挑戰（B1）',
+        prompt: '冬のコーディネートを褒めるフレーズを言ってみましょう！', zhPrompt: '聽完發音後，試著說出稱讚冬季穿搭的日語！',
+        spoken: 'その白いマフラー、とてもお似合いですね！',
+        zhSentence: '「那條白色圍巾非常適合你呢！」',
+        keywords: ['マフラー', '似合', 'にあ', '白', 'しろ'],
+        hint: '讀音：so-no shi-ro-i ma-fu-ra-a, to-te-mo o-ni-a-i de-su ne!'
+      },
+      mg_pippin: {
+        id: 'mg_pippin', type: 'speak_mic', cefr: 'A2', rewardCoins: 36, friendTarget: 'pippin',
+        title: 'ピピンのハーブティー案内', zhTitle: '鼠兔的花草茶口說挑戰（A2）',
+        prompt: 'お客さんに温かいお茶を勧める日本語を話しましょう！', zhPrompt: '聽完示範後，用親切日語請客人喝花草茶！',
+        spoken: '温かいハーブティーはいかがですか？',
+        zhSentence: '「要不要來一杯溫熱的花草茶呢？」',
+        keywords: ['ハーブ', 'ティー', '温か', 'あたた', 'いかが'],
+        hint: '讀音：a-ta-ta-ka-i ha-a-bu-ti-i wa i-ka-ga de-su ka?'
+      },
+      mg_crag: {
+        id: 'mg_crag', type: 'scavenger_hunt', cefr: 'B2', rewardCoins: 48, friendTarget: 'crag',
+        title: 'クラッグの珍しい鉱石さがし', zhTitle: '絨鼠的 3D 高山礦石尋寶（B2）',
+        clueJp: '山の南西の岩かげに、珍しい「青い水晶の原石」が光っていたんだ。採取してきてくれるかな？',
+        clueZh: '山區西南側的岩石旁有顆發光的「藍色水晶原石」，能幫我採集回來嗎？',
+        hint: '往地圖西南方（左下方，x 約 -13、z 約 +11）尋找發光的藍色水晶！',
+        targetPos: { x: -13, z: 11 }, itemIcon: '💎', itemName: '青い水晶の原石（藍色水晶原石）',
+        checkQ: '地質学で、長い年月をかけて形成された結晶は何を物語っていますか？',
+        checkOpts: [{ ok: true, lbl: 'ちきゅうの ながい れきし' }, { ok: false, lbl: 'あしたの てんきよほう' }]
+      },
+
+      // --- FROSTBERRY ICE ---
+      mg_flurry: {
+        id: 'mg_flurry', type: 'riddle', cefr: 'A1', rewardCoins: 30, friendTarget: 'flurry',
+        title: 'フラリーの冬スポーツクイズ', zhTitle: '北極熊的冬季運動猜謎（A1）',
+        prompt: '板をはいて雪の坂をすべり降りる冬のスポーツ（ひらがな3文字）。',
+        zhPrompt: '腳踩雪板從雪坡滑下來的冬季運動（提示：3 個字元，含長音）。',
+        answer: 'すきー', hint: '第一個假名是「す」（外來語，尾音拉長）。'
+      },
+      mg_frosty: {
+        id: 'mg_frosty', type: 'scramble', cefr: 'A1', rewardCoins: 30, friendTarget: 'frosty',
+        title: 'フロスティのえいがトーク', zhTitle: '北極狐的電影日語重組（A1）',
+        prompt: 'えいがの感想を伝えるかんたんな文を作りましょう！', zhPrompt: '排好稱讚電影很有趣的簡單日語！',
+        zhSentence: '「這部電影非常有趣！」',
+        words: ['このえいがは', 'とても', 'おもしろい', 'です！']
+      },
+      mg_puffin: {
+        id: 'mg_puffin', type: 'scavenger_hunt', cefr: 'A2', rewardCoins: 38, friendTarget: 'puffin',
+        title: 'ピッパのパスポートさがし', zhTitle: '海鸚的 3D 冰原護照尋寶（A2）',
+        clueJp: '氷原の北東の氷の結晶のそばに、旅行用の「パスポート」を落としちゃった！探してくれる？',
+        clueZh: '我不小心把旅行用的「護照」掉在冰原東北方的冰晶旁了！能幫我找嗎？',
+        hint: '往地圖東北方（右上方，x 約 +12、z 約 -11）尋找發光的護照！',
+        targetPos: { x: 12, z: -11 }, itemIcon: '🛂', itemName: 'パスポート（護照）',
+        checkQ: '海外旅行で飛行機に乗るとき、必ず必要なものはどれですか？',
+        checkOpts: [{ ok: true, lbl: 'パスポートと こうくうけん' }, { ok: false, lbl: 'ゆきだるまの ぼうし' }]
+      },
+      mg_tusk: {
+        id: 'mg_tusk', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'tusk',
+        title: 'タスクのあったか料理合わせ', zhTitle: '小海象的溫暖料理配對（A1）',
+        prompt: '寒い日に食べたい料理の言葉を合わせましょう！', zhPrompt: '配對冬天料理相關的基礎日語！',
+        pairs: [{ word: 'スープ', zh: '濃湯', icon: '🥣' }, { word: 'なべ', zh: '火鍋', icon: '🍲' }, { word: 'パン', zh: '麵包', icon: '🍞' }, { word: 'あたたかい', zh: '溫暖的', icon: '🔥' }]
+      },
+      mg_snowy: {
+        id: 'mg_snowy', type: 'scavenger_hunt', cefr: 'B2', rewardCoins: 48, friendTarget: 'snowy',
+        title: 'スノーウィーのオーロラ観測機', zhTitle: '雪鴞的 3D 極光觀測器尋寶（B2）',
+        clueJp: '氷原の西側に設置した「オーロラ観測プリズム」のデータを回収したいんです。見つけてくれますか？',
+        clueZh: '我想回收放在冰原西側的「極光觀測稜鏡」數據，能幫我找回來嗎？',
+        hint: '往地圖西側（左側，x 約 -15、z 約 +2）尋找閃耀的極光稜鏡！',
+        targetPos: { x: -15, z: 2 }, itemIcon: '🔮', itemName: 'オーロラ観測プリズム（極光稜鏡）',
+        checkQ: 'オーロラは主に何の衝突によって夜空に光り輝きますか？',
+        checkOpts: [{ ok: true, lbl: 'たいようふうと ちきゅうの たいき' }, { ok: false, lbl: 'うみの なみと すなはま' }]
+      },
+
+      // --- SUNSTONE DESERT ---
+      mg_sandy: {
+        id: 'mg_sandy', type: 'riddle', cefr: 'A2', rewardCoins: 36, friendTarget: 'sandy',
+        title: 'サンディのサイクリングクイズ', zhTitle: '耳廓狐的單車日語猜謎（A2）',
+        prompt: '風を感じながらペダルをこいで走る爽快な乗り物（ひらがな5文字）。',
+        zhPrompt: '迎風踩踏板前進的雙輪交通工具（提示：5 個平假名）。',
+        answer: 'じてんしゃ', hint: '第一個假名是「じ」，第 3 個假名是「ん」。'
+      },
+      mg_spike: {
+        id: 'mg_spike', type: 'speak_mic', cefr: 'A1', rewardCoins: 30, friendTarget: 'spike',
+        title: 'スパイクの野球応援ボイス', zhTitle: '狐獴的棒球加油口說挑戰（A1）',
+        prompt: '野球の試合で元気に声を出して応援しましょう！', zhPrompt: '聽示範後，用活力滿滿的日語為棒球隊加油！',
+        spoken: 'いっしょに野球をしましょう！',
+        zhSentence: '「一起來打棒球吧！」',
+        keywords: ['野球', 'やきゅう', '一緒', 'いっしょ'],
+        hint: '讀音：i-ssho ni ya-kyu-u wo shi-ma-sho-u!'
+      },
+      mg_dune: {
+        id: 'mg_dune', type: 'scramble', cefr: 'B1', rewardCoins: 42, friendTarget: 'dune',
+        title: 'デューンの世界遺産ガイド', zhTitle: '小駱駝的世界遺產日語重組（B1）',
+        prompt: '古代遺跡の歴史を紹介する文を並べ替えましょう！', zhPrompt: '重組介紹古代遺跡歷史的日語！',
+        zhSentence: '「這座古代遺跡建於一千多年以前。」',
+        words: ['この古代遺跡は', '千年以上も', '前に', '建てられ', 'ました。']
+      },
+      mg_gecko: {
+        id: 'mg_gecko', type: 'scavenger_hunt', cefr: 'A2', rewardCoins: 38, friendTarget: 'gecko',
+        title: 'ゲッコーの水彩パレットさがし', zhTitle: '守宮的 3D 沙漠畫具尋寶（A2）',
+        clueJp: '砂漠の南東のサボテンの近くで、夕焼けを描いた「水彩パレット」を忘れちゃった！',
+        clueZh: '我把畫夕陽用的「水彩調色盤」忘在沙漠東南方的仙人掌附近了！',
+        hint: '往地圖東南方（右下方，x 約 +12、z 約 +11）尋找發光的調色盤！',
+        targetPos: { x: 12, z: 11 }, itemIcon: '🎨', itemName: '水彩パレット（水彩調色盤）',
+        checkQ: '赤と黄色を混ぜると、夕焼けにぴったりの何色になりますか？',
+        checkOpts: [{ ok: true, lbl: 'オレンジいろ' }, { ok: false, lbl: 'みどりいろ' }]
+      },
+      mg_dusty: {
+        id: 'mg_dusty', type: 'object_puzzle', cefr: 'B1', rewardCoins: 42, friendTarget: 'dusty',
+        title: 'ダスティのロボット工作', zhTitle: '犰狳的迷你機器人組裝拼圖（B1）',
+        prompt: 'お手伝いロボットを正しい手順で組み立てましょう！', zhPrompt: '依序組裝幫忙機器人的 4 個科技零件！',
+        objectIcon: '🤖', objectName: 'お手伝いミニロボット（幫忙機器人）',
+        parts: [
+          { jp: 'バッテリー', hint: '電気を供給する電源（でんげん）パーツです。', icon: '🔋' },
+          { jp: 'はぐるま', hint: 'かみ合って回転し、手足を動かす部品です。', icon: '⚙️' },
+          { jp: 'センサー', hint: '周囲の光や距離を感じ取る「目」の役割です。', icon: '📡' },
+          { jp: 'プログラム', hint: '最後に動き方を教える命令（めいれい）を入れます。', icon: '💻' }
+        ]
+      },
+
+      // --- BREEZE PLAINS ---
+      mg_daisy: {
+        id: 'mg_daisy', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'daisy',
+        title: 'デイジーの朝ごはん合わせ', zhTitle: '小乳牛的早餐日語配對（A1）',
+        prompt: 'おいしい朝ごはんの言葉を合わせましょう！', zhPrompt: '配對營養早餐的基礎日語單字！',
+        pairs: [{ word: 'たまご', zh: '雞蛋', icon: '🍳' }, { word: 'チーズ', zh: '起司', icon: '🧀' }, { word: 'バター', zh: '奶油', icon: '🧈' }, { word: 'パン', zh: '麵包', icon: '🥐' }]
+      },
+      mg_woolly: {
+        id: 'mg_woolly', type: 'riddle', cefr: 'A2', rewardCoins: 36, friendTarget: 'woolly',
+        title: 'ウーリーの編み物クイズ', zhTitle: '羊駝的編織日語猜謎（A2）',
+        prompt: '寒い冬に首に巻いて温める、毛糸で編んだ長い小物（ひらがな4文字）。',
+        zhPrompt: '寒冷冬天圍在脖子保暖的毛線織品（提示：4 個字元，含長音）。',
+        answer: 'まふらー', hint: '第一個假名是「ま」（來自英文 muffler 的日語外來語）。'
+      },
+      mg_trotter: {
+        id: 'mg_trotter', type: 'scavenger_hunt', cefr: 'B1', rewardCoins: 44, friendTarget: 'trotter',
+        title: 'トロッターのテニストロフィー', zhTitle: '小馬的 3D 草原網球尋寶（B1）',
+        clueJp: '平原の北西の木かげに、試合で使う「金色テニスボール」が転がっていったんだ！見つけてくれる？',
+        clueZh: '比賽用的「金色網球」滾到草原西北方樹蔭下了！能幫我找回來嗎？',
+        hint: '往地圖西北方（左上方，x 約 -14、z 約 -12）尋找發光的金色網球！',
+        targetPos: { x: -14, z: -12 }, itemIcon: '🎾', itemName: '金色テニスボール（金色網球）',
+        checkQ: 'テニスの試合で最初にボールを打ち込むことを何と言いますか？',
+        checkOpts: [{ ok: true, lbl: 'サーブ' }, { ok: false, lbl: 'ホームラン' }]
+      },
+      mg_squeak: {
+        id: 'mg_squeak', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'squeak',
+        title: 'スクイークの野菜サラダ合わせ', zhTitle: '天竺鼠的蔬菜日語配對（A1）',
+        prompt: '新鮮な野菜の日本語をペアにしましょう！', zhPrompt: '將新鮮蔬菜的日語單字與圖示配對！',
+        pairs: [{ word: 'トマト', zh: '番茄', icon: '🍅' }, { word: 'にんじん', zh: '胡蘿蔔', icon: '🥕' }, { word: 'とうもろこし', zh: '玉米', icon: '🌽' }, { word: 'ピーマン', zh: '青椒／甜椒', icon: '🫑' }]
+      },
+      mg_chirp: {
+        id: 'mg_chirp', type: 'speak_mic', cefr: 'A1', rewardCoins: 30, friendTarget: 'chirp',
+        title: 'チャープの朝のあいさつ発音', zhTitle: '小雞的元氣早安口說挑戰（A1）',
+        prompt: '朝いちばんの元気な挨拶を日本語で言ってみましょう！', zhPrompt: '聽示範發音後，元氣滿滿地說出日語早安問候！',
+        spoken: 'おはようございます！今日もいい天気ですね！',
+        zhSentence: '「早安！今天天氣也真好呢！」',
+        keywords: ['おはよう', '天気', 'てんき', '今日', 'きょう'],
+        hint: '讀音：o-ha-yo-u go-za-i-ma-su! kyo-u mo i-i te-n-ki de-su ne!'
+      },
+
+      // --- STARLIGHT GLADE ---
+      mg_puff: {
+        id: 'mg_puff', type: 'object_puzzle', cefr: 'A2', rewardCoins: 36, friendTarget: 'puff',
+        title: 'パフのフルーツパフェ作り', zhTitle: '雲朵小羊的甜點聖代拼圖（A2）',
+        prompt: 'かわいいパフェを下から順番に盛り付けましょう！', zhPrompt: '由下往上依序疊出可愛的水果聖代！',
+        objectIcon: '🍨', objectName: 'きらきらフルーツパフェ（閃耀水果聖代）',
+        parts: [
+          { jp: 'コーンフレーク', hint: 'グラスの一番底に入れるサクサク食感の層です。', icon: '🥣' },
+          { jp: 'アイスクリーム', hint: 'ひんやり甘くて冷たい真ん中の主役です。', icon: '🍦' },
+          { jp: 'なまクリーム', hint: '真っ白でふわふわに絞るトッピングです。', icon: '☁️' },
+          { jp: 'さくらんぼ', hint: 'てっぺんにちょこんと乗せる赤い果実です。', icon: '🍒' }
+        ]
+      },
+      mg_wisp: {
+        id: 'mg_wisp', type: 'riddle', cefr: 'B1', rewardCoins: 42, friendTarget: 'wisp',
+        title: 'ウィスプの宇宙クイズ', zhTitle: '星光狐狸的宇宙日語猜謎（B1）',
+        prompt: '地球を飛び出して月や星へ向かう乗り物（ひらがな4文字）。',
+        zhPrompt: '飛離地球前往月球與宇宙的載具（提示：4 個平假名，含促音）。',
+        answer: 'ろけっと', hint: '第一個假名是「ろ」（來自英文 rocket）。'
+      },
+      mg_glimmer: {
+        id: 'mg_glimmer', type: 'scavenger_hunt', cefr: 'B2', rewardCoins: 48, friendTarget: 'glimmer',
+        title: 'グリマーの色彩プリズムさがし', zhTitle: '月光蛾的 3D 色彩稜鏡尋寶（B2）',
+        clueJp: '林の南東に落とした「虹の色彩プリズム」を見つけてくれる？光の三原色を確かめたいの。',
+        clueZh: '能幫我找回掉在林地東南方的「彩虹色彩稜鏡」嗎？我想觀察光的三原色。',
+        hint: '往地圖東南方（右下方，x 約 +13、z 約 +10）尋找閃亮的稜鏡！',
+        targetPos: { x: 13, z: 10 }, itemIcon: '🌈', itemName: '虹の色彩プリズム（彩虹稜鏡）',
+        checkQ: '美術で淡い紫と金を合わせると、どのような印象を与えられますか？',
+        checkOpts: [{ ok: true, lbl: 'じょうひんで げんそうてきな ふんいき' }, { ok: false, lbl: 'こうじげんばの かんばんのような いんしょう' }]
+      },
+      mg_nova: {
+        id: 'mg_nova', type: 'scramble', cefr: 'A2', rewardCoins: 36, friendTarget: 'nova',
+        title: 'ノヴァのひこうきトーク', zhTitle: '小獅鷲的飛機日語重組（A2）',
+        prompt: 'ひこうきが空へ飛ぶ文を並べ替えましょう！', zhPrompt: '排好描寫飛機飛向藍天的日語句子！',
+        zhSentence: '「飛機飛向了藍色的天空。」',
+        words: ['ひこうきが', 'あおい', 'そらへ', 'とびます。']
+      },
+      mg_twinkle: {
+        id: 'mg_twinkle', type: 'speak_mic', cefr: 'A2', rewardCoins: 36, friendTarget: 'twinkle',
+        title: 'トゥインクルのバイオリン演奏会', zhTitle: '水晶貓的小提琴口說挑戰（A2）',
+        prompt: 'コンサートで音楽の感想を日本語で伝えましょう！', zhPrompt: '聽示範發音後，用日語稱讚美妙的小提琴聲！',
+        spoken: 'バイオリンの音がとてもきれいですね。',
+        zhSentence: '「小提琴的聲音非常優美呢。」',
+        keywords: ['バイオリン', '音', 'おと', 'きれい'],
+        hint: '讀音：ba-i-o-ri-n no o-to ga to-te-mo ki-re-i de-su ne.'
+      },
+
+      // --- BAMBOO GROVE ---
+      mg_bao: {
+        id: 'mg_bao', type: 'memory', cefr: 'A1', rewardCoins: 28, friendTarget: 'bao',
+        title: 'バオのお弁当ペア合わせ', zhTitle: '大熊貓的日式便當配對（A1）',
+        prompt: '和食とお弁当の言葉をペアにしましょう！', zhPrompt: '配對日式料理與便當的基礎日語！',
+        pairs: [{ word: 'おにぎり', zh: '飯糰', icon: '🍙' }, { word: 'おちゃ', zh: '茶', icon: '🍵' }, { word: 'だんご', zh: '糰子', icon: '🍡' }, { word: 'べんとう', zh: '便當', icon: '🍱' }]
+      },
+      mg_miso: {
+        id: 'mg_miso', type: 'speak_mic', cefr: 'A2', rewardCoins: 36, friendTarget: 'miso',
+        title: 'ミソの茶道おもてなし', zhTitle: '柴犬味增的茶道日語口說（A2）',
+        prompt: 'お茶席での丁寧な言葉を日本語で言ってみましょう！', zhPrompt: '聽示範後，用有禮貌的日語招待抹茶與和菓子！',
+        spoken: 'おいしい抹茶をどうぞ召し上がれ。',
+        zhSentence: '「請品嚐美味的抹茶。」',
+        keywords: ['抹茶', 'まっちゃ', 'どうぞ', '召し上', 'めしあ'],
+        hint: '讀音：o-i-shi-i ma-ccha wo do-u-zo me-shi-a-ga-re.'
+      },
+      mg_taro: {
+        id: 'mg_taro', type: 'riddle', cefr: 'B1', rewardCoins: 42, friendTarget: 'taro',
+        title: 'タロウの温泉旅クイズ', zhTitle: '小獼猴的溫泉旅行猜謎（B1）',
+        prompt: '地下から湧き出る温かいお湯に入って疲れを癒やす場所（ひらがな4文字）。',
+        zhPrompt: '浸泡從地下湧出的天然熱水、放鬆身心的好地方（提示：4 個平假名）。',
+        answer: 'おんせん', hint: '第一個假名是「お」，第 2 與第 4 個假名都是「ん」。'
+      },
+      mg_yuzu: {
+        id: 'mg_yuzu', type: 'speak_mic', cefr: 'B2', rewardCoins: 48, friendTarget: 'yuzu',
+        title: 'ユズの季節の俳句朗読', zhTitle: '丹頂鶴的季節俳句朗讀挑戰（B2）',
+        prompt: '竹林の風を詠んだ俳句を美しく朗読しましょう！', zhPrompt: '聽示範後，用日語優雅地朗讀這首季節俳句！',
+        spoken: '竹の葉に、そよ風わたる、朝の道。',
+        zhSentence: '「微風輕拂竹葉，走過晨間小徑。」',
+        keywords: ['竹', 'たけ', '風', 'かぜ', '朝', 'あさ'],
+        hint: '讀音：ta-ke no ha ni, so-yo-ka-ze wa-ta-ru, a-sa no mi-chi.'
+      },
+      mg_kiki: {
+        id: 'mg_kiki', type: 'memory', cefr: 'A2', rewardCoins: 36, friendTarget: 'kiki',
+        title: 'キキの折り紙クラフト合わせ', zhTitle: '小飛鼠的摺紙手作配對（A2）',
+        prompt: '折り紙と工作の言葉をペアにしましょう！', zhPrompt: '配對摺紙與手作相關的日語單字！',
+        pairs: [{ word: 'おりがみ', zh: '摺紙', icon: '🦢' }, { word: 'はさみ', zh: '剪刀', icon: '✂️' }, { word: 'かみ', zh: '紙張', icon: '📄' }, { word: 'ひこうき', zh: '紙飛機', icon: '✈️' }]
+      }
+    };
+    // Fix Summit's riddle answer cleanly to さんちょう (山頂, 5 kana)
+    NPC_MINIGAMES.mg_summit.prompt = '山のてっぺん、いちばん高い場所を日本語で何というでしょう？（ひらがな5文字）';
+    NPC_MINIGAMES.mg_summit.answer = 'さんちょう';
+    NPC_MINIGAMES.mg_summit.hint = '前半是「さん」，最後一個假名是「う」。';
+    Object.assign(MINIGAMES, NPC_MINIGAMES);
 
     // 12 Interconnected Zones (4x3 World Grid — Japanese Target + Traditional Chinese!)
     const ZONES = {
@@ -1115,7 +1669,7 @@
       ridingGuardian: null, rideMesh: null, mirrorPreview: false,
       designMode: false, designSelectedId: null, designGhost: null, designGhostRing: null,
       designCursorX: -6, designCursorZ: 7, designRotY: 0, designRedGroup: null,
-      decorMeshes: [], raycaster: new THREE.Raycaster(), mouseNDC: new THREE.Vector2(),
+      decorMeshes: [], activeChallenge: null, raycaster: new THREE.Raycaster(), mouseNDC: new THREE.Vector2(),
       keys: {}, camYaw: 0, camPitch: 0.36, camDist: 10.5,
       isDragging: false, lastX: 0, lastY: 0, velY: 0, onGround: true,
       modalOpen: false, cutscene: null, nearest: null, portalCooldown: 0,
@@ -1901,6 +2455,14 @@
             headG.add(horn, ear);
           }
           addSnout(0xffc2d1, 0.30, 0.19, 0.22, -0.49, -0.11, 0xf472b6);
+          for (const nx of [-0.09, 0.09]) {
+            const nos = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), plushMat(0xbe185d));
+            nos.position.set(nx, -0.09, -0.70); headG.add(nos);
+          }
+          const cTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.045, 0.38, 6, 8), mainMat);
+          cTail.position.set(0, 0.38, 0.48); cTail.rotation.x = 0.7;
+          const cTuft = new THREE.Mesh(new THREE.SphereGeometry(0.10, 8, 8), spotMat);
+          cTuft.position.set(0, 0.22, 0.62); bodyGroup.add(cTail, cTuft);
           attachCuteFace(headG, { eyeY: 0.09, eyeX: 0.22, eyeZ: -0.47, muzzleColor: 0xffc2d1 });
         } else if (aid === 'woolly') {
           headG.position.y = 1.48;
@@ -2120,12 +2682,44 @@
           const cTail = new THREE.Mesh(new THREE.CapsuleGeometry(0.10, 0.36, 8, 10), mainMat);
           cTail.position.set(0, 0.46, 0.48); cTail.rotation.x = 0.68; bodyGroup.add(cTail);
         } else if (aid === 'miso') {
+          // Shiba Inu: Iconic white maro eyebrows, cream muzzle & curled donut tail!
+          for (const side of [-1, 1]) {
+            const maro = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), plushMat(0xffffff));
+            maro.position.set(side * 0.17, 0.22, -0.48); headG.add(maro);
+          }
           const dTail = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.09, 8, 14), mainMat);
           dTail.position.set(0, 0.56, 0.48); dTail.rotation.y = Math.PI / 2; bodyGroup.add(dTail);
           addSnout(0xfff8eb, 0.22, 0.15, 0.20, -0.48, -0.09, 0x2b252c);
+        } else if (aid === 'biscuit') {
+          // Corgi: White forehead blaze, fluffy white chest ruff & cute peach bobtail!
+          const blaze = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.30, 8, 10), plushMat(0xffffff));
+          blaze.position.set(0, 0.18, -0.46); headG.add(blaze);
+          const ruff = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), plushMat(0xffffff));
+          ruff.scale.set(1.05, 0.72, 0.55); ruff.position.set(0, 0.74, -0.26);
+          const bob = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), mainMat);
+          bob.position.set(0, 0.36, 0.44);
+          bodyGroup.add(ruff, bob);
+          addSnout(0xffffff, 0.22, 0.14, 0.22, -0.49, -0.09, 0x2b252c);
+        } else if (aid === 'mimi') {
+          // Kitten: Cute tabby forehead stripes + graceful curled kitten tail!
+          for (const sx of [-0.11, 0, 0.11]) {
+            const st = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.14, 6, 8), plushMat(0xf4a261));
+            st.position.set(sx, 0.34, -0.44); headG.add(st);
+          }
+          const kTail = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.065, 8, 16, Math.PI * 1.2), mainMat);
+          kTail.position.set(0, 0.52, 0.50); kTail.rotation.y = Math.PI / 2; bodyGroup.add(kTail);
         } else {
-          const tail = new THREE.Mesh(new THREE.CapsuleGeometry(sp === 'fox' ? 0.19 : 0.11, sp === 'fox' ? 0.46 : 0.28, 10, 12), sp === 'fox' ? accMat : mainMat);
-          tail.position.set(0, 0.45, 0.48); tail.rotation.x = 0.68; bodyGroup.add(tail);
+          // Arctic Fox (frosty) & Star Fox (wisp): Sleek fox snout + huge fluffy white-tipped brush tail!
+          addSnout(a.accent, 0.19, 0.13, 0.24, -0.50, -0.09, 0x2b252c);
+          const tail = new THREE.Mesh(new THREE.CapsuleGeometry(0.21, 0.52, 10, 12), mainMat);
+          tail.position.set(0, 0.46, 0.54); tail.rotation.x = 0.75;
+          const tip = new THREE.Mesh(new THREE.SphereGeometry(0.20, 10, 10), plushMat(0xffffff));
+          tip.position.set(0, 0.66, 0.76);
+          bodyGroup.add(tail, tip);
+          if (aid === 'wisp') {
+            const wStar = new THREE.Mesh(new THREE.OctahedronGeometry(0.11, 0), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+            wStar.position.set(0, 0.90, 0.80); bodyGroup.add(wStar);
+          }
         }
         attachCuteFace(headG, { hasWhiskers: sp === 'cat' || isSquirrel, muzzleColor: a.accent });
       } else if (sp === 'otter') {
@@ -2167,8 +2761,11 @@
           }
           addSnout(0xf3e5d8, 0.16, 0.12, 0.24, -0.50, -0.09, 0x5c4033);
         } else if (aid === 'squeak') {
+          // Guinea Pig: Plump calico color patches + cute floppy ears!
+          const patch = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), plushMat(0x78350f));
+          patch.scale.set(0.9, 1.0, 0.48); patch.position.set(-0.24, 0.12, -0.36); headG.add(patch);
           for (const side of [-1, 1]) {
-            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), plushMat(0x78350f));
+            const ear = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), plushMat(0x78350f));
             ear.scale.set(0.75, 1.0, 0.35); ear.position.set(side * 0.46, 0.22, -0.04); headG.add(ear);
           }
         } else {
@@ -2195,6 +2792,7 @@
           const hump = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 12), mainMat);
           hump.scale.set(0.9, 1.15, 1.0); hump.position.set(0, 0.76, 0.36); bodyGroup.add(hump);
         } else if (aid === 'trotter') {
+          footL.material = plushMat(0x451a03); footR.material = plushMat(0x451a03);
           for (let mi = 0; mi < 3; mi++) {
             const mane = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), plushMat(0x78350f));
             mane.position.set(0, 0.48 - mi * 0.14, 0.24 + mi * 0.10); headG.add(mane);
@@ -2904,6 +3502,151 @@
       }
     }
 
+    function buildPlantedFlowerMesh(seedId) {
+      const grp = new THREE.Group();
+      const stemMat = plushMat(0x22c55e);
+      const leafMat = plushMat(0x4ade80);
+
+      if (seedId === 'seed_tulip') {
+        // Classic cupped Pink Tulip with broad embracing leaves
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.04, 0.62, 6), stemMat);
+        stem.position.y = 0.31; grp.add(stem);
+        for (const side of [-1, 1]) {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), leafMat);
+          lf.scale.set(0.38, 1.65, 0.14); lf.position.set(side * 0.13, 0.28, 0); lf.rotation.z = -side * 0.42;
+          grp.add(lf);
+        }
+        const cols = [0xf43f5e, 0xf472b6, 0xfb7185];
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), plushMat(cols[i % 3]));
+          p.scale.set(0.72, 1.45, 0.35);
+          p.position.set(Math.cos(a) * 0.085, 0.72, Math.sin(a) * 0.085);
+          p.rotation.y = -a + Math.PI / 2; p.rotation.x = 0.24;
+          grp.add(p);
+        }
+      } else if (seedId === 'seed_sunflower') {
+        // Tall Sunny Sunflower with dark chocolate seed disc & 12 golden petals!
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.052, 0.92, 7), stemMat);
+        stem.position.y = 0.46; grp.add(stem);
+        for (const side of [-1, 1]) {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), leafMat);
+          lf.scale.set(1.15, 0.18, 0.85); lf.position.set(side * 0.18, 0.40 + side * 0.06, 0); lf.rotation.z = side * 0.35;
+          grp.add(lf);
+        }
+        const head = new THREE.Group(); head.position.set(0, 0.96, 0.04); head.rotation.x = -0.35;
+        const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.07, 14), plushMat(0x5c2d16));
+        disc.rotation.x = Math.PI / 2; head.add(disc);
+        const pMat = plushMat(0xfacc15);
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), pMat);
+          p.scale.set(0.65, 1.55, 0.25);
+          p.position.set(Math.cos(a) * 0.23, Math.sin(a) * 0.23, -0.01);
+          p.rotation.z = a - Math.PI / 2; head.add(p);
+        }
+        grp.add(head);
+      } else if (seedId === 'seed_lavender') {
+        // Tiered upright purple Lavender spikes!
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.028, 0.84, 6), plushMat(0x65a30d));
+        stem.position.y = 0.42; grp.add(stem);
+        const budCols = [0x9333ea, 0xa855f7, 0xc084fc];
+        for (let tier = 0; tier < 6; tier++) {
+          const y = 0.44 + tier * 0.085;
+          const rad = 0.085 - tier * 0.009;
+          for (let b = 0; b < 4; b++) {
+            const a = (b / 4) * Math.PI * 2 + tier * 0.6;
+            const bud = new THREE.Mesh(new THREE.SphereGeometry(0.048 - tier * 0.003, 7, 6), plushMat(budCols[(tier + b) % 3]));
+            bud.scale.set(0.85, 1.25, 0.85);
+            bud.position.set(Math.cos(a) * rad, y, Math.sin(a) * rad);
+            grp.add(bud);
+          }
+        }
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(0.042, 7, 6), plushMat(0xd8b4fe));
+        tip.position.y = 0.96; grp.add(tip);
+      } else if (seedId === 'seed_bluebell') {
+        // Gracefully arching Sky Bluebell stem with 3 dangling bell blossoms!
+        const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.52, 0.03), new THREE.Vector3(0.14, 0.80, 0.06), new THREE.Vector3(0.32, 0.72, 0.08)];
+        const stem = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, 0.026, 6, false), stemMat);
+        grp.add(stem);
+        [[0.12, 0.72, 0.05, 0.95], [0.24, 0.70, 0.07, 0.88], [0.33, 0.64, 0.08, 0.80]].forEach(([bx, by, bz, sc]) => {
+          const bell = new THREE.Mesh(new THREE.ConeGeometry(0.10 * sc, 0.19 * sc, 10, 1, true), new THREE.MeshToonMaterial({ color: 0x38bdf8, gradientMap: G.toonGradient, side: THREE.DoubleSide }));
+          bell.position.set(bx, by, bz);
+          const cap = new THREE.Mesh(new THREE.SphereGeometry(0.055 * sc, 8, 6), plushMat(0x0284c7));
+          cap.position.set(bx, by + 0.08 * sc, bz);
+          const stam = new THREE.Mesh(new THREE.SphereGeometry(0.032 * sc, 6, 6), plushMat(0xfef08a));
+          stam.position.set(bx, by - 0.08 * sc, bz);
+          grp.add(bell, cap, stam);
+        });
+      } else if (seedId === 'seed_rose') {
+        // Lush layered spiral Cherry Rose with leafy stem!
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.038, 0.68, 6), plushMat(0x16a34a));
+        stem.position.y = 0.34; grp.add(stem);
+        for (const side of [-1, 1]) {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), plushMat(0x22c55e));
+          lf.scale.set(1.25, 0.18, 0.65); lf.position.set(side * 0.14, 0.36, 0); lf.rotation.z = side * 0.35;
+          grp.add(lf);
+        }
+        const bud = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), plushMat(0xbe123c));
+        bud.position.y = 0.75; grp.add(bud);
+        for (let i = 0; i < 5; i++) {
+          const a = (i / 5) * Math.PI * 2;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.10, 8, 8), plushMat(0xe11d48));
+          p.scale.set(0.95, 1.15, 0.32);
+          p.position.set(Math.cos(a) * 0.095, 0.74, Math.sin(a) * 0.095);
+          p.rotation.y = -a + Math.PI / 2; p.rotation.x = 0.32;
+          grp.add(p);
+        }
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + 0.3;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.125, 8, 8), plushMat(0xf43f5e));
+          p.scale.set(1.05, 1.0, 0.32);
+          p.position.set(Math.cos(a) * 0.155, 0.71, Math.sin(a) * 0.155);
+          p.rotation.y = -a + Math.PI / 2; p.rotation.x = 0.62;
+          grp.add(p);
+        }
+      } else if (seedId === 'seed_orchid') {
+        // Sculpted Royal Orchid with arching stalk, glossy basal leaves & golden-lip 5-petal blooms!
+        const pts = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0.48, 0.03), new THREE.Vector3(0.12, 0.80, 0.07), new THREE.Vector3(0.28, 0.88, 0.09)];
+        const stem = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 14, 0.03, 6, false), stemMat);
+        grp.add(stem);
+        for (const side of [-1, 1]) {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), plushMat(0x15803d));
+          lf.scale.set(1.25, 0.14, 0.52); lf.position.set(side * 0.16, 0.09, 0); lf.rotation.z = side * 0.22;
+          grp.add(lf);
+        }
+        [[0.12, 0.78, 0.08, 0.72], [0.27, 0.87, 0.10, 0.62]].forEach(([bx, by, bz, sc]) => {
+          const bg = new THREE.Group(); bg.position.set(bx, by, bz); bg.scale.setScalar(sc);
+          for (let i = 0; i < 5; i++) {
+            const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
+            const p = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), plushMat(i % 2 ? 0xe879f9 : 0xc084fc));
+            p.scale.set(0.85, 1.35, 0.26);
+            p.position.set(Math.cos(a) * 0.18, Math.sin(a) * 0.18, 0);
+            p.rotation.z = a - Math.PI / 2; bg.add(p);
+          }
+          const lip = new THREE.Mesh(new THREE.SphereGeometry(0.10, 8, 8), plushMat(0xfef08a));
+          lip.position.set(0, -0.04, 0.05); bg.add(lip); grp.add(bg);
+        });
+      } else {
+        // Golden Daisy: Crisp 10-petal white daisy ring + bright sunny golden dome!
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.034, 0.62, 6), stemMat);
+        stem.position.y = 0.31; grp.add(stem);
+        const head = new THREE.Group(); head.position.y = 0.64; head.rotation.x = -Math.PI / 3.4;
+        const pMat = plushMat(0xffffff);
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          const p = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), pMat);
+          p.scale.set(0.58, 1.65, 0.25);
+          p.position.set(Math.cos(a) * 0.16, Math.sin(a) * 0.16, 0);
+          p.rotation.z = a - Math.PI / 2; head.add(p);
+        }
+        const ctr = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 10), plushMat(0xfacc15));
+        ctr.scale.z = 0.6; ctr.position.z = 0.03; head.add(ctr);
+        grp.add(head);
+      }
+      return grp;
+    }
+
     function updatePlotVisual(idx) {
       const pm = G.plotMeshes[idx], pl = G.state.farmPlots[idx];
       if (!pm || !pl) return;
@@ -2913,13 +3656,13 @@
       if (pl.ready) {
         const seedItem = ITEMS[pl.seedId];
         if (seedItem && seedItem.type === 'flower_seed') {
-          const positions = [[-0.65, -0.45], [0.65, -0.45], [0, 0.1], [-0.55, 0.58], [0.55, 0.58]];
+          const positions = [[-0.68, -0.52], [0.68, -0.48], [0, 0.04], [-0.58, 0.58], [0.60, 0.55]];
           positions.forEach(([ox, oz], fi) => {
-            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.68, 6), plushMat(0x22c55e));
-            stem.position.set(ox, 0.34, oz);
-            const fl = buildSixPetalFlower(seedItem.petalHex || 0xf472b6, 0.92);
-            fl.position.set(ox, 0.72, oz); fl.rotation.x = -Math.PI / 3.2; fl.rotation.z = fi * 0.7;
-            pm.sprout.add(stem, fl);
+            const fl = buildPlantedFlowerMesh(pl.seedId);
+            fl.position.set(ox, 0, oz);
+            fl.rotation.y = fi * 1.25;
+            fl.scale.setScalar(0.92 + (fi % 2) * 0.12);
+            pm.sprout.add(fl);
           });
         } else {
           const col = pl.seedId === 'seed_carrot' ? 0xf97316 : (pl.seedId === 'seed_strawberry' ? 0xf43f5e : 0x4ade80);
@@ -2943,7 +3686,20 @@
       if (G.cutscene) endCutscene();
       const clampedDur = Math.min(2.8, duration);
       let foodMesh = null;
-      if (foodColor !== null) {
+      if (anim === 'groom') {
+        // Cute 3D pastel brush/comb floating & gently brushing the excited animal!
+        foodMesh = new THREE.Group();
+        const handle = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.36, 8, 10), plushMat(0xf472b6));
+        handle.rotation.z = Math.PI / 2; handle.position.x = 0.24;
+        const pad = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.12, 0.24), plushMat(0xfef08a));
+        for (let ti = -2; ti <= 2; ti++) {
+          const tooth = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 6), plushMat(0xffffff));
+          tooth.position.set(ti * 0.08, -0.12, 0); foodMesh.add(tooth);
+        }
+        foodMesh.add(handle, pad);
+        foodMesh.position.set(focusMesh.position.x, 2.05, focusMesh.position.z - 0.15);
+        G.zoneGroup.add(foodMesh);
+      } else if (foodColor !== null) {
         foodMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), plushMat(foodColor));
         foodMesh.position.set(focusMesh.position.x, 1.4, focusMesh.position.z - 1.1);
         G.zoneGroup.add(foodMesh);
@@ -3030,22 +3786,27 @@
       const zName = ZONES[a.zoneId].name;
       const mode = turnSeed % 3;
       if (mode === 1) {
+        const isEasy = (a.cefr === 'A1' || a.cefr === 'A2');
         return {
-          promptEn: `ちょっと質問してもいいですか？${zName}で${fav.name}を食べるのは好きですか？`,
-          promptZh: `可以問你一個問題嗎？你喜歡在${ZONES[a.zoneId].zhName}吃${fav.zh}嗎？`,
+          promptEn: isEasy
+            ? `${fav.name}はすきですか？`
+            : `ちょっと質問してもいいですか？${zName}で${fav.name}を食べるのは好きですか？`,
+          promptZh: isEasy
+            ? `你喜歡${fav.zh}嗎？`
+            : `可以問你一個問題嗎？你喜歡在${ZONES[a.zoneId].zhName}吃${fav.zh}嗎？`,
           replies: [
             {
-              en: `はい！${fav.name}はとても美味しそうですね！`,
-              zh: `喜歡！${fav.zh}聽起來就超好吃！`,
-              followEn: `わあ、好みがぴったり合いますね！今度いっしょに${fav.name}を食べましょう！`,
-              followZh: `哇，我們的口味一拍即合呢！下次一起吃${fav.zh}吧！`,
+              en: isEasy ? `はい、だいすきです！おいしそう！` : `はい！${fav.name}はとても美味しそうですね！`,
+              zh: `喜歡！看起來好好吃！`,
+              followEn: isEasy ? `うれしいな！こんどいっしょに食べましょう！` : `わあ、好みがぴったり合いますね！今度いっしょに${fav.name}を食べましょう！`,
+              followZh: `好開心！下次一起吃吧！`,
               bonus: a.isGuardian ? 6 : 8
             },
             {
-              en: `まだ食べたことがありませんが、今度お土産に持ってきますね！`,
-              zh: `還沒吃過呢，不過下次我買來當伴手禮送你！`,
-              followEn: `まあ、なんて優しいんでしょう！お心遣いありがとうございます！`,
-              followZh: `哇，你真是太體貼了！謝謝你的心意！`,
+              en: isEasy ? `まだですが、こんど持ってきますね！` : `まだ食べたことがありませんが、今度お土産に持ってきますね！`,
+              zh: `還沒吃過，下次我帶給你！`,
+              followEn: isEasy ? `わあ、ありがとう！たのしみにしています！` : `まあ、なんて優しいんでしょう！お心遣いありがとうございます！`,
+              followZh: `哇，謝謝你！我很期待喔！`,
               bonus: a.isGuardian ? 7 : 9
             }
           ]
@@ -3110,8 +3871,8 @@
       openModal(`
         <div class="modal-head">
           <div>
-            <h2 class="modal-title">${a.isGuardian ? '✨ ' : '🐾 '}${a.name} (${a.species})</h2>
-            <div class="modal-sub">${a.zhSpecies} · Favorite: ${fav.icon} ${fav.name} ${G.state.zhHints ? `(${fav.zh})` : ''}</div>
+            <h2 class="modal-title">${a.isGuardian ? '✨ ' : '🐾 '}${a.name}（${a.species}） <span style="font-size:12px; padding:2px 8px; border-radius:999px; background:${a.cefr==='A1'?'#dcfce7':a.cefr==='A2'?'#e0f2fe':a.cefr==='B1'?'#fef3c7':'#f3e8ff'}; color:#1e293b; vertical-align:middle;">CEFR ${a.cefr}</span></h2>
+            <div class="modal-sub">${a.zhSpecies} · 主題：${a.topic}（${a.topicZh}） · 最愛：${fav.icon} ${fav.name}</div>
           </div>
           <div style="display:flex; gap:6px;">
             <button id="an-speak" class="btn btn-sky btn-sm">🔊 聽日語發音</button>
@@ -3132,9 +3893,10 @@
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
           <button id="btn-feed" class="btn btn-peach" ${hasFav ? '' : 'disabled'}>${fav.icon} Feed ${fav.name} (${G.state.inventory[a.favFood] || 0})</button>
-          <button id="btn-comb" class="btn btn-mint" ${hasComb ? '' : 'disabled'}>🪮 Groom (+10 ♥)</button>
+          <button id="btn-comb" class="btn btn-mint" ${hasComb ? '' : 'disabled'}>🪮 ブラシでとかす（梳毛 +10 ♥）</button>
+          <button id="btn-pet" class="btn btn-peach">✋ なでなで（摸摸頭 +6 ♥）</button>
           ${ownedFlowers.length > 0 ? `<button id="btn-gift-flower" class="btn btn-pink">💐 Gift ${ownedFlowers[0].icon} ${ownedFlowers[0].name} (+${ownedFlowers[0].giftBonus} ♥)</button>` : ''}
-          ${a.rescueMiniGame ? `<button id="btn-help-mg" class="btn btn-sky">🎮 Help Mini-Game</button>` : ''}
+          <button id="btn-help-mg" class="btn btn-sky">${a.isGuardian ? '🌟 守護者特別チャレンジ（專屬挑戰）' : `🎮 ${a.topic}ミニゲーム（挑戰小遊戲）`}</button>
           ${canInvite ? `<button id="btn-invite-farm" class="btn btn-pink">🏡 Invite to My Farm!</button>` : ''}
           ${canPlay ? `<button id="btn-play-cut" class="btn btn-pink">🎀 Play Together!</button>` : ''}
           ${canRide ? `<button id="btn-ride-guard" class="btn btn-sky">${animalId === 'longwei' ? '🐉 Ask to Ride Longwei!' : '🦄 Ask to Ride Celeste!'}</button>` : ''}
@@ -3220,7 +3982,14 @@
       });
       document.getElementById('btn-comb').addEventListener('click', () => {
         if ((G.state.inventory.soft_comb || 0) <= 0) return;
-        AudioSys.sfx('heart'); addFriendship(animalId, 10); toast(`🪮 ${a.name} looks extra fluffy! (+10 ♥)`); openAnimalModal(animalId, isOnFarm);
+        addFriendship(animalId, 10); closeModal();
+        const fm = G.animalMeshes[animalId];
+        if (fm) startCutscene(`✨ ${a.name}（${a.species}）：「わぁ、ふわふわで気持ちいい！」(+10 ♥)`, `${a.name}（${a.zhSpecies}）開心得蹦蹦跳跳，毛髮變得超蓬鬆！（好感度 +10）`, fm, 'groom', 2.4);
+      });
+      document.getElementById('btn-pet').addEventListener('click', () => {
+        addFriendship(animalId, 6); closeModal();
+        const fm = G.animalMeshes[animalId];
+        if (fm) startCutscene(`💖 ${a.name}（${a.species}）：「えへへ、なでてくれてありがとう！」(+6 ♥)`, `${a.name}（${a.zhSpecies}）開心地搖晃身體享受你的摸摸！（好感度 +6）`, fm, 'groom', 2.2);
       });
       const gfBtn = document.getElementById('btn-gift-flower');
       if (gfBtn && ownedFlowers.length > 0) gfBtn.addEventListener('click', () => {
@@ -3397,11 +4166,355 @@
     }
 
     function openMiniGame(mgId) {
-      showTutorialOnce('mg', 'English Mini-Games', 'Complete mini-games to earn coins and raise friendship!', '完成英語小遊戲可以賺取金幣並提升好感度！');
+      showTutorialOnce('mg', '日語迷你遊戲', '完成每位動物與守護者的專屬日語遊戲，可獲得金幣與好感度！需要幫忙隨時點 💡 ヒント（提示）！', '完成每位動物與守護者的專屬日語遊戲，可獲得金幣與好感度！');
+      if (mgId === 'guardian_dragon_hoops') { startDragonHoopsChallenge(); return; }
+      if (mgId === 'guardian_tanuki_hide') { startTanukiHideChallenge(); return; }
+      if (mgId === 'guardian_unicorn_stars') { startUnicornStarsChallenge(); return; }
+      if (mgId === 'guardian_koma_petals') { startKomaBellChallenge(); return; }
+      if (mgId === 'guardian_bramble_sprint') { startBrambleSprintChallenge(); return; }
       const mg = MINIGAMES[mgId]; if (!mg) return;
       if (mg.type === 'memory') renderMemoryMG(mg);
       else if (mg.type === 'scramble') renderScrambleMG(mg);
       else if (mg.type === 'riddle') renderRiddleMG(mg);
+      else if (mg.type === 'speak_mic') renderSpeakMicMG(mg);
+      else if (mg.type === 'object_puzzle') renderObjectPuzzleMG(mg);
+      else if (mg.type === 'scavenger_hunt') startScavengerHuntMG(mg);
+    }
+
+    // --- NEW NPC MINI-GAME TYPE 4: MICROPHONE SPEAKING CHALLENGE (With Graceful Fallback & 💡 Hint) ---
+    function renderSpeakMicMG(mg) {
+      let showHint = false;
+      function draw() {
+        openModal(`
+          <div class="modal-head">
+            <div>
+              <h2 class="modal-title">🎤 ${mg.title} ${mg.cefr ? `<span style="font-size:11px; padding:2px 7px; border-radius:999px; background:#e0f2fe; color:#0369a1;">CEFR ${mg.cefr}</span>` : ''}</h2>
+              <div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div>
+            </div>
+            <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+          </div>
+          <p style="font-size:14px; font-weight:700; margin:0 0 8px;">${mg.prompt}</p>
+          <div style="background:#fff; border:2px solid #7dd3fc; border-radius:16px; padding:14px; text-align:center; margin:8px 0;">
+            <div style="font-size:18px; font-weight:800; color:#0f172a; margin-bottom:6px;">「${mg.spoken}」</div>
+            <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}" style="margin-top:6px;">${mg.zhSentence}</div>
+            ${showHint ? `<div style="margin-top:8px; font-size:12.5px; color:#c2410c; font-weight:800;">💡 ${mg.hint}</div>` : ''}
+          </div>
+          <div id="sp-status" style="font-size:12.5px; color:#0369a1; font-weight:700; text-align:center; min-height:22px; margin:8px 0;">先聽示範發音，再按下麥克風說出日語（BGM 會自動降低）！</div>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px;">
+            <button id="sp-listen" class="btn btn-sky btn-sm">🔊 聽示範發音</button>
+            <button id="sp-hint" class="btn btn-ghost btn-sm">💡 ヒント（讀音提示）</button>
+            <button id="sp-mic" class="btn btn-peach">🎤 開始說日語</button>
+            <button id="sp-alt" class="btn btn-mint btn-sm">✅ 我已跟讀完成（無麥克風）</button>
+          </div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('sp-listen').addEventListener('click', () => AudioSys.speak(mg.spoken));
+        document.getElementById('sp-hint').addEventListener('click', () => { showHint = true; draw(); });
+        document.getElementById('sp-alt').addEventListener('click', () => { AudioSys.speak(mg.spoken); finishMiniGame(mg); });
+        document.getElementById('sp-mic').addEventListener('click', () => {
+          startSpeechRecognition(mg.keywords, (ok, heard) => {
+            const st = document.getElementById('sp-status');
+            if (ok) { if (st) st.textContent = `🎉 発音バッチリ！（辨識：「${heard}」）`; setTimeout(() => finishMiniGame(mg), 500); }
+            else if (st) st.textContent = `辨識到「${heard}」——再試一次，或點 💡 ヒント 查看讀音！`;
+          }, msg => { const st = document.getElementById('sp-status'); if (st) st.textContent = msg; });
+        });
+      }
+      draw();
+      setTimeout(() => AudioSys.speak(mg.spoken), 220);
+    }
+
+    // --- NEW NPC MINI-GAME TYPE 5: INTERACTIVE OBJECT ASSEMBLY PUZZLE (With 💡 Hint) ---
+    function renderObjectPuzzleMG(mg) {
+      let step = 0, showHint = false;
+      const pool = mg.parts.map((p, i) => ({ ...p, idx: i })).sort(() => Math.random() - 0.5);
+      function draw() {
+        const done = step >= mg.parts.length;
+        openModal(`
+          <div class="modal-head">
+            <div>
+              <h2 class="modal-title">🧩 ${mg.title} ${mg.cefr ? `<span style="font-size:11px; padding:2px 7px; border-radius:999px; background:#fef3c7; color:#92400e;">CEFR ${mg.cefr}</span>` : ''}</h2>
+              <div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div>
+            </div>
+            <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+          </div>
+          <p style="font-size:14px; font-weight:700; margin:0 0 8px;">${mg.prompt}</p>
+          <div style="background:#fff; border:2px dashed #f59e0b; border-radius:16px; padding:12px; text-align:center; margin:8px 0;">
+            <div style="font-size:38px;">${done ? mg.objectIcon : '🛠️'}</div>
+            <div style="font-size:13px; font-weight:800; color:#b45309; margin-bottom:6px;">${mg.objectName}（進度：${step}/${mg.parts.length}）</div>
+            <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+              ${mg.parts.map((p, i) => `<span style="padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800; background:${i < step ? '#dcfce7' : '#f1f5f9'}; border:1.5px solid ${i < step ? '#4ade80' : '#cbd5e1'};">${i < step ? `${p.icon} ${p.jp}` : `步驟 ${i + 1}：？`}</span>`).join('')}
+            </div>
+            ${showHint && !done ? `<div style="margin-top:8px; font-size:12.5px; color:#0369a1; font-weight:800;">💡 ${mg.parts[step].hint}</div>` : ''}
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin:10px 0;">
+            ${pool.map(p => {
+              const used = p.idx < step;
+              return `<button class="reply-btn" style="text-align:center; ${used ? 'opacity:0.4;' : ''}" data-pz="${p.idx}" ${used ? 'disabled' : ''}>${p.icon} ${p.jp}</button>`;
+            }).join('')}
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:8px;">
+            <button id="pz-hint" class="btn btn-ghost btn-sm">💡 ヒント（下一步提示）</button>
+            <span style="font-size:12px; color:var(--ink-soft); font-weight:700;">依序點擊零件組裝！</span>
+          </div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('pz-hint').addEventListener('click', () => { showHint = true; draw(); });
+        document.querySelectorAll('[data-pz]').forEach(btn => btn.addEventListener('click', () => {
+          const pickedIdx = Number(btn.dataset.pz);
+          if (pickedIdx === step) {
+            AudioSys.sfx('heart'); AudioSys.speak(mg.parts[step].jp);
+            step++; showHint = false;
+            if (step >= mg.parts.length) { draw(); setTimeout(() => finishMiniGame(mg), 650); }
+            else draw();
+          } else {
+            AudioSys.sfx('wrong'); toast('🧩 順序不對喔！點 💡 ヒント 看看下一步需要哪個零件！');
+          }
+        }));
+      }
+      draw();
+    }
+
+    // --- 3D CHALLENGE HELPER (Used by Scavenger Hunts & Guardian Special Modes!) ---
+    function clearActiveChallenge() {
+      if (!G.activeChallenge) return;
+      const ac = G.activeChallenge;
+      (ac.meshes || []).forEach(m => { if (G.zoneGroup) G.zoneGroup.remove(m); });
+      (ac.labels || []).forEach(l => l.remove());
+      G.interactables = G.interactables.filter(x => !x.isChallengeObj);
+      G.activeChallenge = null;
+      document.getElementById('challenge-banner').classList.add('hidden');
+      document.getElementById('cb-audio').classList.add('hidden');
+    }
+
+    function showChallengeBanner(title, sub, hintFn, audioFn = null) {
+      document.getElementById('cb-title').textContent = title;
+      document.getElementById('cb-sub').textContent = sub;
+      const b = document.getElementById('challenge-banner');
+      b.classList.remove('hidden');
+      const ab = document.getElementById('cb-audio');
+      if (audioFn) { ab.classList.remove('hidden'); ab.onclick = audioFn; }
+      else ab.classList.add('hidden');
+      document.getElementById('cb-hint').onclick = hintFn;
+      document.getElementById('cb-cancel').onclick = () => {
+        if (G.ridingGuardian) dismountGuardian();
+        clearActiveChallenge(); toast('🌸 已結束挑戰，隨時可以再來玩！');
+      };
+    }
+
+    // --- NEW NPC MINI-GAME TYPE 6: 3D ZONE SCAVENGER HUNT ---
+    function startScavengerHuntMG(mg) {
+      clearActiveChallenge(); closeModal();
+      const grp = new THREE.Group();
+      grp.position.set(mg.targetPos.x, 0, mg.targetPos.z);
+      const orb = new THREE.Mesh(new THREE.OctahedronGeometry(0.55, 0), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xf59e0b, emissiveIntensity: 0.5 }));
+      orb.position.y = 1.1;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.75, 1.05, 24), new THREE.MeshBasicMaterial({ color: 0xf472b6, side: THREE.DoubleSide, transparent: true, opacity: 0.78 }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08;
+      grp.add(orb, ring); G.zoneGroup.add(grp);
+      const lbl = addLabel(`${mg.itemIcon} ${mg.itemName}`, '按 [E] 拾取', 'guardian');
+      G.interactables.push({
+        kind: 'challenge_item', isChallengeObj: true,
+        name: mg.itemName, prompt: `拾取 ${mg.itemIcon} ${mg.itemName}`,
+        x: mg.targetPos.x, z: mg.targetPos.z, mesh: grp, labelEl: lbl,
+        onInteract: () => {
+          AudioSys.sfx('heart');
+          openModal(`
+            <div class="modal-head"><div><h2 class="modal-title">${mg.itemIcon} 見つけた！（找到了！）</h2><div class="modal-sub">回答最後一題日語確認題即可領取獎勵！</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+            <p style="font-size:15px; font-weight:800; margin:6px 0;">${mg.checkQ}</p>
+            <div class="reply-list">${mg.checkOpts.map((o, i) => `<button class="reply-btn" data-sco="${i}">${o.lbl}</button>`).join('')}</div>
+          `);
+          document.getElementById('m-close').addEventListener('click', closeModal);
+          document.querySelectorAll('[data-sco]').forEach(btn => btn.addEventListener('click', () => {
+            const opt = mg.checkOpts[Number(btn.dataset.sco)];
+            if (opt.ok) { clearActiveChallenge(); finishMiniGame(mg); }
+            else { AudioSys.sfx('wrong'); toast('再想一下喔！'); }
+          }));
+        }
+      });
+      G.activeChallenge = { kind: 'scavenger', meshes: [grp], labels: [lbl], orb };
+      showChallengeBanner(`🔍 ${mg.title} (CEFR ${mg.cefr})`, `${mg.clueJp}${G.state.zhHints ? ` (${mg.clueZh})` : ''}`, () => toast(`💡 ${mg.hint}`));
+      AudioSys.speak(mg.clueJp);
+    }
+
+    // =========================================================================
+    // 5 LEGIT UNIQUE GUARDIAN SPECIAL MODES!
+    // =========================================================================
+    // 1) LONGWEI (DRAGON): 3D Aerial Hoop Flight + B2 Japanese Sky Questions!
+    function startDragonHoopsChallenge() {
+      if (G.state.currentZoneId !== 'mountains') { toast('🐉 請先前往「雲峰の山」找龍威開始空中飛行挑戰！'); return; }
+      clearActiveChallenge(); closeModal();
+      mountGuardian('longwei');
+      const hoopCoords = [
+        { x: -12, y: 3.4, z: -8, q: '飛行機が雲の上を飛ぶと、視界はどうなりますか？', hint: 'ひらがな：うんかい（雲海）／あおぞら（青空）。雲より高い場所を想像してね。', opts: [{ ok: true, lbl: 'うんかいの うえに あおぞらが ひろがる' }, { ok: false, lbl: 'あめが したから ふってくる' }] },
+        { x: 10,  y: 3.4, z: -10, q: '高い山の頂上ほど気温はどう変化しますか？', hint: 'ひらがな：ひょうこう（標高）／きおん（気温）。高い山ほど涼しくなります。', opts: [{ ok: true, lbl: 'ひょうこうが あがるほど きおんが さがる' }, { ok: false, lbl: 'ひょうこうが あがるほど あつくなる' }] },
+        { x: 14,  y: 3.4, z: 8, q: '「気流が安定している」とはどういう意味ですか？', hint: 'ひらがな：おだやか（穏やか）／ゆれ（揺れ）。安心して飛べる状態です。', opts: [{ ok: true, lbl: 'かぜの ながれが おだやかで ゆれが すくない' }, { ok: false, lbl: 'つよい たいふうが ちかづいている' }] },
+        { x: -10, y: 3.4, z: 12, q: '遠くの景色が一望できることを日本語で何と言いますか？', hint: '「みはらし（見晴らし）」は遠くまでよく見えることを表します。', opts: [{ ok: true, lbl: 'みはらしが いい' }, { ok: false, lbl: 'みちに まよう' }] },
+        { x: 0,   y: 3.4, z: 2, q: '雲峰の山の空の旅、感想を丁寧に伝えるなら？', hint: '丁寧なお礼（おれい）の気持ちを表すフレーズを選びましょう。', opts: [{ ok: true, lbl: 'すばらしい そらの たびを ありがとうございました！' }, { ok: false, lbl: 'おなかが すきました！' }] }
+      ];
+      const meshes = [];
+      hoopCoords.forEach((h, i) => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(2.3, 0.22, 12, 28), new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xf59e0b, emissiveIntensity: 0.55 }));
+        ring.position.set(h.x, h.y, h.z);
+        G.zoneGroup.add(ring); meshes.push(ring);
+        h.mesh = ring; h.cleared = false;
+      });
+      G.activeChallenge = { kind: 'dragon_hoops', hoops: hoopCoords, cleared: 0, meshes, labels: [], paused: false };
+      showChallengeBanner('🐉 ロンウェイ空中リング飛行 (CEFR B2)', '騎乘龍威穿過空中的 5 個金色光環（0/5）並回答日語問題！', () => toast('💡 用 WASD 操控神龍穿過漂浮的金色大圓環！'));
+    }
+
+    // 2) POKO (TANUKI): 3-Round 3D Bamboo Grove Hide & Seek!
+    function startTanukiHideChallenge() {
+      if (G.state.currentZoneId !== 'bamboo') { toast('🦝 請先前往「みどりの竹林」找波可玩捉迷藏！'); return; }
+      clearActiveChallenge(); closeModal();
+      const spots = [
+        { x: -14, z: -12, clueJp: '北西の竹のかげに葉っぱで変身して隠れたよ！', clueZh: '我用葉子變身躲在西北方的竹林陰影裡喔！', hint: '往西北方（左上方 x:-14, z:-12）找發光的變身竹葉！' },
+        { x: 15,  z: 10,  clueJp: '次は南東の竹のそばに隠れたよ！見つけられるかな？', clueZh: '下一輪躲在東南方的竹子旁！找得到嗎？', hint: '往東南方（右下方 x:+15, z:+10）找發光的變身竹葉！' },
+        { x: 2,   z: -16, clueJp: '最後だよ！北の真ん中あたりでじっとしているよ！', clueZh: '最後一輪！我正躲在正北方動也不動喔！', hint: '往正北方（上方中央 x:+2, z:-16）找發光的變身竹葉！' }
+      ];
+      let round = 0;
+      function spawnRound() {
+        clearActiveChallenge();
+        const sp = spots[round];
+        const grp = new THREE.Group(); grp.position.set(sp.x, 0, sp.z);
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 10), plushMat(0x4ade80));
+        leaf.scale.set(1.2, 0.35, 1.5); leaf.position.y = 0.65;
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.7, 1.0, 20), new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide, transparent: true, opacity: 0.78 }));
+        ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08;
+        grp.add(leaf, ring); G.zoneGroup.add(grp);
+        const lbl = addLabel('🍃 あやしい葉っぱ…', '按 [E] 揭穿變身！', 'guardian');
+        G.interactables.push({
+          kind: 'challenge_item', isChallengeObj: true, name: '変身ポコ', prompt: '揭穿波可的變身！',
+          x: sp.x, z: sp.z, mesh: grp, labelEl: lbl,
+          onInteract: () => {
+            AudioSys.sfx('heart'); round++;
+            if (round < spots.length) { toast(`🦝 見つかっちゃった！第 ${round}/3 回合過關！`); spawnRound(); }
+            else { clearActiveChallenge(); finishMiniGame({ rewardCoins: 65, friendTarget: 'poko' }); }
+          }
+        });
+        G.activeChallenge = { kind: 'tanuki_hide', meshes: [grp], labels: [lbl], orb: leaf };
+        showChallengeBanner(`🦝 ポコのかくれんぼ (${round + 1}/3 · CEFR A2)`, `${sp.clueJp}${G.state.zhHints ? ` (${sp.clueZh})` : ''}`, () => toast(`💡 ${sp.hint}`), () => AudioSys.speak(sp.clueJp));
+        AudioSys.speak(sp.clueJp);
+      }
+      spawnRound();
+    }
+
+    // 3) CELESTE (UNICORN): 3D Starlight Glade Listening & Crystal Catch!
+    function startUnicornStarsChallenge() {
+      if (G.state.currentZoneId !== 'magical') { toast('🦄 請先前往「星あかりの林」找賽蕾絲特開始星光捕捉！'); return; }
+      clearActiveChallenge(); closeModal();
+      mountGuardian('celeste');
+      const rounds = [
+        { target: 'ほし', spoken: 'きらめく「ほし（星）」のクリスタルを集めてください！', hint: '尋找寫著「ほし（星星）」的發光星晶！', choices: [{ w: 'ほし', col: 0xfef08a, x: -11, z: -10 }, { w: 'くも', col: 0x93c5fd, x: 11, z: -10 }, { w: 'かぜ', col: 0x86efac, x: 0, z: 12 }] },
+        { target: 'つき', spoken: '次はやさしい「つき（月）」のクリスタルへ駆けていきましょう！', hint: '尋找寫著「つき（月亮）」的發光星晶！', choices: [{ w: 'つき', col: 0xe9d5ff, x: 12, z: 8 }, { w: 'あめ', col: 0x38bdf8, x: -12, z: 8 }, { w: 'ゆき', col: 0xffffff, x: 0, z: -14 }] },
+        { target: 'ぎんが', spoken: '最後は美しい「ぎんが（銀河）」のクリスタルです！', hint: '尋找寫著「ぎんが（銀河）」的發光星晶！', choices: [{ w: 'ぎんが', col: 0xf472b6, x: 0, z: -13 }, { w: 'たいよう', col: 0xfb923c, x: -13, z: 4 }, { w: 'にじ', col: 0x4ade80, x: 13, z: 4 }] }
+      ];
+      let rIdx = 0;
+      function spawnStars() {
+        clearActiveChallenge();
+        const r = rounds[rIdx];
+        const meshes = [], labels = [];
+        r.choices.forEach(c => {
+          const crys = new THREE.Mesh(new THREE.OctahedronGeometry(0.75, 0), new THREE.MeshStandardMaterial({ color: c.col, emissive: c.col, emissiveIntensity: 0.4 }));
+          crys.position.set(c.x, 1.3, c.z); G.zoneGroup.add(crys); meshes.push(crys);
+          const lbl = addLabel(`✨ ${c.w}`, '騎獨角獸靠近碰觸', 'guardian'); labels.push(lbl);
+          G.interactables.push({ kind: 'star_crys', isChallengeObj: true, word: c.w, x: c.x, z: c.z, mesh: crys, labelEl: lbl });
+        });
+        G.activeChallenge = { kind: 'unicorn_stars', target: r.target, meshes, labels, onCatch: (word) => {
+          if (word === r.target) {
+            AudioSys.sfx('heart'); rIdx++;
+            if (rIdx < rounds.length) { toast(`🦄 太棒了！進入第 ${rIdx + 1}/3 顆星光！`); spawnStars(); }
+            else { dismountGuardian(); clearActiveChallenge(); finishMiniGame({ rewardCoins: 70, friendTarget: 'celeste' }); }
+          } else {
+            AudioSys.sfx('wrong'); toast('🦄 不是這顆喔！點上方「🔊 聞く」再聽一次賽蕾絲特說的單字！');
+            AudioSys.speak(r.spoken);
+          }
+        }};
+        showChallengeBanner(`🦄 セレストの星あかりキャッチ (${rIdx + 1}/3 · CEFR B1)`, '騎著賽蕾絲特聆聽日語，撞擊正確的星光結晶！', () => toast(`💡 ${r.hint}`), () => AudioSys.speak(r.spoken));
+        AudioSys.speak(r.spoken);
+      }
+      spawnStars();
+    }
+
+    // 4) KOMA (LION DOG): Sacred Bell Listening & Polite Japanese Challenge!
+    function startKomaBellChallenge() {
+      const qs = [
+        { spoken: 'はじめまして、どうぞよろしくお願いします。', hint: '初次見面時的禮貌寒暄。', opts: [{ ok: true, lbl: 'こちらこそ、よろしく おねがいします！' }, { ok: false, lbl: 'おやすみなさい！' }, { ok: false, lbl: 'ごちそうさまでした！' }] },
+        { spoken: 'お花をありがとうございます！とてもきれいです。', hint: '別人感謝你的禮物時怎麼回應？', opts: [{ ok: true, lbl: 'どういたしまして！よろこんでくれて うれしいです。' }, { ok: false, lbl: 'いってきます！' }, { ok: false, lbl: 'ただいま！' }] },
+        { spoken: 'すみません、花畑への道を教えていただけますか？', hint: '對方禮貌地問路，該怎麼溫柔回答？', opts: [{ ok: true, lbl: 'はい、まっすぐ いくと すぐ みえますよ！' }, { ok: false, lbl: 'いただきます！' }, { ok: false, lbl: 'おたんじょうび おめでとう！' }] },
+        { spoken: '今日はとても楽しかったです。また遊びましょうね！', hint: '道別時的溫暖回應。', opts: [{ ok: true, lbl: 'はい、また おあいしましょう！' }, { ok: false, lbl: 'はじめまして！' }, { ok: false, lbl: 'おじゃまします！' }] }
+      ];
+      let idx = 0, showHint = false;
+      function draw() {
+        const q = qs[idx];
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">🔔 コマの鈴リスニング挑戦 (${idx + 1}/${qs.length} · CEFR A2)</h2><div class="modal-sub">聆聽狛犬的日語發音，選出最得體的禮貌回應！</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div style="text-align:center; margin:10px 0;">
+            <button id="km-play" class="btn btn-sky">🔊 鈴の声を聞く（聽日語發音）</button>
+            <button id="km-hint" class="btn btn-ghost btn-sm" style="margin-left:6px;">💡 ヒント（提示）</button>
+            ${showHint ? `<div class="zh-box" style="margin-top:8px;">💡 ${q.hint}</div>` : ''}
+          </div>
+          <div class="reply-list">${q.opts.map((o, i) => `<button class="reply-btn" data-kmo="${i}">${o.lbl}</button>`).join('')}</div>
+        `);
+        document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('km-play').addEventListener('click', () => { AudioSys.tone(1046, 0.25, 'sine', 0.35); setTimeout(() => AudioSys.speak(q.spoken), 220); });
+        document.getElementById('km-hint').addEventListener('click', () => { showHint = true; draw(); });
+        document.querySelectorAll('[data-kmo]').forEach(btn => btn.addEventListener('click', () => {
+          if (q.opts[Number(btn.dataset.kmo)].ok) {
+            AudioSys.sfx('heart'); idx++; showHint = false;
+            if (idx < qs.length) draw();
+            else finishMiniGame({ rewardCoins: 65, friendTarget: 'koma' });
+          } else { AudioSys.sfx('wrong'); toast('🔔 再聽一次日語情境喔！'); AudioSys.speak(q.spoken); }
+        }));
+      }
+      draw();
+      setTimeout(() => AudioSys.speak(qs[0].spoken), 220);
+    }
+
+    // 5) BRAMBLE (JACKALOPE): 3D Breeze Plains Clover Checkpoint Dash!
+    function startBrambleSprintChallenge() {
+      if (G.state.currentZoneId !== 'plains') { toast('🐰 請先前往「そよかぜ平原」找布蘭布開始草原競速！'); return; }
+      clearActiveChallenge(); closeModal();
+      const gates = [
+        { x: -12, z: -10, q: '走る前に体をほぐすことを日本語で何と言いますか？', hint: '英語由来のカタカナ言葉です！', opts: [{ ok: true, lbl: 'ストレッチ' }, { ok: false, lbl: 'パジャマ' }] },
+        { x: 12,  z: -10, q: '「風を切って走る」はどんな様子ですか？', hint: 'とても速くて爽快な走り方です。', opts: [{ ok: true, lbl: 'いきおいよく そうかいに はしること' }, { ok: false, lbl: 'ゆっくり ひるねすること' }] },
+        { x: 12,  z: 10,  q: '草原のレースでゴールした友達にかける言葉は？', hint: '努力を労う温かい表現！', opts: [{ ok: true, lbl: 'ナイスラン！おつかれさまでした！' }, { ok: false, lbl: 'おやすみなさい！' }] },
+        { x: -10, z: 12,  q: '自然の中で運動すると心身はどうなりますか？', hint: '気分がすっきりしますね！', opts: [{ ok: true, lbl: 'リフレッシュして げんきになる' }, { ok: false, lbl: 'ほんが よめなくなる' }] }
+      ];
+      let idx = 0;
+      function spawnGate() {
+        clearActiveChallenge();
+        const g = gates[idx];
+        const grp = new THREE.Group(); grp.position.set(g.x, 0, g.z);
+        const arch = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.20, 10, 24, Math.PI), plushMat(0x22c55e)); arch.position.y = 0.2;
+        const glow = new THREE.Mesh(new THREE.CircleGeometry(1.7, 20), new THREE.MeshBasicMaterial({ color: 0x86efac, transparent: true, opacity: 0.35, side: THREE.DoubleSide })); glow.position.y = 1.4;
+        grp.add(arch, glow); G.zoneGroup.add(grp);
+        const lbl = addLabel(`🍀 クローバー関門 ${idx + 1}/4`, '衝過關門答題！', 'gate');
+        G.activeChallenge = { kind: 'bramble_sprint', gate: g, meshes: [grp], labels: [lbl], paused: false, onReach: () => {
+          G.activeChallenge.paused = true; AudioSys.sfx('pop');
+          let showH = false;
+          function drawQ() {
+            openModal(`
+              <div class="modal-head"><div><h2 class="modal-title">🍀 草原チェックポイント ${idx + 1}/4 (CEFR B1)</h2><div class="modal-sub">答對這題就能衝向下一座幸運草關門！</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+              <p style="font-size:15px; font-weight:800; margin:6px 0;">${g.q}</p>
+              ${showH ? `<div class="zh-box">💡 ${g.hint}</div>` : ''}
+              <div class="reply-list">${g.opts.map((o, i) => `<button class="reply-btn" data-bro="${i}">${o.lbl}</button>`).join('')}</div>
+              <button id="br-hint" class="btn btn-ghost btn-sm">💡 ヒント（提示）</button>
+            `);
+            document.getElementById('m-close').addEventListener('click', () => { closeModal(); if (G.activeChallenge) G.activeChallenge.paused = false; });
+            document.getElementById('br-hint').addEventListener('click', () => { showH = true; drawQ(); });
+            document.querySelectorAll('[data-bro]').forEach(btn => btn.addEventListener('click', () => {
+              if (g.opts[Number(btn.dataset.bro)].ok) {
+                AudioSys.sfx('heart'); closeModal(); idx++;
+                if (idx < gates.length) spawnGate();
+                else { clearActiveChallenge(); finishMiniGame({ rewardCoins: 65, friendTarget: 'bramble' }); }
+              } else { AudioSys.sfx('wrong'); toast('🍀 再想想喔！可以點 💡 ヒント！'); }
+            }));
+          }
+          drawQ();
+        }};
+        showChallengeBanner(`🐰 ブランブル草原ダッシュ (${idx + 1}/4 · CEFR B1)`, `衝過發光的幸運草關門 ${idx + 1}/4！（可騎腳踏車 [1] 加速！）`, () => toast(`💡 關門座標在 (${g.x}, ${g.z}) 附近，順著發光的綠色拱門跑過去！`));
+      }
+      spawnGate();
     }
 
     function finishMiniGame(mg) {
@@ -3419,19 +4532,25 @@
         cards.push({ id: i, kind: 'pic', word: p.word, text: p.zh, icon: p.icon, flipped: false, matched: false });
       });
       cards.sort(() => Math.random() - 0.5);
-      let first = null, lock = false;
+      let first = null, lock = false, hintMsg = '';
       function draw() {
         openModal(`
-          <div class="modal-head"><div><h2 class="modal-title">🃏 ${mg.title}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div class="modal-head"><div><h2 class="modal-title">🃏 ${mg.title} ${mg.cefr ? `<span style="font-size:11px; padding:2px 7px; border-radius:999px; background:#dcfce7; color:#166534;">CEFR ${mg.cefr}</span>` : ''}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
           <p style="font-size:14px; font-weight:700; margin:0;">${mg.prompt}</p>
           <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}">${mg.zhPrompt}</div>
+          ${hintMsg ? `<div style="margin-top:6px; font-size:12.5px; color:#c2410c; font-weight:800;">💡 ${hintMsg}</div>` : ''}
           <div class="mem-grid">${cards.map((c, i) => {
             let inner = `<span style="font-size:20px;">🌼</span>`;
             if (c.flipped || c.matched) inner = c.kind === 'word' ? `<span style="font-size:15px; color:#c2410c;">${c.text}</span><span style="font-size:10px; color:#0284c7;">🔊</span>` : `<span style="font-size:28px;">${c.icon}</span>${G.state.zhHints ? `<span style="font-size:11px;">${c.text}</span>` : ''}`;
             return `<button class="mem-card ${c.matched ? 'matched' : c.flipped ? 'flipped' : ''}" data-c="${i}">${inner}</button>`;
           }).join('')}</div>
+          <div style="text-align:right;"><button id="mem-hint" class="btn btn-ghost btn-sm">💡 ヒント（顯示一組提示）</button></div>
         `);
         document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('mem-hint').addEventListener('click', () => {
+          const unm = mg.pairs.find((_, pi) => cards.some(c => c.id === pi && !c.matched));
+          if (unm) { hintMsg = `「${unm.word}」＝ ${unm.icon} ${unm.zh}`; AudioSys.speak(unm.word); draw(); }
+        });
         document.querySelectorAll('[data-c]').forEach(btn => btn.addEventListener('click', () => {
           const idx = Number(btn.dataset.c); if (lock || cards[idx].flipped || cards[idx].matched) return;
           cards[idx].flipped = true; AudioSys.sfx('pop'); if (cards[idx].kind === 'word') AudioSys.speak(cards[idx].word);
@@ -3448,12 +4567,12 @@
 
     function renderScrambleMG(mg) {
       const pool = mg.words.map((w, i) => ({ id: i, text: w })).sort(() => Math.random() - 0.5);
-      let chosen = [], fb = '';
+      let chosen = [], fb = '', showZhHint = false;
       function draw() {
         openModal(`
-          <div class="modal-head"><div><h2 class="modal-title">📝 ${mg.title}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div class="modal-head"><div><h2 class="modal-title">📝 ${mg.title} ${mg.cefr ? `<span style="font-size:11px; padding:2px 7px; border-radius:999px; background:#e0f2fe; color:#0369a1;">CEFR ${mg.cefr}</span>` : ''}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
           <p style="font-size:14px; font-weight:700; margin:0;">${mg.prompt}</p>
-          <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}">${mg.zhPrompt} ${mg.zhSentence}</div>
+          <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}">${mg.zhPrompt}${showZhHint && mg.zhSentence ? `<br>💡 句意提示：${mg.zhSentence}` : ''}</div>
           <div style="min-height:48px; margin:12px 0; padding:10px; border-radius:14px; background:#fff; border:2px dashed var(--peach); display:flex; flex-wrap:wrap; gap:6px;">
             ${chosen.length === 0 ? '<span style="color:var(--ink-soft); font-size:13px;">Click words in order…</span>' : chosen.map((c, i) => `<button class="word-chip" data-rm="${i}">${c.text}</button>`).join('')}
           </div>
@@ -3462,7 +4581,11 @@
           <div style="display:flex; justify-content:space-between; margin-top:12px;"><button id="mg-hint" class="btn btn-ghost btn-sm">💡 Next Word</button><button id="mg-check" class="btn btn-peach">Check Sentence</button></div>
         `);
         document.getElementById('m-close').addEventListener('click', closeModal);
-        document.getElementById('mg-hint').addEventListener('click', () => { const n = pool.find(p => p.text === mg.words[chosen.length] && !chosen.includes(p)); if (n) { chosen.push(n); AudioSys.sfx('pop'); draw(); } });
+        document.getElementById('mg-hint').addEventListener('click', () => {
+          if (!showZhHint && mg.zhSentence) { showZhHint = true; AudioSys.sfx('pop'); draw(); return; }
+          const n = pool.find(p => p.text === mg.words[chosen.length] && !chosen.includes(p));
+          if (n) { chosen.push(n); AudioSys.sfx('pop'); draw(); }
+        });
         document.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => { const p = pool.find(x => x.id === Number(b.dataset.add)); if (p) { chosen.push(p); AudioSys.sfx('pop'); draw(); } }));
         document.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => { chosen.splice(Number(b.dataset.rm), 1); draw(); }));
         document.getElementById('mg-check').addEventListener('click', () => {
@@ -3480,16 +4603,29 @@
       const keySet = new Set(chars);
       for (const fk of fillerKana) { if (keySet.size >= 16) break; keySet.add(fk); }
       const keys = Array.from(keySet).sort(() => Math.random() - 0.5);
+      let showHint = false;
       function draw() {
         const won = chars.every(ch => guessed.has(ch));
         openModal(`
-          <div class="modal-head"><div><h2 class="modal-title">🔤 ${mg.title}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+          <div class="modal-head"><div><h2 class="modal-title">🔤 ${mg.title} ${mg.cefr ? `<span style="font-size:11px; padding:2px 7px; border-radius:999px; background:#fef3c7; color:#92400e;">CEFR ${mg.cefr}</span>` : ''}</h2><div class="modal-sub">${G.state.zhHints ? mg.zhTitle : ''}</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
           <p style="font-size:14.5px; font-weight:700; margin:0;">${mg.prompt}</p>
           <div class="zh-box ${G.state.zhHints ? '' : 'hidden'}">${mg.zhPrompt}</div>
+          ${showHint && mg.hint ? `<div style="margin-top:6px; font-size:12.5px; color:#c2410c; font-weight:800;">💡 ${mg.hint}</div>` : ''}
           <div style="display:flex; gap:10px; justify-content:center; margin:16px 0;">${chars.map(ch => `<div style="width:44px; height:48px; border-bottom:3px solid var(--peach-deep); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800;">${guessed.has(ch) ? ch : ''}</div>`).join('')}</div>
           <div class="kb-grid">${keys.map(ch => `<button class="kb-key" style="width:44px; height:42px; font-size:16px;" data-k="${ch}" ${guessed.has(ch) ? 'disabled' : ''}>${ch}</button>`).join('')}</div>
+          <div style="display:flex; justify-content:space-between; margin-top:8px;">
+            <button id="rd-hint" class="btn btn-ghost btn-sm">💡 ヒント（提示一個假名）</button>
+            <button id="rd-audio" class="btn btn-sky btn-sm">🔊 聽讀音提示</button>
+          </div>
         `);
         document.getElementById('m-close').addEventListener('click', closeModal);
+        document.getElementById('rd-audio').addEventListener('click', () => AudioSys.speak(mg.answer));
+        document.getElementById('rd-hint').addEventListener('click', () => {
+          if (!showHint && mg.hint) { showHint = true; AudioSys.sfx('pop'); draw(); return; }
+          const nextCh = chars.find(c => !guessed.has(c));
+          if (nextCh) guessed.add(nextCh);
+          AudioSys.sfx('pop'); draw();
+        });
         document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => { const ch = b.dataset.k; guessed.add(ch); AudioSys.sfx(chars.includes(ch) ? 'pop' : 'wrong'); draw(); }));
         if (won) { AudioSys.speak(mg.answer); setTimeout(() => finishMiniGame(mg), 500); }
       }
@@ -4410,9 +5546,9 @@
 
     function runCarpenterEvent() {
       const steps = [
-        { spoken: '木の板をのこぎりでまっすぐ切ってください。', zh: '請用鋸子把木板鋸直。', answer: 'saw', opts: [{ id: 'saw', lbl: '🪚 木の板を切る（鋸木板）' }, { id: 'paint', lbl: '🎨 屋根をピンクに塗る（把屋頂漆成粉紅）' }, { id: 'water', lbl: '💧 畑に水をあげる（幫農地澆水）' }] },
-        { spoken: '次に、テーブルに釘をトントン打ってください。', zh: '接著，把釘子敲進桌子裡。', answer: 'hammer', opts: [{ id: 'hammer', lbl: '🔨 釘を打つ（敲釘子）' }, { id: 'bake', lbl: '🥐 パンを焼く（烤麵包）' }, { id: 'brush', lbl: '🪮 うさぎをとかす（幫兔子梳毛）' }] },
-        { spoken: '最後に、木のいすをピカピカに磨きましょう！', zh: '最後，把木頭椅子擦得亮晶晶！', answer: 'polish', opts: [{ id: 'polish', lbl: '✨ いすを磨く（擦亮木椅）' }, { id: 'dig', lbl: '⛏️ 深い穴を掘る（挖深洞）' }, { id: 'swim', lbl: '🏄 海でサーフィンする（在海邊衝浪）' }] }
+        { spoken: '木の板をのこぎりでまっすぐ切ってください。', zh: '請用鋸子把木板鋸直。', answer: 'saw', opts: [{ id: 'saw', lbl: '🪚 きの いたを きる' }, { id: 'paint', lbl: '🎨 やねを ピンクに ぬる' }, { id: 'water', lbl: '💧 はたけに みずを あげる' }] },
+        { spoken: '次に、テーブルに釘をトントン打ってください。', zh: '接著，把釘子敲進桌子裡。', answer: 'hammer', opts: [{ id: 'hammer', lbl: '🔨 くぎを うつ' }, { id: 'bake', lbl: '🥐 パンを やく' }, { id: 'brush', lbl: '🪮 うさぎを とかす' }] },
+        { spoken: '最後に、木のいすをピカピカに磨きましょう！', zh: '最後，把木頭椅子擦得亮晶晶！', answer: 'polish', opts: [{ id: 'polish', lbl: '✨ いすを みがく' }, { id: 'dig', lbl: '⛏️ ふかい あなを ほる' }, { id: 'swim', lbl: '🏄 うみで サーフィンする' }] }
       ];
       let idx = 0, bonus = 0;
       function draw() {
@@ -4557,8 +5693,8 @@
 
     function runBakeryEvent() {
       const rounds = [
-        { spoken: 'キャロットケーキのために、新鮮なニンジンをお願いします！', zh: '為了做胡蘿蔔蛋糕，請給我新鮮的胡蘿蔔！', ans: 'carrot', opts: [{ id: 'carrot', lbl: '🥕 はちみつニンジン（胡蘿蔔）' }, { id: 'melon', lbl: '🍈 ジューシーメロン（哈密瓜）' }, { id: 'bamboo', lbl: '🎋 あまいタケノコ（竹筍）' }] },
-        { spoken: 'ベリーパイのために、あまいイチゴが必要です！', zh: '做莓果派需要甜甜的草莓！', ans: 'strawberry', opts: [{ id: 'strawberry', lbl: '🍓 あまいイチゴ（草莓）' }, { id: 'carrot', lbl: '🥕 はちみつニンジン（胡蘿蔔）' }, { id: 'bamboo', lbl: '🎋 あまいタケノコ（竹筍）' }] }
+        { spoken: 'キャロットケーキのために、新鮮なニンジンをお願いします！', zh: '為了做胡蘿蔔蛋糕，請給我新鮮的胡蘿蔔！', ans: 'carrot', opts: [{ id: 'carrot', lbl: '🥕 はちみつニンジン' }, { id: 'melon', lbl: '🍈 ジューシーメロン' }, { id: 'bamboo', lbl: '🎋 あまいタケノコ' }] },
+        { spoken: 'ベリーパイのために、あまいイチゴが必要です！', zh: '做莓果派需要甜甜的草莓！', ans: 'strawberry', opts: [{ id: 'strawberry', lbl: '🍓 あまいイチゴ' }, { id: 'carrot', lbl: '🥕 はちみつニンジン' }, { id: 'bamboo', lbl: '🎋 あまいタケノコ' }] }
       ];
       let idx = 0;
       function draw() {
@@ -4747,6 +5883,7 @@
     // 6. TRAVEL, HUD, MINIMAP & ANIMATION LOOP
     // =========================================================================
     function travelToZone(zoneId, spawn) {
+      clearActiveChallenge();
       if (G.ridingGuardian) dismountGuardian();
       G.portalCooldown = 1.0; G.state.currentZoneId = zoneId;
       const p = spawn || ZONES[zoneId].defaultSpawn;
@@ -4763,6 +5900,7 @@
       else if (it.kind === 'flower_shop') openFlowerShopModal();
       else if (it.kind === 'decor_shop') openDecorShopModal();
       else if (it.kind === 'wild_flower') pluckWildFlower(it.wfId, it.wfKind);
+      else if (it.kind === 'challenge_item' && it.onInteract) it.onInteract();
       else if (it.kind === 'door') travelToZone(it.target, it.spawn);
       else if (it.kind === 'mirror') openMirrorModal();
       else if (it.kind === 'tv') openTVModal();
@@ -4840,6 +5978,54 @@
       G.waterTexList.forEach(wt => { wt.offset.x += dt * 0.09; wt.offset.y += dt * 0.05; });
       if (G.sparkles) G.sparkles.rotation.y += dt * 0.12;
       (G.decorMeshes || []).forEach(d => { if (d.mesh.userData.windmillHub) d.mesh.userData.windmillHub.rotation.z -= dt * 1.4; });
+      if (G.activeChallenge && !G.modalOpen) {
+        const ac = G.activeChallenge;
+        if (ac.orb) ac.orb.rotation.y += dt * 2.2;
+        if (ac.kind === 'dragon_hoops' && !ac.paused) {
+          ac.hoops.forEach((h, hi) => {
+            if (h.cleared) return;
+            h.mesh.rotation.y += dt * 1.2;
+            const d = Math.hypot(G.playerMesh.position.x - h.x, G.playerMesh.position.z - h.z);
+            if (d < 2.6) {
+              ac.paused = true; AudioSys.sfx('pop');
+              let showH = false;
+              function drawHoopQ() {
+                openModal(`
+                  <div class="modal-head"><div><h2 class="modal-title">🐉 スカイリング ${ac.cleared + 1}/5 (CEFR B2)</h2><div class="modal-sub">答對即可點亮這座天空光環！</div></div><button id="m-close" class="btn btn-ghost btn-sm">✕</button></div>
+                  <p style="font-size:15px; font-weight:800; margin:6px 0;">${h.q}</p>
+                  ${showH ? `<div class="zh-box">💡 ${h.hint}</div>` : ''}
+                  <div class="reply-list">${h.opts.map((o, i) => `<button class="reply-btn" data-dho="${i}">${o.lbl}</button>`).join('')}</div>
+                  <button id="dh-hint" class="btn btn-ghost btn-sm">💡 ヒント（提示）</button>
+                `);
+                document.getElementById('m-close').addEventListener('click', () => { closeModal(); ac.paused = false; });
+                document.getElementById('dh-hint').addEventListener('click', () => { showH = true; drawHoopQ(); });
+                document.querySelectorAll('[data-dho]').forEach(btn => btn.addEventListener('click', () => {
+                  if (h.opts[Number(btn.dataset.dho)].ok) {
+                    h.cleared = true; ac.cleared++;
+                    h.mesh.material.color.setHex(0x4ade80); h.mesh.material.emissive.setHex(0x16a34a);
+                    AudioSys.sfx('heart'); closeModal(); ac.paused = false;
+                    document.getElementById('cb-sub').textContent = `騎乘龍威穿過空中的 5 個金色光環（${ac.cleared}/5）並回答日語問題！`;
+                    if (ac.cleared >= ac.hoops.length) { dismountGuardian(); clearActiveChallenge(); finishMiniGame({ rewardCoins: 70, friendTarget: 'longwei' }); }
+                  } else { AudioSys.sfx('wrong'); toast('🐉 再想想喔！可以點 💡 ヒント！'); }
+                }));
+              }
+              drawHoopQ();
+            }
+          });
+        } else if (ac.kind === 'unicorn_stars') {
+          const stars = G.interactables.filter(x => x.kind === 'star_crys');
+          for (const st of stars) {
+            st.mesh.rotation.y += dt * 2.0;
+            if (Math.hypot(G.playerMesh.position.x - st.x, G.playerMesh.position.z - st.z) < 2.2) {
+              ac.onCatch(st.word); break;
+            }
+          }
+        } else if (ac.kind === 'bramble_sprint' && !ac.paused) {
+          if (Math.hypot(G.playerMesh.position.x - ac.gate.x, G.playerMesh.position.z - ac.gate.z) < 2.4) {
+            ac.onReach();
+          }
+        }
+      }
 
       Object.values(G.animalMeshes).forEach((m, idx) => {
         const u = m.userData; if (!u || !u.bodyGroup) return;
@@ -4987,11 +6173,26 @@
         const c = G.cutscene; c.timer -= dt; const u = 1 - Math.max(0, c.timer / c.duration);
         const fm = c.focusMesh, bg = fm.userData.bodyGroup, bs = fm.userData.baseScale || 1;
         if (bg) {
-          if (c.anim === 'hop') { const hop = Math.abs(Math.sin(u * Math.PI * 4)); bg.position.y = hop * 0.55; bg.scale.set(bs * (1 - hop * 0.08), bs * (1 + hop * 0.14), bs * (1 - hop * 0.08)); }
+          if (c.anim === 'groom') {
+            // Super excited happy bounces + joyful wiggle spin!
+            const hop = Math.abs(Math.sin(u * Math.PI * 6));
+            bg.position.y = hop * 0.48;
+            bg.rotation.y = Math.sin(u * Math.PI * 8) * 0.45;
+            bg.scale.set(bs * (1 + hop * 0.12), bs * (1 - hop * 0.08 + 0.10), bs * (1 + hop * 0.12));
+          } else if (c.anim === 'hop') { const hop = Math.abs(Math.sin(u * Math.PI * 4)); bg.position.y = hop * 0.55; bg.scale.set(bs * (1 - hop * 0.08), bs * (1 + hop * 0.14), bs * (1 - hop * 0.08)); }
           else if (c.anim === 'spin') { bg.rotation.y = u * Math.PI * 4; bg.position.y = Math.sin(u * Math.PI) * 0.35; }
           else { bg.scale.set(bs * (1 + Math.sin(u * Math.PI * 6) * 0.08), bs * (1 - Math.sin(u * Math.PI * 6) * 0.06), bs * 1.06); }
         }
-        if (c.foodMesh) { c.foodMesh.position.z = THREE.MathUtils.lerp(fm.position.z - 1.2, fm.position.z - 0.3, Math.min(1, u * 1.4)); c.foodMesh.scale.setScalar(Math.max(0.01, 1 - u)); }
+        if (c.foodMesh) {
+          if (c.anim === 'groom') {
+            c.foodMesh.position.x = fm.position.x + Math.sin(u * Math.PI * 8) * 0.48;
+            c.foodMesh.position.y = (fm.position.y || 0) + 1.95 + Math.cos(u * Math.PI * 8) * 0.16;
+            c.foodMesh.rotation.z = Math.sin(u * Math.PI * 8) * 0.32;
+          } else {
+            c.foodMesh.position.z = THREE.MathUtils.lerp(fm.position.z - 1.2, fm.position.z - 0.3, Math.min(1, u * 1.4));
+            c.foodMesh.scale.setScalar(Math.max(0.01, 1 - u));
+          }
+        }
         c.hearts.forEach(h => { h.position.y += dt * 1.1; h.rotation.y += dt * 3; });
         const ang = u * 0.9 - 0.45;
         G.camera.position.lerp(new THREE.Vector3(fm.position.x + Math.sin(ang) * 4.4, 2.2, fm.position.z - Math.cos(ang) * 4.4), 0.18);
@@ -5023,7 +6224,8 @@
         if (it.kind === 'gate' && d < 1.9 && G.portalCooldown <= 0 && !G.modalOpen && !startOpen && !G.cutscene) { travelToZone(it.gate.target, it.gate.spawn); return; }
         if (d < bestD) { bestD = d; best = it; }
         if (it.labelEl) {
-          if (d < 22 && !startOpen && !G.modalOpen && !G.cutscene) {
+          const hidePlantedPlot = (it.kind === 'plot' && G.state && G.state.farmPlots[it.plotIdx] && G.state.farmPlots[it.plotIdx].seedId);
+          if (d < 22 && !startOpen && !G.modalOpen && !G.cutscene && !hidePlantedPlot) {
             const lblH = it.kind === 'plot' ? 0.85 : (it.kind === 'gate' ? 3.2 : 2.35);
             const v = new THREE.Vector3(it.x, (it.y || 0) + lblH, it.z); v.project(G.camera);
             if (v.z < 1) { it.labelEl.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`; it.labelEl.style.top = `${(-v.y * 0.5 + 0.5) * window.innerHeight}px`; it.labelEl.style.opacity = '1'; }
