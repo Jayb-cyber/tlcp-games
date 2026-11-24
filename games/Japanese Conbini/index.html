@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <script data-goatcounter="https://tlcp-games.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>さくらマート 3D — 第一人稱日本便利商店日語冒險</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;800&family=Noto+Sans+TC:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Original Sakura Mart Boutique Palette: Sakura Coral, Midnight Indigo & Champagne Gold */
+      --cream: #fff9f7;
+      --panel: rgba(255, 250, 248, 0.96);
+      --border: rgba(232, 93, 117, 0.36);
+      --sakura: #e85d75;
+      --sakura-deep: #be123c;
+      --indigo: #312e81;
+      --indigo-soft: #4f46e5;
+      --gold: #eab308;
+      --sage: #4d7c6f;
+      --ink: #27222b;
+      --ink-soft: #645b6b;
+    }
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #fce7f3; color: var(--ink);
+      font-family: 'Nunito', 'Noto Sans JP', 'Noto Sans TC', system-ui, sans-serif;
+    }
+    #game-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; outline: none; }
+
+    #back-hub-btn {
+      position: fixed; top: 12px; left: 12px; z-index: 45;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; background: #fff; color: var(--ink);
+      text-decoration: none; font-size: 13px; font-weight: 800;
+      border-radius: 999px; border: 2px solid #fbcfe8;
+      box-shadow: 0 4px 12px rgba(49, 46, 129, 0.14);
+      transition: transform 0.15s;
+    }
+    #back-hub-btn:hover { transform: scale(1.04); background: #fff1f5; }
+
+    #crosshair {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2.5px solid rgba(255,255,255,0.95);
+      background: rgba(232, 93, 117, 0.65);
+      box-shadow: 0 0 10px rgba(49, 46, 129, 0.35);
+      pointer-events: none; z-index: 10;
+    }
+    #crosshair.hidden { display: none !important; }
+
+    #world-labels { position: fixed; inset: 0; pointer-events: none; z-index: 8; overflow: hidden; }
+    .aisle-tag {
+      position: absolute; transform: translate(-50%, -100%);
+      background: rgba(255, 250, 248, 0.95); border: 2px solid var(--sakura);
+      color: var(--ink); padding: 3px 11px; border-radius: 999px;
+      font-size: 11.5px; font-weight: 800; white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(49, 46, 129, 0.16);
+    }
+    .aisle-tag.register { border-color: var(--indigo-soft); background: #eef2ff; color: var(--indigo); }
+    .aisle-tag .zh { color: #6366f1; font-size: 10.5px; margin-left: 4px; }
+
+    /* Start Menu */
+    #start-screen {
+      position: fixed; inset: 0; z-index: 50;
+      background: radial-gradient(circle at 25% 25%, rgba(255, 241, 245, 0.25), rgba(30, 27, 75, 0.62));
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    #start-screen.hidden { display: none !important; }
+    .start-card {
+      background: var(--panel); border: 3px solid #f9a8d4;
+      border-radius: 28px; max-width: 630px; width: 100%; max-height: 92vh; overflow-y: auto;
+      padding: 24px 26px; box-shadow: 0 24px 60px rgba(30, 27, 75, 0.34);
+    }
+    .sakura-stripe {
+      height: 8px; border-radius: 999px; margin-bottom: 12px;
+      background: linear-gradient(90deg, #e85d75 0%, #e85d75 40%, #eab308 40%, #eab308 65%, #312e81 65%, #312e81 100%);
+    }
+    .brand-title { font-family: 'Fredoka', 'Noto Sans JP', sans-serif; font-size: 26px; font-weight: 800; color: var(--indigo); margin: 0; }
+    .choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0 14px; }
+    .choice-card {
+      background: #fff; border: 2.5px solid #e2e8f0; border-radius: 18px;
+      padding: 12px 10px; text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .choice-card:hover { transform: translateY(-2px); border-color: var(--sakura); }
+    .choice-card.selected { border-color: var(--indigo-soft); background: #eef2ff; box-shadow: 0 6px 16px rgba(79, 70, 229, 0.18); }
+
+    /* HUD */
+    #hud {
+      position: fixed; inset: 0; pointer-events: none; z-index: 15;
+      display: flex; flex-direction: column; justify-content: space-between; padding: 12px;
+    }
+    #hud.hidden { display: none !important; }
+    .hud-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .hud-left { display: flex; flex-direction: column; gap: 8px; margin-top: 42px; max-width: 320px; }
+    .hud-card {
+      pointer-events: auto; background: var(--panel);
+      border: 2px solid var(--border); border-radius: 18px;
+      padding: 10px 14px; box-shadow: 0 8px 22px rgba(49, 46, 129, 0.14);
+      backdrop-filter: blur(8px);
+    }
+    .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .hud-btn-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .pill-btn {
+      pointer-events: auto; cursor: pointer;
+      background: var(--panel); border: 2px solid var(--border);
+      color: var(--ink); border-radius: 999px; padding: 6px 12px;
+      font-family: inherit; font-size: 12px; font-weight: 800;
+      display: inline-flex; align-items: center; gap: 5px;
+      box-shadow: 0 4px 10px rgba(49, 46, 129, 0.1);
+      transition: transform 0.12s;
+    }
+    .pill-btn:hover { transform: translateY(-1px); background: #fff; border-color: var(--sakura); }
+    .pill-btn.cert { background: #fef9c3; border-color: #eab308; color: #854d0e; }
+
+    .checklist-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 5px 9px; border-radius: 10px; font-size: 13px; font-weight: 800;
+      background: #fff; border: 1.5px solid #fbcfe8; margin-top: 5px;
+    }
+    .checklist-item.done { background: #ecfdf5; border-color: #34d399; color: #065f46; text-decoration: line-through; opacity: 0.85; }
+    .checklist-item.added { border-color: var(--sakura); background: #fff1f2; }
+
+    .hud-bottom { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    #interact-pill {
+      pointer-events: auto; cursor: pointer;
+      background: linear-gradient(135deg, #e85d75, #4f46e5);
+      color: #fff; border: 2.5px solid #fff;
+      padding: 9px 22px; border-radius: 999px; font-size: 14.5px; font-weight: 800;
+      box-shadow: 0 8px 22px rgba(79, 70, 229, 0.35);
+      animation: bouncePill 1.6s infinite;
+    }
+    #interact-pill.hidden { display: none !important; }
+    @keyframes bouncePill { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+    .controls-bar {
+      background: rgba(255, 250, 248, 0.92); border: 1.5px solid var(--border);
+      padding: 5px 14px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+      color: var(--ink-soft); text-align: center;
+    }
+
+    /* Clerk POS Dock */
+    #clerk-dock {
+      pointer-events: auto; width: 100%; max-width: 800px;
+      background: rgba(255, 250, 248, 0.97); border: 3px solid var(--indigo-soft);
+      border-radius: 24px; padding: 14px 18px;
+      box-shadow: 0 14px 36px rgba(30, 27, 75, 0.25);
+    }
+    #clerk-dock.hidden { display: none !important; }
+    .clerk-tray { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 8px; margin-top: 10px; }
+    .tray-item-btn {
+      background: #fff; border: 2px solid #cbd5e1; border-radius: 16px;
+      padding: 10px 8px; cursor: pointer; text-align: center; font-family: inherit;
+      transition: all 0.14s; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .tray-item-btn:hover:not(:disabled) { border-color: var(--sakura); transform: translateY(-2px); background: #fff1f5; }
+    .tray-item-btn.scanned { background: #ecfdf5; border-color: #34d399; opacity: 0.42; cursor: default; }
+
+    #touch-controls {
+      position: fixed; bottom: 56px; left: 14px; z-index: 16; display: none;
+      grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 4px;
+    }
+    @media (hover: none) and (pointer: coarse) { #touch-controls.active { display: grid; } }
+    .touch-btn { background: rgba(255,250,248,0.92); border: 2px solid var(--sakura); border-radius: 12px; font-weight: 800; font-size: 16px; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 42;
+      background: rgba(30, 27, 75, 0.48); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; padding: 14px;
+    }
+    .modal-backdrop.hidden { display: none !important; }
+    .modal-box {
+      background: var(--cream); border: 3px solid #f9a8d4;
+      border-radius: 26px; width: 100%; max-width: 650px; max-height: 90vh;
+      overflow-y: auto; padding: 22px; box-shadow: 0 22px 54px rgba(30, 27, 75, 0.3);
+      animation: popIn 0.18s ease-out;
+    }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .modal-title { font-family: 'Fredoka', 'Noto Sans JP', sans-serif; font-size: 20px; font-weight: 800; margin: 0; color: var(--indigo); }
+    .modal-sub { font-size: 12.5px; color: var(--ink-soft); font-weight: 700; }
+
+    .btn {
+      cursor: pointer; border: none; border-radius: 999px; padding: 9px 16px;
+      font-family: inherit; font-size: 13.5px; font-weight: 800;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      transition: transform 0.12s, filter 0.15s;
+    }
+    .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.04); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-indigo { background: linear-gradient(135deg, #4f46e5, #312e81); color: #fff; }
+    .btn-sakura { background: linear-gradient(135deg, #f472b6, #e85d75); color: #fff; }
+    .btn-sage   { background: linear-gradient(135deg, #34d399, #4d7c6f); color: #fff; }
+    .btn-gold   { background: linear-gradient(135deg, #fbbf24, #d97706); color: #fff; }
+    .btn-ghost  { background: #fff; color: var(--ink); border: 2px solid #e2d5dd; }
+    .btn-sm     { padding: 6px 12px; font-size: 12px; }
+
+    .zh-box {
+      margin-top: 8px; padding: 8px 12px; border-radius: 14px;
+      background: #eef2ff; border: 1.5px solid #c7d2fe;
+      color: #3730a3; font-size: 13px; font-weight: 700; line-height: 1.5;
+    }
+    .zh-box.hidden { display: none; }
+
+    .speech-bubble {
+      background: #fff; border: 2.5px solid var(--indigo-soft); border-radius: 20px;
+      padding: 13px 16px; margin: 10px 0;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.12);
+    }
+    .reply-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+    .reply-btn {
+      text-align: left; background: #fff; border: 2px solid #e2d5dd; border-radius: 14px;
+      padding: 10px 14px; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 800;
+      color: var(--ink); transition: all 0.14s;
+    }
+    .reply-btn:hover { border-color: var(--sakura); background: #fff1f5; transform: translateX(2px); }
+
+    .shelf-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+    .shelf-card {
+      background: #fff; border: 2px solid #fbcfe8; border-radius: 16px; padding: 12px 10px;
+      text-align: center; cursor: pointer; transition: all 0.14s;
+    }
+    .shelf-card:hover { border-color: var(--indigo-soft); transform: translateY(-2px); background: #eef2ff; }
+
+    .phone-banner {
+      background: linear-gradient(135deg, #fff1f5, #eef2ff);
+      border: 3px solid var(--sakura); border-radius: 22px; padding: 14px; text-align: center;
+    }
+
+    #toast-container { position: fixed; bottom: 84px; right: 14px; z-index: 48; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+    .toast {
+      background: var(--panel); border: 2px solid var(--sakura); border-left-width: 6px;
+      padding: 9px 14px; border-radius: 14px; font-size: 13px; font-weight: 800;
+      box-shadow: 0 8px 20px rgba(30,27,75,0.16); max-width: 340px;
+    }
+  </style>
+</head>
+<body>
+  <a href="../../index.html" id="back-hub-btn"><span>←</span><span>TLCP@Games</span></a>
+  <canvas id="game-canvas"></canvas>
+  <div id="crosshair" class="hidden"></div>
+  <div id="world-labels"></div>
+  <div id="toast-container"></div>
+
+  <!-- Start Menu -->
+  <div id="start-screen">
+    <div class="start-card">
+      <div class="sakura-stripe"></div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+        <div>
+          <h1 class="brand-title">🌸 さくらマート 3D</h1>
+          <div style="font-size:12.5px; color:var(--ink-soft); font-weight:700;">
+            原創第一人稱日本便利商店日語冒險 · 顧客＆店員雙模式 · 各 10 回合
+          </div>
+        </div>
+        <button id="btn-start-zh" class="btn btn-ghost btn-sm">🌐 繁體中文提示: ON</button>
+      </div>
+
+      <p style="font-size:13px; line-height:1.55; margin:8px 0 4px;">
+        オリジナルの3Dコンビニ「さくらマート」で、買いもの＆レジ接客を1人称視点でリアル体験！読み・聞き・話し・お釣り計算まで、全10ラウンドに挑戦しましょう。
+      </p>
+      <div id="start-zh-box" class="zh-box">
+        在原創 3D「櫻花超市（さくらマート）」以第一人稱沉浸學習日語！顧客模式可走逛六大貨架、練習日語量詞、接聽爸媽來電並完成口說結帳；店員模式則站在櫃檯後掃碼配對、計算找零並開口用敬語回應客人提問！
+      </div>
+
+      <div style="margin-top:12px; font-size:12.5px; font-weight:800;">1. 選擇角色模式（モード選択）：</div>
+      <div class="choice-grid" id="mode-grid">
+        <div class="choice-card selected" data-mode="customer">
+          <div style="font-size:28px;">🛒</div>
+          <div style="font-weight:800; font-size:15px;">お客さん（顧客模式）</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">第一人稱逛店、3D 購物籃、爸媽來電加買、口說結帳付款</div>
+        </div>
+        <div class="choice-card" data-mode="clerk">
+          <div style="font-size:28px;">🏪</div>
+          <div style="font-weight:800; font-size:15px;">店員さん（店員模式）</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">櫃檯第一人稱、雷射掃碼配對、敬語開口應對與找零計算</div>
+        </div>
+      </div>
+
+      <div style="font-size:12.5px; font-weight:800;">2. 選擇日語程度（CEFR レベル）：</div>
+      <div class="choice-grid" id="level-grid">
+        <div class="choice-card selected" data-level="a1a2">
+          <div style="font-size:24px;">🌱</div>
+          <div style="font-weight:800; font-size:15px;">CEFR A1–A2（初級）</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">平假名／片假名與基礎量詞、日常購物與親切接客</div>
+        </div>
+        <div class="choice-card" data-level="b1b2">
+          <div style="font-size:24px;">🌿</div>
+          <div style="font-weight:800; font-size:15px;">CEFR B1–B2（中高級）</div>
+          <div style="font-size:11.5px; color:var(--ink-soft); margin-top:2px;">自然漢字、中途來電追加、進階敬語客服與找零挑戰</div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <label style="font-size:12px; font-weight:800;">お名前（你的名字）：</label>
+        <input id="input-player-name" type="text" maxlength="20" value="ハル"
+          style="width:100%; margin-top:4px; padding:8px 14px; border-radius:14px; border:2px solid #e2d5dd; font-family:inherit; font-size:14px; font-weight:700;" />
+      </div>
+
+      <button id="btn-start-game" class="btn btn-indigo" style="width:100%; margin-top:14px; padding:12px; font-size:15px;">
+        ✨ いらっしゃいませ！（進入さくらマート）
+      </button>
+    </div>
+  </div>
+
+  <!-- Main HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="hud-card" id="status-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <span id="hud-mode-badge" style="font-weight:800; font-size:14px; color:var(--indigo);">🛒 顧客 · A1–A2</span>
+            <span style="background:#fef9c3; border:1.5px solid #eab308; color:#854d0e; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:800;">
+              Round <span id="hud-round">1</span>/10
+            </span>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft); font-weight:700; margin-top:4px;">
+            ⭐ 分數：<strong id="hud-score">0</strong> · 🔥 連擊：<strong id="hud-streak">0</strong> · 💴 <span id="hud-yen">¥0</span>
+          </div>
+        </div>
+
+        <div class="hud-card hidden" id="checklist-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="font-size:13.5px; color:var(--indigo);">📝 お買い物リスト（購物清單）</strong>
+            <button id="btn-list-hint" class="btn btn-ghost btn-sm" style="padding:2px 8px; font-size:11px;">💡 讀音</button>
+          </div>
+          <div id="checklist-items"></div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="hud-btn-row">
+          <button id="btn-cert" class="pill-btn cert">🏆 學習證書</button>
+          <button id="btn-menu" class="pill-btn">🏠 切換模式</button>
+          <button id="btn-zh-toggle" class="pill-btn">🌐 中文: ON</button>
+          <div class="pill-btn" style="padding:4px 10px; gap:6px;">
+            <button id="btn-mute" style="background:none; border:none; cursor:pointer; font-size:14px; padding:0;">🔊</button>
+            <input id="vol-slider" type="range" min="0" max="100" value="75" title="音量" style="width:60px; accent-color:#e85d75; cursor:pointer;" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-bottom">
+      <div id="interact-pill" class="hidden">[E] 查看貨架</div>
+      <div id="clerk-dock" class="hidden"></div>
+      <div class="controls-bar" id="controls-hint">
+        WASD / 方向鍵：走動 · 拖曳滑鼠：轉動視角 · E 或點擊按鈕：拿商品 / 前往結帳
+      </div>
+    </div>
+  </div>
+
+  <div id="touch-controls">
+    <div></div><button class="touch-btn" data-key="KeyW">▲</button><div></div>
+    <button class="touch-btn" data-key="KeyA">◀</button><button class="touch-btn" data-key="KeyS">▼</button><button class="touch-btn" data-key="KeyD">▶</button>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div id="modal-box" class="modal-box"></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+    // =========================================================================
+    // 1. ORIGINAL PRODUCT CATALOG (24 KONBINI ITEMS + JAPANESE COUNTERS, ZERO TRADEMARKS)
+    // =========================================================================
+    const AISLES = {
+      onigiri:  { id: 'onigiri',  jp: 'おにぎり・お弁当', zh: '飯糰與便當區', icon: '🍙', x: -7.5, z: -4.2, color: 0xe85d75 },
+      drinks:   { id: 'drinks',   jp: 'ドリンク冷蔵庫',   zh: '冷飲冰櫃區',   icon: '🥤', x: -7.5, z: 2.2,  color: 0x4f46e5 },
+      bakery:   { id: 'bakery',   jp: 'パン・スイーツ',   zh: '麵包與甜點區', icon: '🥐', x: 0.0,  z: -6.2, color: 0xd97706 },
+      snacks:   { id: 'snacks',   jp: 'カップ麺・お菓子', zh: '泡麵與零食區', icon: '🍜', x: 7.5,  z: -4.2, color: 0xf43f5e },
+      daily:    { id: 'daily',    jp: '日用品・雑貨',     zh: '日用品與雜貨', icon: '🧴', x: 7.5,  z: 2.2,  color: 0x6b9080 },
+      hotfood:  { id: 'hotfood',  jp: 'ホットスナック',   zh: '櫃檯熟食區',   icon: '🍗', x: 3.4,  z: 6.4,  color: 0xeab308 }
+    };
+
+    const PRODUCTS = {
+      onigiri_salmon: { id: 'onigiri_salmon', aisle: 'onigiri', icon: '🍙', price: 150, col: 0xf8fafc, acc: 0x1e293b, shape: 'onigiri', counter: 'こ', easy: 'さけ おにぎり',     kanji: '鮭おにぎり',       kana: 'さけ おにぎり',         zh: '鮭魚飯糰' },
+      onigiri_tuna:   { id: 'onigiri_tuna',   aisle: 'onigiri', icon: '🍙', price: 140, col: 0xfffbeb, acc: 0x0f172a, shape: 'onigiri', counter: 'こ', easy: 'ツナマヨ おにぎり', kanji: 'ツナマヨおにぎり', kana: 'つなまよ おにぎり',     zh: '鮪魚美乃滋飯糰' },
+      bento_karaage:  { id: 'bento_karaage',  aisle: 'onigiri', icon: '🍱', price: 540, col: 0x1e293b, acc: 0xf59e0b, shape: 'bento',   counter: 'こ', easy: 'からあげ べんとう', kanji: '唐揚げ弁当',       kana: 'からあげ べんとう',     zh: '炸雞便當', heatable: true },
+      sandwich_egg:   { id: 'sandwich_egg',   aisle: 'onigiri', icon: '🥪', price: 280, col: 0xfef3c7, acc: 0xfacc15, shape: 'sand',    counter: 'こ', easy: 'たまご サンド',     kanji: 'たまごサンド',     kana: 'たまご さんど',         zh: '雞蛋三明治' },
+      green_tea:      { id: 'green_tea',      aisle: 'drinks',  icon: '🍵', price: 130, col: 0x4d7c6f, acc: 0xbbf7d0, shape: 'bottle',  counter: 'ほん', easy: 'おちゃ',          kanji: '緑茶',             kana: 'りょくちゃ／おちゃ',   zh: '綠茶' },
+      milk:           { id: 'milk',           aisle: 'drinks',  icon: '🥛', price: 210, col: 0xffffff, acc: 0x3b82f6, shape: 'carton',  counter: 'ほん', easy: 'ぎゅうにゅう',    kanji: '牛乳',             kana: 'ぎゅうにゅう',         zh: '牛奶' },
+      coffee:         { id: 'coffee',         aisle: 'drinks',  icon: '☕', price: 160, col: 0x78350f, acc: 0xfde68a, shape: 'bottle',  counter: 'ほん', easy: 'コーヒー',        kanji: '缶コーヒー',       kana: 'かんこーひー',         zh: '罐裝咖啡' },
+      orange_juice:   { id: 'orange_juice',   aisle: 'drinks',  icon: '🧃', price: 150, col: 0xfb923c, acc: 0xfef08a, shape: 'carton',  counter: 'ほん', easy: 'オレンジジュース', kanji: 'オレンジジュース', kana: 'おれんじじゅーす',     zh: '柳橙汁' },
+      melonpan:       { id: 'melonpan',       aisle: 'bakery',  icon: '🍈', price: 160, col: 0xfde047, acc: 0xd97706, shape: 'bun',     counter: 'こ', easy: 'メロンパン',        kanji: 'メロンパン',       kana: 'めろんぱん',           zh: '菠蘿麵包' },
+      pudding:        { id: 'pudding',        aisle: 'bakery',  icon: '🍮', price: 190, col: 0xfef08a, acc: 0x78350f, shape: 'cup',     counter: 'こ', easy: 'プリン',            kanji: 'カスタードプリン', kana: 'かすたーどぷりん',     zh: '布丁' },
+      shortcake:      { id: 'shortcake',      aisle: 'bakery',  icon: '🍰', price: 360, col: 0xfff5f7, acc: 0xf43f5e, shape: 'cake',    counter: 'こ', easy: 'いちご ケーキ',     kanji: '苺ショートケーキ', kana: 'いちご しょーとけーき', zh: '草莓蛋糕' },
+      croissant:      { id: 'croissant',      aisle: 'bakery',  icon: '🥐', price: 170, col: 0xd97706, acc: 0xfde68a, shape: 'bun',     counter: 'こ', easy: 'クロワッサン',      kanji: 'クロワッサン',     kana: 'くろわっさん',         zh: '可頌麵包' },
+      cup_ramen:      { id: 'cup_ramen',      aisle: 'snacks',  icon: '🍜', price: 220, col: 0xfff1f2, acc: 0xe11d48, shape: 'cup',     counter: 'こ', easy: 'カップラーメン',    kanji: 'カップ麺',         kana: 'かっぷめん',           zh: '杯麵' },
+      chips:          { id: 'chips',          aisle: 'snacks',  icon: '🥔', price: 180, col: 0xfacc15, acc: 0xea580c, shape: 'bag',     counter: 'ふくろ', easy: 'ポテトチップス',  kanji: 'ポテトチップス',   kana: 'ぽてとちっぷす',       zh: '洋芋片' },
+      chocolate:      { id: 'chocolate',      aisle: 'snacks',  icon: '🍫', price: 150, col: 0x5c2d16, acc: 0xeab308, shape: 'bag',     counter: 'まい', easy: 'チョコレート',      kanji: '板チョコレート',   kana: 'いたちょこれーと',     zh: '巧克力' },
+      senbei:         { id: 'senbei',         aisle: 'snacks',  icon: '🍘', price: 160, col: 0xb45309, acc: 0xfef3c7, shape: 'bun',     counter: 'ふくろ', easy: 'おせんべい',      kanji: '煎餅',             kana: 'せんべい',             zh: '仙貝' },
+      karaage:        { id: 'karaage',        aisle: 'hotfood', icon: '🍗', price: 240, col: 0xea580c, acc: 0xfef3c7, shape: 'bun',     counter: 'こ', easy: 'からあげ',          kanji: '唐揚げチキン',     kana: 'からあげちきん',       zh: '現炸雞塊' },
+      nikuman:        { id: 'nikuman',        aisle: 'hotfood', icon: '🥟', price: 160, col: 0xfffbeb, acc: 0xfde68a, shape: 'bun',     counter: 'こ', easy: 'にくまん',          kanji: '肉まん',           kana: 'にくまん',             zh: '肉包' },
+      oden:           { id: 'oden',           aisle: 'hotfood', icon: '🍢', price: 280, col: 0xfdba74, acc: 0x92400e, shape: 'cup',     counter: 'こ', easy: 'おでん',            kanji: 'おでんセット',     kana: 'おでんせっと',         zh: '關東煮' },
+      curry_bun:      { id: 'curry_bun',      aisle: 'hotfood', icon: '🥯', price: 170, col: 0xf59e0b, acc: 0x92400e, shape: 'bun',     counter: 'こ', easy: 'カレーまん',        kanji: 'カレーまん',       kana: 'かれーまん',           zh: '咖哩包' },
+      umbrella:       { id: 'umbrella',       aisle: 'daily',   icon: '☂️', price: 650, col: 0x818cf8, acc: 0xe0e7ff, shape: 'umbrella', counter: 'ほん', easy: 'かさ',            kanji: 'ビニール傘',       kana: 'びにーるがさ',         zh: '透明雨傘' },
+      tissue:         { id: 'tissue',         aisle: 'daily',   icon: '🧻', price: 120, col: 0xf8fafc, acc: 0xf9a8d4, shape: 'bag',     counter: 'こ', easy: 'ティッシュ',        kanji: 'ポケットティッシュ', kana: 'ぽけっとてぃっしゅ', zh: '面紙' },
+      notebook:       { id: 'notebook',       aisle: 'daily',   icon: '📓', price: 200, col: 0x4f46e5, acc: 0xe0e7ff, shape: 'bag',     counter: 'さつ', easy: 'ノート',          kanji: '大学ノート',       kana: 'だいがくのーと',       zh: '筆記本' },
+      bandaid:        { id: 'bandaid',        aisle: 'daily',   icon: '🩹', price: 320, col: 0xfda4af, acc: 0xffffff, shape: 'bag',     counter: 'はこ', easy: 'ばんそうこう',    kanji: '絆創膏',           kana: 'ばんそうこう',         zh: 'OK繃' }
+    };
+    const ALL_PRODUCT_IDS = Object.keys(PRODUCTS);
+
+    function renderProductIcon(prod, size = 38) {
+      const s = `width="${size}" height="${size}" viewBox="0 0 48 48" style="display:inline-block; vertical-align:middle;"`;
+      if (prod.id === 'curry_bun') {
+        return `<svg ${s}><path d="M16 12 Q18 7 16 4 M24 10 Q26 5 24 2 M32 12 Q34 7 32 4" stroke="#f59e0b" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M6 34 C6 18 14 14 24 14 C34 14 42 18 42 34 C42 40 36 42 24 42 C12 42 6 40 6 34 Z" fill="#f59e0b" stroke="#b45309" stroke-width="2"/><path d="M17 18 Q24 22 31 18" stroke="#fef3c7" stroke-width="2.2" fill="none" stroke-linecap="round"/><ellipse cx="24" cy="37" rx="14" ry="4" fill="#d97706" opacity="0.45"/></svg>`;
+      }
+      if (prod.id === 'nikuman') {
+        return `<svg ${s}><path d="M17 11 Q19 6 17 3 M24 9 Q26 4 24 1 M31 11 Q33 6 31 3" stroke="#94a3b8" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M6 34 C6 18 14 13 24 13 C34 13 42 18 42 34 C42 40 36 42 24 42 C12 42 6 40 6 34 Z" fill="#fffbeb" stroke="#cbd5e1" stroke-width="2"/><path d="M24 14 L20 22 M24 14 L24 23 M24 14 L28 22" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/><circle cx="24" cy="14" r="2.2" fill="#e2e8f0"/></svg>`;
+      }
+      if (prod.id === 'melonpan') {
+        return `<svg ${s}><ellipse cx="24" cy="27" rx="19" ry="15" fill="#fbbf24" stroke="#b45309" stroke-width="2"/><path d="M12 18 L34 36 M18 14 L39 31 M9 25 L26 40 M36 18 L14 36 M30 14 L9 31 M39 25 L22 40" stroke="#d97706" stroke-width="1.8" stroke-linecap="round" opacity="0.75"/></svg>`;
+      }
+      if (prod.id === 'chips') {
+        return `<svg ${s}><rect x="10" y="6" width="28" height="36" rx="4" fill="#facc15" stroke="#ca8a04" stroke-width="2"/><rect x="10" y="6" width="28" height="6" fill="#ef4444"/><rect x="10" y="36" width="28" height="6" fill="#ef4444"/><ellipse cx="24" cy="24" rx="9" ry="6" fill="#fef08a" stroke="#d97706" stroke-width="1.8"/><text x="24" y="27" text-anchor="middle" font-size="8" font-weight="bold" fill="#b45309">CHIPS</text></svg>`;
+      }
+      if (prod.id === 'tissue') {
+        return `<svg ${s}><rect x="6" y="14" width="36" height="24" rx="5" fill="#fbcfe8" stroke="#e85d75" stroke-width="2"/><path d="M16 14 Q24 5 32 14" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.8"/><line x1="14" y1="26" x2="34" y2="26" stroke="#e85d75" stroke-width="2.2" stroke-linecap="round"/><circle cx="24" cy="31" r="2.2" fill="#fff"/></svg>`;
+      }
+      if (prod.id === 'onigiri_salmon') {
+        return `<svg ${s}><path d="M24 6 L42 38 Q43 42 38 42 L10 42 Q5 42 6 38 Z" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/><rect x="15" y="28" width="18" height="14" rx="2" fill="#1e293b"/><circle cx="24" cy="18" r="5" fill="#fb7185" stroke="#e11d48" stroke-width="1.5"/></svg>`;
+      }
+      if (prod.id === 'onigiri_tuna') {
+        return `<svg ${s}><path d="M24 6 L42 38 Q43 42 38 42 L10 42 Q5 42 6 38 Z" fill="#fffbeb" stroke="#94a3b8" stroke-width="2"/><rect x="14" y="27" width="20" height="15" rx="2" fill="#0f172a"/><ellipse cx="24" cy="18" rx="6" ry="4.5" fill="#fde68a" stroke="#d97706" stroke-width="1.5"/><circle cx="22" cy="17" r="1.4" fill="#b45309"/><circle cx="26" cy="19" r="1.4" fill="#b45309"/></svg>`;
+      }
+      return `<span style="font-size:${Math.round(size * 0.88)}px; line-height:1;">${prod.icon}</span>`;
+    }
+
+    function formatQtyJp(qty, counter) {
+      if (qty <= 1) return '';
+      if (counter === 'ほん' && qty === 2) return ' 2ほん';
+      return ` ${qty}${counter}`;
+    }
+
+    // =========================================================================
+    // 2. ORIGINAL AUDIO ENGINE (100% ORIGINAL SAKURA CHIME & LO-FI BGM + DUCKING)
+    // =========================================================================
+    const AudioSys = {
+      ctx: null, bus: null, bgmGain: null, comp: null, muted: false, vol: 0.75, timer: null, step: 0, duckTimer: null, jaVoice: null,
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) {
+            this.ctx = new AC();
+            this.bus = this.ctx.createGain();
+            this.bgmGain = this.ctx.createGain();
+            this.comp = this.ctx.createDynamicsCompressor();
+            this.bus.gain.value = this.muted ? 0 : this.vol;
+            this.bgmGain.gain.value = 1.0;
+            this.bgmGain.connect(this.bus);
+            this.bus.connect(this.comp);
+            this.comp.connect(this.ctx.destination);
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+        if (!this.timer) this.startBGM();
+      },
+      setVol(v) { this.vol = Math.max(0, Math.min(1, v)); if (this.bus) this.bus.gain.value = this.muted ? 0 : this.vol; },
+      setMuted(m) {
+        this.muted = m;
+        if (this.bus) this.bus.gain.value = m ? 0 : this.vol;
+        if (m && window.speechSynthesis) try { window.speechSynthesis.cancel(); } catch {}
+      },
+      duckBGM(active, safetyMs = 6000) {
+        if (this.duckTimer) { clearTimeout(this.duckTimer); this.duckTimer = null; }
+        if (this.bgmGain && this.ctx) {
+          const now = this.ctx.currentTime;
+          this.bgmGain.gain.cancelScheduledValues(now);
+          this.bgmGain.gain.setTargetAtTime(active ? 0.05 : 1.0, now, active ? 0.03 : 0.14);
+        }
+        if (active && safetyMs > 0) this.duckTimer = setTimeout(() => this.duckBGM(false), safetyMs);
+      },
+      loadJaVoice() {
+        if (!window.speechSynthesis) return null;
+        const ja = (window.speechSynthesis.getVoices() || []).filter(v => (v.lang || '').toLowerCase().startsWith('ja'));
+        this.jaVoice = ja.find(v => /google|kyoko|nanami|otoya|natural/i.test(v.name)) || ja[0] || null;
+        return this.jaVoice;
+      },
+      speak(text, onDone = null) {
+        if (this.muted || !text || !window.speechSynthesis) { if (onDone) onDone(); return; }
+        try {
+          window.speechSynthesis.cancel();
+          const clean = text.replace(/（[^）]*）/g, '').trim();
+          this.duckBGM(true, Math.max(3200, clean.length * 165 + 1400));
+          const u = new SpeechSynthesisUtterance(clean);
+          u.lang = 'ja-JP'; u.rate = 0.88; u.pitch = 1.04; u.volume = 1.0;
+          const v = this.jaVoice || this.loadJaVoice();
+          if (v) u.voice = v;
+          const fin = () => { this.duckBGM(false); if (onDone) onDone(); };
+          u.onend = fin; u.onerror = fin;
+          window.speechSynthesis.speak(u);
+        } catch { this.duckBGM(false); if (onDone) onDone(); }
+      },
+      tone(freq, dur, type = 'sine', vol = 0.22, isBgm = false) {
+        if (this.muted || !this.ctx || this.ctx.state !== 'running' || !freq) return;
+        try {
+          const now = this.ctx.currentTime;
+          const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.type = type; o.frequency.setValueAtTime(freq, now);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(vol, now + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+          o.connect(g); g.connect((isBgm && this.bgmGain) ? this.bgmGain : (this.bus || this.ctx.destination));
+          o.start(now); o.stop(now + dur + 0.03);
+        } catch {}
+      },
+      sfx(kind) {
+        this.init();
+        if (kind === 'chime') {
+          // 100% Original Sakura Mart 4-Note Blossom Bell Arpeggio (C5-E5-G5-B5)
+          [[523.25, 0], [659.25, 110], [783.99, 220], [987.77, 340]].forEach(([f, d]) => setTimeout(() => this.tone(f, 0.28, 'sine', 0.30), d));
+        } else if (kind === 'scan') {
+          this.tone(1680, 0.08, 'square', 0.18);
+        } else if (kind === 'pay') {
+          this.tone(880, 0.10, 'sine', 0.34); setTimeout(() => this.tone(1318.5, 0.20, 'sine', 0.36), 95);
+        } else if (kind === 'ring') {
+          [0, 170, 390, 560].forEach(d => setTimeout(() => this.tone(987.77, 0.11, 'triangle', 0.30), d));
+        } else if (kind === 'good') {
+          this.tone(587.3, 0.11, 'triangle', 0.34); setTimeout(() => this.tone(740, 0.14, 'triangle', 0.34), 80); setTimeout(() => this.tone(880, 0.22, 'sine', 0.36), 160);
+        } else if (kind === 'wrong') {
+          this.tone(233, 0.20, 'triangle', 0.34);
+        } else {
+          this.tone(622, 0.09, 'sine', 0.28);
+        }
+      },
+      startBGM() {
+        // Original gentle jazz-waltz boutique synth loop
+        const mel = [523,659,784,988, 784,0,659,587, 523,587,659,784, 659,0,587,0];
+        const bas = [261,0,330,0, 220,0,261,0, 175,0,220,0, 196,0,247,0];
+        this.timer = setInterval(() => {
+          if (this.muted || !this.ctx || this.ctx.state !== 'running') return;
+          const m = mel[this.step % mel.length], b = bas[this.step % bas.length];
+          if (m) this.tone(m, 0.32, 'sine', 0.18, true);
+          if (b) this.tone(b, 0.44, 'triangle', 0.13, true);
+          this.step++;
+        }, 380);
+      }
+    };
+
+    function startSpeechRecognition(expectedKeywords, onResult, onStatus) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        if (onStatus) onStatus('此瀏覽器不支援麥克風辨識，請點「✅ 已跟讀完成」繼續！');
+        return null;
+      }
+      try {
+        const rec = new SR();
+        rec.lang = 'ja-JP'; rec.interimResults = false; rec.maxAlternatives = 3;
+        AudioSys.duckBGM(true, 9000);
+        if (onStatus) onStatus('🎤 聆聽中…請用日語清楚說出來！（BGM 已自動降低）');
+        rec.onresult = (e) => {
+          AudioSys.duckBGM(false);
+          const list = Array.from(e.results[0]).map(r => r.transcript.toLowerCase());
+          const heard = list[0] || '';
+          const ok = expectedKeywords.some(kw => list.some(t => t.includes(kw.toLowerCase())));
+          onResult(ok, heard);
+        };
+        rec.onerror = () => { AudioSys.duckBGM(false); if (onStatus) onStatus('🎤 沒聽清楚，可以再試一次或點「✅ 已跟讀完成」！'); };
+        rec.onend = () => AudioSys.duckBGM(false);
+        rec.start();
+        return rec;
+      } catch {
+        AudioSys.duckBGM(false);
+        if (onStatus) onStatus('無法開啟麥克風，請點「✅ 已跟讀完成」繼續！');
+        return null;
+      }
+    }
+
+    // =========================================================================
+    // 3. SOPHISTICATED 3D SAKURA MART INTERIOR, SCULPTED PRODUCTS & FP BASKET
+    // =========================================================================
+    const G = {
+      scene: null, camera: null, renderer: null, toonGrad: null,
+      mode: 'customer', level: 'a1a2', playerName: 'ハル', zhHints: true,
+      round: 1, score: 0, streak: 0, yenEarned: 0, roundsCleared: 0, running: false, modalOpen: false,
+      pos: new THREE.Vector3(0, 1.72, 2.0), yaw: 0, pitch: -0.05,
+      keys: {}, dragging: false, lastX: 0, lastY: 0, nearest: null,
+      interactables: [], checkoutCamMode: false,
+      fpBasketGroup: null, laserBeam: null, laserTimer: 0,
+      checklist: [], basket: [], phoneTriggered: false, listShowKana: false,
+      clerkCustomerMesh: null, custWalkZ: 5.25, clerkTrayGroup: null,
+      clerkItems: [], clerkScanQueue: [], clerkQueuePos: 0, clerkNeedsHeat: false, clerkHeated: false, clerkInterruptsLeft: [], clerkBusy: false,
+      clock: new THREE.Clock()
+    };
+
+    function createToonGrad() {
+      const data = new Uint8Array([172,172,172,255, 212,212,212,255, 240,240,240,255, 255,255,255,255]);
+      const tex = new THREE.DataTexture(data, 4, 1, THREE.RGBAFormat);
+      tex.minFilter = THREE.LinearFilter; tex.magFilter = THREE.LinearFilter; tex.needsUpdate = true;
+      return tex;
+    }
+    function mat(hex, opts = {}) { return new THREE.MeshToonMaterial({ color: hex, gradientMap: G.toonGrad, ...opts }); }
+
+    function makeFloorTileTexture() {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fcf6f2'; ctx.fillRect(0, 0, 256, 256);
+      ctx.fillStyle = '#f5ebe4'; ctx.fillRect(0, 0, 128, 128); ctx.fillRect(128, 128, 128, 128);
+      ctx.strokeStyle = '#eadcd3'; ctx.lineWidth = 3;
+      ctx.strokeRect(0, 0, 128, 128); ctx.strokeRect(128, 0, 128, 128);
+      ctx.strokeRect(0, 128, 128, 128); ctx.strokeRect(128, 128, 128, 128);
+      const tex = new THREE.CanvasTexture(c);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(9, 8); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function makeSignTexture(text, sub, bgHex = '#312e81', fgHex = '#fff9f7') {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = bgHex; ctx.fillRect(0, 0, 512, 128);
+      ctx.fillStyle = '#e85d75'; ctx.fillRect(0, 108, 512, 20);
+      ctx.fillStyle = '#eab308'; ctx.fillRect(0, 98, 512, 10);
+      ctx.fillStyle = fgHex; ctx.textAlign = 'center';
+      ctx.font = 'bold 46px sans-serif'; ctx.fillText(text, 256, 56);
+      ctx.fillStyle = '#fbcfe8'; ctx.font = 'bold 24px sans-serif'; ctx.fillText(sub, 256, 88);
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    // Multi-Part Sculpted 3D Konbini Products!
+    function buildProduct3D(prod) {
+      const g = new THREE.Group();
+      const mMain = mat(prod.col), mAcc = mat(prod.acc || 0xffffff);
+      if (prod.shape === 'onigiri') {
+        const rice = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.24, 3), mMain); rice.position.y = 0.12;
+        const nori = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.17), mAcc); nori.position.y = 0.08;
+        g.add(rice, nori);
+      } else if (prod.shape === 'bottle') {
+        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.08, 0.24, 10), mMain); body.position.y = 0.12;
+        const lbl = new THREE.Mesh(new THREE.CylinderGeometry(0.078, 0.078, 0.10, 10), mAcc); lbl.position.y = 0.13;
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.045, 0.06, 8), mat(0xffffff)); cap.position.y = 0.27;
+        g.add(body, lbl, cap);
+      } else if (prod.shape === 'carton') {
+        const box = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.24, 0.14), mMain); box.position.y = 0.12;
+        const top = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.09, 4), mAcc); top.rotation.y = Math.PI / 4; top.position.y = 0.28;
+        g.add(box, top);
+      } else if (prod.shape === 'bento') {
+        const tray = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.09, 0.20), mMain); tray.position.y = 0.05;
+        const food1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.06, 0.14), mat(0xffffff)); food1.position.set(-0.06, 0.09, 0);
+        const food2 = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), mAcc); food2.position.set(0.06, 0.10, 0);
+        g.add(tray, food1, food2);
+      } else if (prod.shape === 'cake') {
+        const slice = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.20, 3), mMain); slice.position.y = 0.10;
+        const berry = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), mAcc); berry.position.y = 0.22;
+        g.add(slice, berry);
+      } else if (prod.shape === 'cup') {
+        const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.08, 0.22, 10), mMain); cup.position.y = 0.11;
+        const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.118, 0.118, 0.03, 10), mAcc); lid.position.y = 0.23;
+        g.add(cup, lid);
+      } else if (prod.shape === 'umbrella') {
+        const cane = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.34, 6), mAcc); cane.position.y = 0.17;
+        const dome = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.22, 8), mMain); dome.position.y = 0.22;
+        g.add(cane, dome);
+      } else if (prod.shape === 'bun') {
+        const dome = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), mMain); dome.scale.y = 0.72; dome.position.y = 0.09;
+        const glaze = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), mAcc); glaze.scale.y = 0.4; glaze.position.y = 0.15;
+        g.add(dome, glaze);
+      } else {
+        const bag = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.22, 0.10), mMain); bag.position.y = 0.11;
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.205, 0.07, 0.105), mAcc); stripe.position.y = 0.13;
+        g.add(bag, stripe);
+      }
+      g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      return g;
+    }
+
+    function buildChibiNPC(shirtHex, hairHex, isClerk = false) {
+      const grp = new THREE.Group();
+      const skin = mat(0xffe2c8);
+      const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.42, 10, 14), mat(shirtHex));
+      torso.position.y = 0.82; torso.castShadow = true;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 18, 16), skin);
+      head.position.y = 1.48; head.castShadow = true;
+      const hair = new THREE.Mesh(new THREE.SphereGeometry(0.44, 16, 14), mat(hairHex));
+      hair.position.set(0, 1.56, -0.06); hair.scale.set(1.04, 0.98, 0.98);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e293b });
+      const blushMat = new THREE.MeshBasicMaterial({ color: 0xff8fab, transparent: true, opacity: 0.55 });
+      for (const side of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 10), eyeMat);
+        eye.position.set(side * 0.14, 1.48, 0.38);
+        const bl = new THREE.Mesh(new THREE.CircleGeometry(0.065, 10), blushMat);
+        bl.position.set(side * 0.22, 1.40, 0.37);
+        const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.26, 8, 10), mat(shirtHex));
+        arm.position.set(side * 0.40, 0.84, 0.08); arm.rotation.z = side * 0.22;
+        grp.add(eye, bl, arm);
+      }
+      const smile = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 6, 12, Math.PI), eyeMat);
+      smile.position.set(0, 1.38, 0.40); smile.rotation.z = Math.PI;
+      grp.add(torso, head, hair, smile);
+      if (isClerk) {
+        // Original Sakura Mart Boutique Uniform (Midnight Indigo Apron + Sakura Pink Collar & Gold Nameplate!)
+        const apron = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.52, 0.14), mat(0x312e81));
+        apron.position.set(0, 0.78, 0.28);
+        const badge = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.09, 0.04), mat(0xeab308));
+        badge.position.set(0.14, 0.96, 0.36);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.42, 0.15, 14), mat(0x312e81));
+        cap.position.set(0, 1.84, 0);
+        const brim = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.05, 0.32), mat(0xe85d75));
+        brim.position.set(0, 1.78, 0.28);
+        grp.add(apron, badge, cap, brim);
+      }
+      return grp;
+    }
+
+    function makeAisleHeaderTex(aisle) {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 96;
+      const ctx = c.getContext('2d');
+      const col = '#' + new THREE.Color(aisle.color).getHexString();
+      ctx.fillStyle = col; ctx.fillRect(0, 0, 512, 96);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(0, 0, 512, 24);
+      ctx.fillStyle = '#fff9f7'; ctx.textAlign = 'center';
+      ctx.font = 'bold 38px sans-serif';
+      ctx.fillText(`${aisle.icon}  ${aisle.jp}`, 256, 62);
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function makePriceStripTex() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 32;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#fff9f7'; ctx.fillRect(0, 0, 512, 32);
+      const prices = ['¥140', '¥150', '¥180', '¥220', '¥160', '¥280', '¥130'];
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#fef08a' : '#fce7f3';
+        ctx.fillRect(i * 73 + 6, 3, 60, 26);
+        ctx.fillStyle = '#be123c'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(prices[i], i * 73 + 36, 22);
+      }
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function makePosterTex(title, sub, bg1, bg2) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 360;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, 0, 360);
+      g.addColorStop(0, bg1); g.addColorStop(1, bg2);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 360);
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 10; ctx.strokeRect(12, 12, 232, 336);
+      ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center';
+      ctx.font = 'bold 34px sans-serif'; ctx.fillText(title, 128, 155);
+      ctx.fillStyle = '#fef08a'; ctx.font = 'bold 26px sans-serif'; ctx.fillText(sub, 128, 215);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('🌸 さくらマート', 128, 305);
+      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    let _priceStripTex = null;
+    function buildShelfUnit(aisle, rotY = 0) {
+      if (!_priceStripTex) _priceStripTex = makePriceStripTex();
+      const grp = new THREE.Group();
+      grp.position.set(aisle.x, 0, aisle.z); grp.rotation.y = rotY;
+      const isCooler = aisle.id === 'drinks';
+
+      // Solid cabinet frame + wood/indigo side panels + colorful header banner
+      const backPanel = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.55, 0.16), mat(isCooler ? 0xdbeafe : 0xfaf0ea));
+      backPanel.position.set(0, 1.28, -0.46); backPanel.receiveShadow = true;
+      const sideMat = mat(isCooler ? 0x312e81 : 0xe7d3c5);
+      const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.55, 1.12), sideMat); sideL.position.set(-2.26, 1.28, 0.04); sideL.castShadow = true;
+      const sideR = sideL.clone(); sideR.position.x = 2.26;
+      const kick = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.24, 1.12), mat(0x312e81)); kick.position.set(0, 0.12, 0.04);
+      const header = new THREE.Mesh(new THREE.BoxGeometry(4.66, 0.42, 1.16), [
+        mat(aisle.color), mat(aisle.color), mat(aisle.color), mat(aisle.color),
+        new THREE.MeshBasicMaterial({ map: makeAisleHeaderTex(aisle) }), mat(aisle.color)
+      ]);
+      header.position.set(0, 2.72, 0.04);
+      grp.add(backPanel, sideL, sideR, kick, header);
+
+      // 4 densely stocked tiers × 7 columns × 2 rows deep = 56 sculpted 3D goods per shelf!
+      const items = Object.values(PRODUCTS).filter(p => p.aisle === aisle.id);
+      const priceMat = new THREE.MeshBasicMaterial({ map: _priceStripTex });
+      for (let row = 0; row < 4; row++) {
+        const sy = 0.34 + row * 0.56;
+        const board = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.06, 1.04), mat(0xffffff));
+        board.position.set(0, sy, 0.06); board.receiveShadow = true;
+        const rail = new THREE.Mesh(new THREE.PlaneGeometry(4.36, 0.10), priceMat);
+        rail.position.set(0, sy - 0.01, 0.59);
+        grp.add(board, rail);
+
+        // LED under-shelf glow strip on cooler
+        if (isCooler) {
+          const led = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.03, 0.05), new THREE.MeshBasicMaterial({ color: 0xe0f2fe }));
+          led.position.set(0, sy + 0.50, 0.48); grp.add(led);
+        }
+
+        for (let col = 0; col < 7; col++) {
+          const prod = items[(row * 7 + col) % items.length];
+          for (let depth = 0; depth < 2; depth++) {
+            const pm = buildProduct3D(prod);
+            pm.scale.setScalar(1.32);
+            pm.position.set(-1.82 + col * 0.61, sy + 0.03, 0.34 - depth * 0.34);
+            pm.rotation.y = (col % 2 === 0 ? 0.08 : -0.08);
+            grp.add(pm);
+          }
+        }
+      }
+
+      if (isCooler) {
+        // Framed glass cooler doors with sleek silver handles
+        for (const gx of [-1.08, 1.08]) {
+          const door = new THREE.Mesh(new THREE.PlaneGeometry(2.05, 2.2), new THREE.MeshStandardMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.16, roughness: 0.06 }));
+          door.position.set(gx, 1.38, 0.61);
+          const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.72, 8), mat(0xcbd5e1));
+          handle.position.set(gx + (gx < 0 ? 0.88 : -0.88), 1.35, 0.65);
+          grp.add(door, handle);
+        }
+      }
+      return grp;
+    }
+
+    function addWorldTag(text, zh, extra = '') {
+      const el = document.createElement('div');
+      el.className = `aisle-tag ${extra}`;
+      el.innerHTML = `${text}${G.zhHints && zh ? `<span class="zh">${zh}</span>` : ''}`;
+      document.getElementById('world-labels').appendChild(el);
+      return el;
+    }
+
+    function buildKonbiniScene() {
+      G.scene = new THREE.Scene();
+      G.scene.background = new THREE.Color(0xfde8ef);
+      G.scene.fog = new THREE.Fog(0xfff1f5, 22, 46);
+
+      G.scene.add(new THREE.HemisphereLight(0xfffaf7, 0xe2d5dd, 1.15));
+      const cl1 = new THREE.PointLight(0xfffbeb, 1.1, 28); cl1.position.set(0, 4.4, -3.0);
+      const cl2 = new THREE.PointLight(0xfff1f5, 1.0, 28); cl2.position.set(0, 4.4, 5.2);
+      const dir = new THREE.DirectionalLight(0xfffdf5, 0.72); dir.position.set(6, 12, 8); dir.castShadow = true;
+      G.scene.add(cl1, cl2, dir);
+
+      // Polished Boutique Floor & Recessed Ceiling Lighting
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(22, 20), new THREE.MeshStandardMaterial({ map: makeFloorTileTexture(), roughness: 0.34, metalness: 0.04 }));
+      floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+      const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(22, 20), mat(0xfffdfd));
+      ceiling.rotation.x = Math.PI / 2; ceiling.position.y = 4.8;
+      for (const cz of [-4.5, 0.0, 4.5]) {
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(15.2, 0.10, 0.68), mat(0xe2d5dd)); frame.position.set(0, 4.76, cz);
+        const lamp = new THREE.Mesh(new THREE.BoxGeometry(14.8, 0.08, 0.46), new THREE.MeshBasicMaterial({ color: 0xfffef5 })); lamp.position.set(0, 4.73, cz);
+        G.scene.add(frame, lamp);
+      }
+
+      // Warm Cream Walls + Wood Wainscoting + Sakura Coral / Gold / Indigo Trim!
+      const wallMat = mat(0xfff9f7);
+      const woodMat = mat(0xe6ccb2);
+      const backW = new THREE.Mesh(new THREE.BoxGeometry(22, 4.8, 0.35), wallMat); backW.position.set(0, 2.4, -9.2);
+      const leftW = new THREE.Mesh(new THREE.BoxGeometry(0.35, 4.8, 20), wallMat); leftW.position.set(-10.6, 2.4, 0);
+      const rightW = leftW.clone(); rightW.position.x = 10.6;
+      const wainBack = new THREE.Mesh(new THREE.BoxGeometry(21.4, 1.05, 0.08), woodMat); wainBack.position.set(0, 0.52, -8.98);
+      const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(22, 4.8, 0.22), new THREE.MeshStandardMaterial({ color: 0xe0e7ff, transparent: true, opacity: 0.22, roughness: 0.08 }));
+      frontGlass.position.set(0, 2.4, 9.8);
+      // Automatic glass entrance door frame + welcome mat
+      for (const dx of [-2.2, 2.2]) {
+        const mull = new THREE.Mesh(new THREE.BoxGeometry(0.18, 4.8, 0.32), mat(0x312e81)); mull.position.set(dx, 2.4, 9.75); G.scene.add(mull);
+      }
+      const welcomeMat = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.04, 1.5), mat(0xe85d75)); welcomeMat.position.set(0, 0.02, 8.8);
+      [[0xe85d75, 4.22], [0xeab308, 4.00], [0x312e81, 3.78]].forEach(([c, y]) => {
+        const s = new THREE.Mesh(new THREE.BoxGeometry(21.4, 0.16, 0.08), mat(c)); s.position.set(0, y, -8.98); G.scene.add(s);
+      });
+
+      // Back Wall Signboard & Framed Seasonal Posters!
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 1.65), new THREE.MeshBasicMaterial({ map: makeSignTexture('🌸 さくらマート 24H', 'SAKURA MART · ORIGINAL KONBINI') }));
+      sign.position.set(0, 3.65, -8.94);
+      const p1 = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.2), new THREE.MeshBasicMaterial({ map: makePosterTex('☕ 淹れたて', 'コーヒー ¥160', '#312e81', '#6366f1') }));
+      p1.position.set(-5.8, 2.55, -8.94);
+      const p2 = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.2), new THREE.MeshBasicMaterial({ map: makePosterTex('🌸 春スイーツ', 'いちごフェア', '#be123c', '#f472b6') }));
+      p2.position.set(5.8, 2.55, -8.94);
+
+      // Scenic Outdoor Street Backdrop (Pastel Buildings, Streetlamp & Blooming Sakura Trees outside!)
+      const outStreet = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), mat(0xcbd5e1)); outStreet.rotation.x = -Math.PI / 2; outStreet.position.set(0, -0.05, 16);
+      [[-6.2, 13.5], [6.8, 14.2]].forEach(([tx, tz]) => {
+        const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.36, 3.0, 8), mat(0x7c5840)); tr.position.set(tx, 1.5, tz);
+        const bl = new THREE.Mesh(new THREE.SphereGeometry(2.2, 14, 12), mat(0xf9a8d4)); bl.position.set(tx, 3.9, tz);
+        G.scene.add(tr, bl);
+      });
+      G.scene.add(floor, ceiling, backW, leftW, rightW, wainBack, frontGlass, welcomeMat, sign, p1, p2, outStreet);
+
+      // Cozy Central Promotional Display Island (Sakura Snack Endcap so the center of the store feels full & polished!)
+      const island = new THREE.Group(); island.position.set(0, 0, -1.6);
+      const islBase = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.95, 1.4), mat(0xfff1f5)); islBase.position.y = 0.48; islBase.castShadow = true;
+      const islTop = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.10, 1.52), mat(0xe85d75)); islTop.position.y = 0.98;
+      ['shortcake', 'melonpan', 'pudding', 'chocolate'].forEach((pid, i) => {
+        const pm = buildProduct3D(PRODUCTS[pid]); pm.scale.setScalar(1.4);
+        pm.position.set(-0.9 + i * 0.6, 1.04, 0); island.add(pm);
+      });
+      // Hanging ceiling promo banner above island
+      const hangBanner = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.55, 0.08), mat(0xe85d75)); hangBanner.position.set(0, 3.85, 0);
+      island.add(islBase, islTop, hangBanner);
+      G.scene.add(island);
+
+      // Magazine Rack along front glass + ATM/Multi-Copier + Microwave/Coffee Bar!
+      const magRack = new THREE.Group(); magRack.position.set(-4.8, 0, 8.8);
+      const mBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.15, 0.55), mat(0xe6ccb2)); mBase.position.y = 0.58;
+      magRack.add(mBase);
+      [0xe85d75, 0x4f46e5, 0xeab308, 0x34d399, 0xf97316, 0xec4899].forEach((c, i) => {
+        const mag = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.56, 0.06), mat(c));
+        mag.position.set(-1.25 + i * 0.5, 1.28, -0.10); mag.rotation.x = -0.25; magRack.add(mag);
+      });
+      const atm = new THREE.Group(); atm.position.set(8.6, 0, 7.2); atm.rotation.y = -Math.PI / 2;
+      const atmBody = new THREE.Mesh(new THREE.BoxGeometry(1.45, 2.2, 1.05), mat(0x312e81)); atmBody.position.y = 1.1;
+      const atmScr = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.65), new THREE.MeshBasicMaterial({ color: 0xbae6fd })); atmScr.position.set(0, 1.48, 0.54);
+      atm.add(atmBody, atmScr);
+      const mw = new THREE.Group(); mw.position.set(-8.6, 0, 7.0); mw.rotation.y = Math.PI / 2;
+      const mwTable = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 1.05), mat(0xd4a373)); mwTable.position.y = 0.5;
+      const mwBox = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.54, 0.64), mat(0xffffff)); mwBox.position.set(-0.5, 1.27, 0);
+      const mwWin = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.34), new THREE.MeshBasicMaterial({ color: 0xfef08a })); mwWin.position.set(-0.58, 1.27, 0.33);
+      const cofMaker = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.78, 0.58), mat(0x312e81)); cofMaker.position.set(0.55, 1.39, 0);
+      mw.add(mwTable, mwBox, mwWin, cofMaker);
+      G.scene.add(magRack, atm, mw);
+
+      // Build all 5 Main Stocked Aisles + Hot Food Showcase
+      document.getElementById('world-labels').innerHTML = '';
+      G.interactables = [];
+      [
+        { aisle: AISLES.onigiri, rotY: Math.PI / 2 },
+        { aisle: AISLES.drinks,  rotY: Math.PI / 2 },
+        { aisle: AISLES.bakery,  rotY: 0 },
+        { aisle: AISLES.snacks,  rotY: -Math.PI / 2 },
+        { aisle: AISLES.daily,   rotY: -Math.PI / 2 }
+      ].forEach(({ aisle, rotY }) => {
+        G.scene.add(buildShelfUnit(aisle, rotY));
+        const tag = addWorldTag(`${aisle.icon} ${aisle.jp}`, aisle.zh);
+        G.interactables.push({ kind: 'aisle', aisleId: aisle.id, x: aisle.x, y: 2.95, z: aisle.z, prompt: `${aisle.icon} ${aisle.jp}を見る（查看貨架）`, labelEl: tag });
+      });
+
+      // Glowing Warm Hot-Food Showcase with Double-Tier Racks
+      const hotCase = new THREE.Group(); hotCase.position.set(AISLES.hotfood.x, 0, AISLES.hotfood.z);
+      const hcBase = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.05, 1.15), mat(0xfff1f5)); hcBase.position.y = 0.52;
+      const hcGlass = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.0, 0.98), new THREE.MeshStandardMaterial({ color: 0xfef3c7, transparent: true, opacity: 0.36 })); hcGlass.position.y = 1.55;
+      const hcTop = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.18, 1.15), mat(0xeab308)); hcTop.position.y = 2.12;
+      const hcLight = new THREE.PointLight(0xfef08a, 0.7, 5); hcLight.position.set(0, 1.85, 0);
+      Object.values(PRODUCTS).filter(p => p.aisle === 'hotfood').forEach((p, i) => {
+        for (let r = 0; r < 2; r++) {
+          const pm = buildProduct3D(p); pm.scale.setScalar(1.3);
+          pm.position.set(-0.78 + i * 0.52, 1.12 + r * 0.38, r === 0 ? 0.18 : -0.18); hotCase.add(pm);
+        }
+      });
+      hotCase.add(hcBase, hcGlass, hcTop, hcLight); G.scene.add(hotCase);
+      const hcTag = addWorldTag(`🍗 ${AISLES.hotfood.jp}`, AISLES.hotfood.zh);
+      G.interactables.push({ kind: 'aisle', aisleId: 'hotfood', x: AISLES.hotfood.x, y: 2.45, z: AISLES.hotfood.z, prompt: '🍗 ホットスナックを見る（查看熟食櫃）', labelEl: hcTag });
+
+      // Detailed 3D Checkout Counter (`レジ`) with POS, IC Pad, Chopstick Caddy & Laser Scanner!
+      const regGrp = new THREE.Group(); regGrp.position.set(0, 0, 6.6);
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(5.0, 1.08, 1.38), mat(0xfff9f7)); counter.position.y = 0.54; counter.castShadow = true; counter.receiveShadow = true;
+      const cTop = new THREE.Mesh(new THREE.BoxGeometry(5.12, 0.12, 1.48), mat(0x312e81)); cTop.position.y = 1.10;
+      const cTrim = new THREE.Mesh(new THREE.BoxGeometry(5.04, 0.12, 1.40), mat(0xe85d75)); cTrim.position.y = 0.96;
+      const posScreen = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.56, 0.14), mat(0x1e1b4b)); posScreen.position.set(-1.45, 1.48, -0.15);
+      const posGlow = new THREE.Mesh(new THREE.PlaneGeometry(0.58, 0.40), new THREE.MeshBasicMaterial({ color: 0xfce7f3 })); posGlow.position.set(-1.45, 1.48, -0.07);
+      const icPad = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.36), mat(0xeab308)); icPad.position.set(1.38, 1.20, -0.35);
+      const caddy = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.24, 10), mat(0xe85d75)); caddy.position.set(1.95, 1.28, -0.2);
+      const tray = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.06, 0.82), mat(0xfbcfe8)); tray.position.set(0, 1.19, -0.15);
+      G.laserBeam = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.06), new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.92, side: THREE.DoubleSide }));
+      G.laserBeam.rotation.x = -Math.PI / 2; G.laserBeam.position.set(0, 1.44, -0.15); G.laserBeam.visible = false;
+      regGrp.add(counter, cTop, cTrim, posScreen, posGlow, icPad, caddy, tray, G.laserBeam);
+      G.scene.add(regGrp);
+
+      G.clerkNPC = buildChibiNPC(0xfff9f7, 0x3b2f2f, true);
+      G.clerkNPC.position.set(0, 0, 7.65); G.clerkNPC.rotation.y = Math.PI;
+      G.scene.add(G.clerkNPC);
+
+      G.clerkCustomerMesh = buildChibiNPC(0xe85d75, 0x6b4423, false);
+      G.clerkCustomerMesh.position.set(0, 0, 5.25); G.clerkCustomerMesh.visible = false;
+      G.scene.add(G.clerkCustomerMesh);
+
+      G.clerkTrayGroup = new THREE.Group();
+      G.clerkTrayGroup.position.set(0, 1.24, 6.45);
+      G.scene.add(G.clerkTrayGroup);
+
+      G.fpBasketGroup = new THREE.Group();
+      const bBody = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.22, 0.30), mat(0xe85d75));
+      const bRim = new THREE.Mesh(new THREE.BoxGeometry(0.47, 0.04, 0.33), mat(0x312e81)); bRim.position.y = 0.11;
+      G.fpBasketGroup.add(bBody, bRim);
+      G.fpBasketGroup.position.set(0.44, -0.44, -0.82);
+      G.fpBasketGroup.rotation.set(0.18, -0.22, 0);
+      G.fpBasketGroup.visible = false;
+      G.camera.add(G.fpBasketGroup);
+      G.scene.add(G.camera);
+
+      const regTag = addWorldTag('💴 レジ（お会計）', '結帳櫃檯', 'register');
+      G.interactables.push({ kind: 'register', x: 0, y: 2.38, z: 6.2, prompt: '💴 レジでお会計する（前往櫃檯結帳）', labelEl: regTag });
+    }
+
+    function syncFPBasketVisual() {
+      if (!G.fpBasketGroup) return;
+      while (G.fpBasketGroup.children.length > 2) G.fpBasketGroup.remove(G.fpBasketGroup.children[2]);
+      G.basket.slice(0, 6).forEach((pid, i) => {
+        const pm = buildProduct3D(PRODUCTS[pid]);
+        pm.scale.setScalar(0.55);
+        pm.position.set(-0.12 + (i % 3) * 0.12, 0.08, i >= 3 ? 0.06 : -0.05);
+        G.fpBasketGroup.add(pm);
+      });
+    }
+
+    // =========================================================================
+    // 4. CUSTOMER MODE (10 ROUNDS, COUNTERS, 3D BASKET, PHONE CALL, CASH/CHANGE)
+    // =========================================================================
+    const PHONE_CALLS = {
+      a1a2: [
+        { caller: 'お母さん（媽媽）', line: 'もしもし？ごめんね、ついでに「ITEM」も買ってきてくれる？', zh: '喂？不好意思，可以順便再幫我買「ITEM」嗎？' },
+        { caller: 'お父さん（爸爸）', line: 'もしもし、お父さんだよ！帰りに「ITEM」もお願いできる？', zh: '喂，我是爸爸！回家順便幫我買個「ITEM」好嗎？' }
+      ],
+      b1b2: [
+        { caller: 'お母さん（媽媽）', line: 'もしもし、ちょうど買い物中？急で悪いんだけど、「ITEM」もカゴに追加しておいてくれる？', zh: '喂，剛好正在買東西嗎？臨時麻煩你一下，可以再多放一個「ITEM」進購物籃嗎？' },
+        { caller: 'お父さん（爸爸）', line: 'もしもし、今コンビニにいるんだよね？申し訳ないけど、「ITEM」も一緒に買ってきてもらえるかな？', zh: '喂，你現在在便利商店對吧？不好意思，可以順便一起買「ITEM」回來嗎？' }
+      ]
+    };
+
+    const CHECKOUT_SCRIPTS = {
+      a1a2: [
+        {
+          clerkJp: 'いらっしゃいませ！レジ袋（ぶくろ）はいりますか？',
+          clerkZh: '歡迎光臨！請問需要購物袋嗎？',
+          opts: [
+            { jp: 'はい、いちまい おねがいします。', kana: 'はい、いちまい おねがいします。', kw: ['はい', '一枚', 'いちまい', 'お願い', 'おねがい'] },
+            { jp: 'いいえ、だいじょうぶです。', kana: 'いいえ、だいじょうぶです。', kw: ['いいえ', '大丈夫', 'だいじょうぶ'] }
+          ]
+        },
+        {
+          clerkJp: 'お弁当（べんとう）は温（あたた）めますか？',
+          clerkZh: '便當需要幫您微波加熱嗎？',
+          opts: [
+            { jp: 'はい、おねがいします。', kana: 'はい、おねがいします。', kw: ['はい', 'お願い', 'おねがい'] },
+            { jp: 'いいえ、そのままで いいです。', kana: 'いいえ、そのままで いいです。', kw: ['いいえ', 'そのまま'] }
+          ]
+        },
+        {
+          clerkJp: 'お箸（はし）やスプーンはつけますか？',
+          clerkZh: '需要附筷子或湯匙嗎？',
+          opts: [
+            { jp: 'はい、ひとつ ください。', kana: 'はい、ひとつ ください。', kw: ['はい', 'ひとつ', 'ください'] },
+            { jp: 'いいえ、けっこうです。', kana: 'いいえ、けっこうです。', kw: ['いいえ', '結構', 'けっこう'] }
+          ]
+        }
+      ],
+      b1b2: [
+        {
+          clerkJp: 'いらっしゃいませ。ポイントカードはお持ちでしょうか？',
+          clerkZh: '歡迎光臨。請問您有集點卡嗎？',
+          opts: [
+            { jp: 'はい、こちらでお願いします。', kana: 'はい、こちらで おねがいします。', kw: ['はい', 'こちら', 'お願い', 'おねがい'] },
+            { jp: 'いえ、持っていません。', kana: 'いえ、もっていません。', kw: ['いえ', '持っ', 'もって'] }
+          ]
+        },
+        {
+          clerkJp: 'レジ袋はご利用になりますか？有料となっておりますが。',
+          clerkZh: '請問需要購物袋嗎？購物袋需要另外收費。',
+          opts: [
+            { jp: 'エコバッグがあるので大丈夫です。', kana: 'えこばっぐが あるので だいじょうぶです。', kw: ['エコバッグ', '大丈夫', 'だいじょうぶ'] },
+            { jp: 'はい、小さいのを一枚お願いします。', kana: 'はい、ちいさいのを いちまい おねがいします。', kw: ['はい', '小さい', '一枚', 'お願い'] }
+          ]
+        },
+        {
+          clerkJp: '温かいものと冷たいもの、袋をお分けしましょうか？',
+          clerkZh: '熱食跟冷飲需要幫您分袋裝嗎？',
+          opts: [
+            { jp: 'はい、分けていただけると助かります。', kana: 'はい、わけて いただけると たすかります。', kw: ['はい', '分け', 'わけ', '助かり', 'たすかり'] },
+            { jp: '一緒に入れていただいて構いません。', kana: 'いっしょに いれて いただいて かまいません。', kw: ['一緒', 'いっしょ', '構い', 'かまい'] }
+          ]
+        }
+      ]
+    };
+
+    function itemDisplayLabel(prod) { return G.level === 'a1a2' ? prod.easy : prod.kanji; }
+
+    function startCustomerRound() {
+      G.checkoutCamMode = false;
+      G.clerkNPC.visible = true;
+      G.clerkCustomerMesh.visible = false;
+      G.clerkTrayGroup.clear();
+      G.fpBasketGroup.visible = true;
+      document.getElementById('clerk-dock').classList.add('hidden');
+      document.getElementById('checklist-card').classList.remove('hidden');
+      document.getElementById('crosshair').classList.remove('hidden');
+      document.getElementById('touch-controls').classList.add('active');
+      document.getElementById('controls-hint').textContent = 'WASD / 方向鍵：走動 · 拖曳滑鼠：轉動視角 · E 或點擊按鈕：拿商品 / 前往結帳';
+
+      G.pos.set(0, 1.72, 1.2); G.yaw = 0; G.pitch = -0.05;
+      const count = G.level === 'a1a2' ? Math.min(5, 3 + Math.floor((G.round - 1) / 3)) : Math.min(6, 4 + Math.floor((G.round - 1) / 3));
+      const picked = [...ALL_PRODUCT_IDS].sort(() => Math.random() - 0.5).slice(0, count);
+      G.checklist = picked.map((id, idx) => ({
+        id,
+        need: (G.round >= 4 && idx === 0) ? 2 : 1, // Practice Japanese counters (2こ / 2ほん) from Round 4!
+        got: 0,
+        fromCall: false
+      }));
+      G.basket = [];
+      G.phoneTriggered = false;
+      G.listShowKana = false;
+      syncFPBasketVisual();
+
+      AudioSys.sfx('chime');
+      renderChecklist(); updateHUD();
+      toast(`🌸 Round ${G.round}/10 開始！看著購物清單採買，拿齊後前往櫃檯結帳！`);
+    }
+
+    function renderChecklist() {
+      const wrap = document.getElementById('checklist-items');
+      wrap.innerHTML = G.checklist.map(c => {
+        const p = PRODUCTS[c.id];
+        const done = c.got >= c.need;
+        const lbl = itemDisplayLabel(p) + formatQtyJp(c.need, p.counter);
+        const kanaSub = (G.listShowKana && G.level === 'b1b2') ? `<div style="font-size:11px; color:#4f46e5;">${p.kana}</div>` : '';
+        return `<div class="checklist-item ${done ? 'done' : ''} ${c.fromCall ? 'added' : ''}">
+          <div>${done ? '✅' : (c.fromCall ? '📱' : '⬜')} ${lbl}${c.need > 1 ? ` (${c.got}/${c.need})` : ''}${kanaSub}</div>
+          <span style="font-size:11px; color:var(--ink-soft);">¥${p.price * c.need}</span>
+        </div>`;
+      }).join('');
+    }
+
+    function openAisleModal(aisleId) {
+      const aisle = AISLES[aisleId];
+      const items = Object.values(PRODUCTS).filter(p => p.aisle === aisleId);
+      openModal(`
+        <div class="modal-head">
+          <div>
+            <h2 class="modal-title">${aisle.icon} ${aisle.jp}</h2>
+            <div class="modal-sub">${G.zhHints ? aisle.zh : ''} · 點擊商品放進 3D 購物籃（同步播放日語發音！）</div>
+          </div>
+          <button id="m-close" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div class="shelf-grid">
+          ${items.map(p => {
+            const entry = G.checklist.find(c => c.id === p.id);
+            const full = entry && entry.got >= entry.need;
+            return `<div class="shelf-card" data-pick="${p.id}" style="${full ? 'opacity:0.5;' : ''}">
+              <div style="height:44px; display:flex; align-items:center; justify-content:center;">${renderProductIcon(p, 42)}</div>
+              <div style="font-weight:800; font-size:14.5px; margin-top:4px;">${itemDisplayLabel(p)}</div>
+              <div style="font-size:12px; color:#be123c; font-weight:800; margin-top:2px;">¥${p.price}</div>
+              <div style="margin-top:6px;"><span class="btn ${full ? 'btn-ghost' : 'btn-indigo'} btn-sm" style="padding:4px 10px;">${full ? '已拿齊' : '🛒 放入籃中'}</span></div>
+            </div>`;
+          }).join('')}
+        </div>
+      `);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.querySelectorAll('[data-pick]').forEach(card => card.addEventListener('click', () => {
+        const pid = card.dataset.pick;
+        const p = PRODUCTS[pid];
+        const entry = G.checklist.find(c => c.id === pid && c.got < c.need);
+        AudioSys.speak(p.kana);
+        if (entry) {
+          entry.got++; G.basket.push(pid); G.score += 15; G.streak++;
+          syncFPBasketVisual(); AudioSys.sfx('good'); renderChecklist(); updateHUD(); closeModal();
+          toast(`🛒 放入購物籃：${itemDisplayLabel(p)}${entry.need > 1 ? ` (${entry.got}/${entry.need})` : ''}！`);
+          checkMidShoppingPhoneCall();
+        } else {
+          G.streak = 0; AudioSys.sfx('wrong'); updateHUD();
+          toast(`🤔 清單上目前不需要「${itemDisplayLabel(p)}」喔，再看看清單！`);
+        }
+      }));
+    }
+
+    function checkMidShoppingPhoneCall() {
+      const shouldCall = (G.level === 'b1b2') || (G.round >= 4);
+      if (!shouldCall || G.phoneTriggered) return;
+      const doneItems = G.checklist.filter(c => c.got >= c.need).length;
+      if (doneItems < Math.ceil(G.checklist.length / 2)) return;
+      G.phoneTriggered = true;
+
+      const remainingPool = ALL_PRODUCT_IDS.filter(id => !G.checklist.some(c => c.id === id));
+      const extraId = remainingPool[Math.floor(Math.random() * remainingPool.length)];
+      const extraProd = PRODUCTS[extraId];
+      const tplList = PHONE_CALLS[G.level];
+      const tpl = tplList[Math.floor(Math.random() * tplList.length)];
+      const spokenLine = tpl.line.replace('ITEM', itemDisplayLabel(extraProd));
+      const zhLine = tpl.zh.replace('ITEM', extraProd.zh);
+
+      G.checklist.push({ id: extraId, need: 1, got: 0, fromCall: true });
+      renderChecklist(); AudioSys.sfx('ring');
+
+      setTimeout(() => {
+        openModal(`
+          <div class="phone-banner">
+            <div style="font-size:40px;">📱</div>
+            <div style="font-size:12px; font-weight:800; color:#be123c;">着信中… 來電顯示：${tpl.caller}</div>
+            <div class="speech-bubble" style="text-align:left; margin-top:10px;">
+              <div style="font-size:16px; font-weight:800;">「${spokenLine}」</div>
+              <div class="zh-box ${G.zhHints ? '' : 'hidden'}">${zhLine}</div>
+            </div>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px;">
+              <button id="ph-replay" class="btn btn-indigo btn-sm">🔊 再聽一次</button>
+              <button id="ph-ok" class="btn btn-sakura">📱 わかった！（已加入清單）</button>
+            </div>
+          </div>
+        `);
+        document.getElementById('ph-replay').addEventListener('click', () => AudioSys.speak(spokenLine));
+        document.getElementById('ph-ok').addEventListener('click', () => { closeModal(); toast(`📱 新增清單項目：${itemDisplayLabel(extraProd)}！`); });
+        setTimeout(() => AudioSys.speak(spokenLine), 240);
+      }, 450);
+    }
+
+    function startCustomerCheckout() {
+      const missing = G.checklist.filter(c => c.got < c.need);
+      if (missing.length > 0) {
+        AudioSys.sfx('wrong');
+        toast(`🛒 還有 ${missing.length} 項商品還沒拿齊喔！`);
+        return;
+      }
+      G.checkoutCamMode = true;
+      const steps = CHECKOUT_SCRIPTS[G.level].slice(0, G.level === 'a1a2' ? 2 : 3);
+      const totalYen = G.checklist.reduce((s, c) => s + PRODUCTS[c.id].price * c.need, 0);
+      const billYen = Math.ceil(totalYen / 1000) * 1000;
+      const changeYen = billYen - totalYen;
+      let stepIdx = 0;
+
+      function runStep() {
+        if (stepIdx >= steps.length) { runPaymentStep(); return; }
+        const st = steps[stepIdx];
+        let pickedOpt = null, showKana = false;
+        function draw() {
+          openModal(`
+            <div class="modal-head">
+              <div><h2 class="modal-title">💴 レジでお会計（結帳對話 ${stepIdx + 1}/${steps.length}）</h2><div class="modal-sub">先聽店員說日語，選擇回答後再開口唸出來！</div></div>
+              <button id="co-listen" class="btn btn-indigo btn-sm">🔊 再聽店員說</button>
+            </div>
+            <div class="speech-bubble">
+              <div style="font-size:11.5px; font-weight:800; color:var(--indigo);">🏪 店員さん：</div>
+              <div style="font-size:16px; font-weight:800; margin-top:3px;">「${st.clerkJp}」</div>
+              <div class="zh-box ${G.zhHints ? '' : 'hidden'}">${st.clerkZh}</div>
+            </div>
+            ${!pickedOpt ? `
+              <div style="font-size:12.5px; font-weight:800; margin-top:8px;">1. 選擇你的日語回答：</div>
+              <div class="reply-list">${st.opts.map((o, i) => `<button class="reply-btn" data-co="${i}">💬 「${o.jp}」</button>`).join('')}</div>
+            ` : `
+              <div style="background:#eef2ff; border:2px solid #818cf8; border-radius:16px; padding:12px; text-align:center; margin-top:10px;">
+                <div style="font-size:12px; font-weight:800; color:var(--indigo);">2. 請用麥克風說出你選的日語（BGM 會自動降低）：</div>
+                <div style="font-size:17px; font-weight:800; margin:6px 0;">「${pickedOpt.jp}」</div>
+                ${showKana ? `<div style="font-size:12.5px; color:#4f46e5; font-weight:700;">💡 ${pickedOpt.kana}</div>` : ''}
+                <div id="co-mic-st" style="font-size:12px; color:#4f46e5; font-weight:700; min-height:20px; margin:6px 0;">點擊「🎤 說出日語」練習發音！</div>
+                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                  <button id="co-demo" class="btn btn-indigo btn-sm">🔊 聽示範</button>
+                  <button id="co-kana" class="btn btn-ghost btn-sm">💡 假名讀音</button>
+                  <button id="co-mic" class="btn btn-sakura">🎤 說出日語</button>
+                  <button id="co-skipmic" class="btn btn-sage btn-sm">✅ 已跟讀完成</button>
+                </div>
+              </div>
+            `}
+          `);
+          document.getElementById('co-listen').addEventListener('click', () => AudioSys.speak(st.clerkJp));
+          if (!pickedOpt) {
+            document.querySelectorAll('[data-co]').forEach(btn => btn.addEventListener('click', () => {
+              pickedOpt = st.opts[Number(btn.dataset.co)]; AudioSys.sfx('pop'); draw();
+              setTimeout(() => AudioSys.speak(pickedOpt.jp), 180);
+            }));
+          } else {
+            document.getElementById('co-demo').addEventListener('click', () => AudioSys.speak(pickedOpt.jp));
+            document.getElementById('co-kana').addEventListener('click', () => { showKana = true; draw(); });
+            document.getElementById('co-skipmic').addEventListener('click', () => { AudioSys.sfx('good'); G.score += 20; G.streak++; stepIdx++; runStep(); });
+            document.getElementById('co-mic').addEventListener('click', () => {
+              startSpeechRecognition(pickedOpt.kw, (ok, heard) => {
+                const el = document.getElementById('co-mic-st');
+                if (ok) { if (el) el.textContent = `🎉 発音バッチリ！（辨識：「${heard}」）`; AudioSys.sfx('good'); G.score += 30; G.streak++; setTimeout(() => { stepIdx++; runStep(); }, 550); }
+                else if (el) el.textContent = `辨識到「${heard}」——再試一次或點「✅ 已跟讀完成」！`;
+              }, msg => { const el = document.getElementById('co-mic-st'); if (el) el.textContent = msg; });
+            });
+          }
+        }
+        draw();
+        setTimeout(() => AudioSys.speak(st.clerkJp), 200);
+      }
+
+      function runPaymentStep() {
+        const clerkPay = `お会計（かいけい）は ${totalYen}円 になります。お支払い方法はいかがなさいますか？`;
+        const payOpts = [
+          { id: 'ic',   icon: '💳', jp: 'ICカードでお願いします。', kw: ['IC', 'カード', 'お願い', 'おねがい'] },
+          { id: 'cash', icon: '💴', jp: `現金で ${billYen}円 お願いします。`, kw: ['現金', 'げんきん', 'お願い', 'おねがい'] },
+          { id: 'qr',   icon: '📱', jp: 'スマホ決済でお願いします。', kw: ['スマホ', '決済', 'けっさい', 'お願い'] }
+        ];
+        let chosenPay = null;
+        function drawPay() {
+          openModal(`
+            <div class="modal-head">
+              <div><h2 class="modal-title">💳 お支払い（付款結帳）</h2><div class="modal-sub">合計：¥${totalYen}${chosenPay && chosenPay.id === 'cash' ? ` · 投入 ¥${billYen}（找零 ¥${changeYen}）` : ''}</div></div>
+              <button id="pay-listen" class="btn btn-indigo btn-sm">🔊 再聽金額</button>
+            </div>
+            <div class="speech-bubble">
+              <div style="font-size:11.5px; font-weight:800; color:var(--indigo);">🏪 店員さん：</div>
+              <div style="font-size:16px; font-weight:800; margin-top:3px;">「${clerkPay}」</div>
+              <div class="zh-box ${G.zhHints ? '' : 'hidden'}">總共是 ${totalYen} 日圓，請問您要用什麼方式付款？</div>
+            </div>
+            ${!chosenPay ? `
+              <div class="reply-list">${payOpts.map((p, i) => `<button class="reply-btn" data-pay="${i}">${p.icon} 「${p.jp}」</button>`).join('')}</div>
+            ` : `
+              <div style="background:#eef2ff; border:2px solid #818cf8; border-radius:16px; padding:12px; text-align:center;">
+                <div style="font-size:16px; font-weight:800; margin-bottom:6px;">${chosenPay.icon} 「${chosenPay.jp}」</div>
+                <div id="pay-mic-st" style="font-size:12px; color:#4f46e5; font-weight:700; min-height:20px; margin-bottom:8px;">說出付款方式或直接點擊完成付款！</div>
+                <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                  <button id="pay-mic" class="btn btn-sakura">🎤 說出付款日語</button>
+                  <button id="pay-confirm" class="btn btn-indigo">💳 ピッ！完成付款（¥${totalYen}）</button>
+                </div>
+              </div>
+            `}
+          `);
+          document.getElementById('pay-listen').addEventListener('click', () => AudioSys.speak(clerkPay));
+          if (!chosenPay) {
+            document.querySelectorAll('[data-pay]').forEach(btn => btn.addEventListener('click', () => {
+              chosenPay = payOpts[Number(btn.dataset.pay)]; AudioSys.sfx('pop'); drawPay();
+              setTimeout(() => AudioSys.speak(chosenPay.jp), 160);
+            }));
+          } else {
+            const completePayment = () => {
+              AudioSys.sfx('pay'); G.yenEarned += totalYen; G.score += 50; G.roundsCleared++; updateHUD();
+              const thankLine = chosenPay.id === 'cash' && changeYen > 0
+                ? `${billYen}円お預かりします。${changeYen}円のお返しです。ありがとうございました！`
+                : 'ありがとうございました！またお越しくださいませ！';
+              AudioSys.speak(thankLine);
+              finishRound(`🛍️ 結帳完成！（支付 ¥${totalYen}${chosenPay.id === 'cash' && changeYen > 0 ? ` · 找零 ¥${changeYen}` : ''}）`);
+            };
+            document.getElementById('pay-confirm').addEventListener('click', completePayment);
+            document.getElementById('pay-mic').addEventListener('click', () => {
+              startSpeechRecognition(chosenPay.kw, (ok, heard) => {
+                const el = document.getElementById('pay-mic-st');
+                if (ok) { if (el) el.textContent = `🎉 発音バッチリ！（「${heard}」）`; setTimeout(completePayment, 500); }
+                else if (el) el.textContent = `聽到「${heard}」——再試一次或點「完成付款」！`;
+              }, msg => { const el = document.getElementById('pay-mic-st'); if (el) el.textContent = msg; });
+            });
+          }
+        }
+        drawPay();
+        setTimeout(() => AudioSys.speak(clerkPay), 200);
+      }
+      runStep();
+    }
+
+    // =========================================================================
+    // 5. CLERK MODE (10 ROUNDS, ANIMATED CUSTOMERS, LASER SCAN, INTERRUPTIONS, CHANGE)
+    // =========================================================================
+    const CLERK_INTERRUPTIONS = {
+      a1a2: [
+        {
+          custJp: 'すみません、トイレはどこですか？',
+          custZh: '不好意思，請問洗手間在哪裡？',
+          opts: [
+            { ok: true,  jp: 'あちらの おくに ありますよ。', kana: 'あちらの おくに ありますよ。', kw: ['あちら', 'おく', '奥', 'あります'] },
+            { ok: false, jp: 'はい、ひとつ 150えんです。', kana: '', kw: [] },
+            { ok: false, jp: 'おやすみなさい。', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: 'すみません、このお弁当を温めてください。',
+          custZh: '不好意思，請幫我把這個便當加熱。',
+          opts: [
+            { ok: true,  jp: 'はい、かしこまりました。しょうしょう おまちください。', kana: 'はい、かしこまりました。しょうしょう おまちください。', kw: ['はい', 'かしこまりました', 'お待ち', 'おまち'] },
+            { ok: false, jp: 'いいえ、つめたい おちゃです。', kana: '', kw: [] },
+            { ok: false, jp: 'はじめまして、よろしくおねがいします。', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: 'あの、レジ袋を一枚もらえますか？',
+          custZh: '請問可以給我一個塑膠袋嗎？',
+          opts: [
+            { ok: true,  jp: 'はい、こちらへ おいれしますね。', kana: 'はい、こちらへ おいれしますね。', kw: ['はい', 'こちら', 'お入れ', 'おいれ'] },
+            { ok: false, jp: 'すみません、いま 3じです。', kana: '', kw: [] },
+            { ok: false, jp: 'ごちそうさまでした。', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: 'ICカードは使えますか？',
+          custZh: '請問可以使用 IC 卡付款嗎？',
+          opts: [
+            { ok: true,  jp: 'はい、つかえますよ。こちらに タッチしてください。', kana: 'はい、つかえますよ。こちらに たっち してください。', kw: ['はい', '使え', 'つかえ', 'タッチ'] },
+            { ok: false, jp: 'いいえ、ここは としょかんです。', kana: '', kw: [] },
+            { ok: false, jp: 'ただいま かえりました。', kana: '', kw: [] }
+          ]
+        }
+      ],
+      b1b2: [
+        {
+          custJp: 'すみません、このサンドイッチに卵は入っていますか？',
+          custZh: '不好意思，請問這個三明治裡面含有雞蛋嗎？',
+          opts: [
+            { ok: true,  jp: 'はい、卵を使用しております。裏面の表示もご確認いただけます。', kana: 'はい、たまごを しようしております。りめんの ひょうじも ごかくにん いただけます。', kw: ['はい', '卵', 'たまご', '使用', '確認'] },
+            { ok: false, jp: 'かしこまりました、1分ほど温めますね。', kana: '', kw: [] },
+            { ok: false, jp: 'ポイントカードはお持ちでしょうか？', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: 'あの、ATMとコピー機はどちらにありますか？',
+          custZh: '請問 ATM 和影印機在哪個方向呢？',
+          opts: [
+            { ok: true,  jp: '入り口のすぐ右手にございます。ご案内いたしましょうか？', kana: 'いりぐちの すぐ みぎてに ございます。ごあんない いたしましょうか？', kw: ['入り口', 'いりぐち', '右手', 'みぎて', 'ございます'] },
+            { ok: false, jp: '申し訳ございません、売り切れでございます。', kana: '', kw: [] },
+            { ok: false, jp: 'お箸はお付けいたしますか？', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: 'すみません、会社の経費にしたいので領収書をいただけますか？',
+          custZh: '不好意思，公司要報帳，可以給我正式收據（領収書）嗎？',
+          opts: [
+            { ok: true,  jp: 'かしこまりました。お宛名と但し書きはいかがいたしましょうか？', kana: 'かしこまりました。おあてなと ただしがきは いかがいたしましょうか？', kw: ['かしこまりました', '宛名', 'あてな', 'いかが'] },
+            { ok: false, jp: 'はい、袋をお分けしておきますね。', kana: '', kw: [] },
+            { ok: false, jp: 'いらっしゃいませ、またお越しください。', kana: '', kw: [] }
+          ]
+        },
+        {
+          custJp: '宅配便の荷物をここから送ることはできますか？',
+          custZh: '請問可以從這裡寄送宅配包裹嗎？',
+          opts: [
+            { ok: true,  jp: 'はい、承っております。伝票をお持ちでしょうか？', kana: 'はい、うけたまわっております。でんぴょうを おもちでしょうか？', kw: ['はい', '承って', 'うけたまわって', '伝票', 'でんぴょう'] },
+            { ok: false, jp: 'はい、合計で500円になります。', kana: '', kw: [] },
+            { ok: false, jp: 'お待たせいたしました、肉まんです。', kana: '', kw: [] }
+          ]
+        }
+      ]
+    };
+
+    function startClerkRound() {
+      G.checkoutCamMode = false;
+      G.clerkNPC.visible = false;
+      G.fpBasketGroup.visible = false;
+      G.clerkCustomerMesh.visible = true;
+      // Smoothly walk the new 3D customer up from the store aisle toward the register!
+      G.custWalkZ = 1.6;
+      G.clerkCustomerMesh.position.set(0, 0, G.custWalkZ);
+      const custColors = [0xe85d75, 0x6366f1, 0xeab308, 0x4d7c6f, 0xec4899, 0x0ea5e9];
+      G.clerkCustomerMesh.children[0].material.color.setHex(custColors[(G.round - 1) % custColors.length]);
+
+      document.getElementById('checklist-card').classList.add('hidden');
+      document.getElementById('crosshair').classList.add('hidden');
+      document.getElementById('touch-controls').classList.remove('active');
+      document.getElementById('interact-pill').classList.add('hidden');
+      document.getElementById('clerk-dock').classList.remove('hidden');
+      document.getElementById('controls-hint').textContent = '🏪 店員第一人稱視角：看 POS 機上的日語單字掃碼商品、開口回應客人提問並正確找零！';
+
+      const count = G.level === 'a1a2' ? Math.min(5, 3 + Math.floor((G.round - 1) / 3)) : Math.min(6, 4 + Math.floor((G.round - 1) / 3));
+      const picked = [...ALL_PRODUCT_IDS].sort(() => Math.random() - 0.5).slice(0, count);
+      G.clerkItems = picked.map(id => ({ id, scanned: false }));
+      // Randomized non-linear scan queue so items are NEVER just left-to-right!
+      G.clerkScanQueue = G.clerkItems.map((_, i) => i).sort(() => Math.random() - 0.5);
+      G.clerkQueuePos = 0;
+      G.clerkNeedsHeat = G.clerkItems.some(it => PRODUCTS[it.id].heatable || PRODUCTS[it.id].aisle === 'hotfood');
+      G.clerkHeated = !G.clerkNeedsHeat;
+      G.clerkBusy = false;
+
+      const pool = CLERK_INTERRUPTIONS[G.level]
+        .filter(x => !(G.clerkNeedsHeat && x.custJp.includes('温めて')))
+        .sort(() => Math.random() - 0.5);
+      G.clerkInterruptsLeft = G.round >= 7 ? pool.slice(0, 2) : (G.round >= 3 ? pool.slice(0, 1) : []);
+
+      G.clerkTrayGroup.clear();
+      G.clerkItems.forEach((it, i) => {
+        const pm = buildProduct3D(PRODUCTS[it.id]);
+        pm.scale.setScalar(1.25);
+        pm.position.set(-0.58 + (i % 3) * 0.58, 0.04, i >= 3 ? 0.20 : -0.16);
+        pm.userData.clerkIdx = i;
+        G.clerkTrayGroup.add(pm);
+      });
+
+      AudioSys.sfx('chime'); updateHUD(); renderClerkDock();
+      const firstIdx = G.clerkScanQueue[0];
+      setTimeout(() => AudioSys.speak(`いらっしゃいませ！${PRODUCTS[G.clerkItems[firstIdx].id].kana}`), 450);
+    }
+
+    function openClerkChangeStep(totalYen) {
+      let bill = Math.ceil(totalYen / 1000) * 1000;
+      if (bill === totalYen) bill += 1000;
+      const correctChange = bill - totalYen;
+      const wrong1 = correctChange + 100;
+      const wrong2 = Math.max(0, correctChange - 50 || 150);
+      const opts = [correctChange, wrong1, wrong2].sort(() => Math.random() - 0.5);
+      openModal(`
+        <div class="modal-head">
+          <div><h2 class="modal-title">💴 おつりの計算（現金找零）</h2><div class="modal-sub">合計：¥${totalYen} · 客人支付：¥${bill} 現金</div></div>
+          <button id="ch-listen" class="btn btn-indigo btn-sm">🔊 聽金額</button>
+        </div>
+        <div class="speech-bubble">
+          <div style="font-size:15.5px; font-weight:800;">「${bill}円で おねがいします！」</div>
+          <div class="zh-box ${G.zhHints ? '' : 'hidden'}">商品合計 ¥${totalYen}，客人付了 ¥${bill}，請問要找多少日圓（おつり）？</div>
+        </div>
+        <div class="reply-list">
+          ${opts.map(v => `<button class="reply-btn" data-chg="${v}">💴 「${v}円の おかえしです。ありがとうございました！」</button>`).join('')}
+        </div>
+      `);
+      document.getElementById('ch-listen').addEventListener('click', () => AudioSys.speak(`${bill}円でお願いします`));
+      document.querySelectorAll('[data-chg]').forEach(btn => btn.addEventListener('click', () => {
+        if (Number(btn.dataset.chg) === correctChange) {
+          AudioSys.sfx('pay'); G.yenEarned += totalYen; G.score += 55; G.streak++; G.roundsCleared++; updateHUD();
+          AudioSys.speak(`${correctChange}円のお返しです。ありがとうございました！`);
+          finishRound(`🏪 完美結帳！（收款 ¥${totalYen} · 正確找零 ¥${correctChange}）`);
+        } else {
+          G.streak = 0; AudioSys.sfx('wrong'); updateHUD();
+          toast(`💴 找零算錯囉！${bill} − ${totalYen} 再算一次！`);
+        }
+      }));
+    }
+
+    function proceedClerkFinish(totalYen) {
+      // Mix payment styles: even rounds use Cash Change calculation, odd rounds (or random) use IC Card Tap!
+      if (G.round % 2 === 0 || Math.random() < 0.65) {
+        openClerkChangeStep(totalYen);
+      } else {
+        openModal(`
+          <div class="modal-head"><div><h2 class="modal-title">💳 ICカード決済（感應結帳）</h2><div class="modal-sub">合計：¥${totalYen}</div></div></div>
+          <div class="speech-bubble">
+            <div style="font-size:16px; font-weight:800;">「ICカードで おねがいします！」</div>
+            <div class="zh-box ${G.zhHints ? '' : 'hidden'}">客人要用 IC 卡感應付款，請點擊下方按鈕完成結帳！</div>
+          </div>
+          <div style="text-align:center; margin-top:10px;">
+            <button id="ck-ic-ok" class="btn btn-indigo" style="padding:11px 22px;">💳 ピッ！「ありがとうございました！」</button>
+          </div>
+        `);
+        AudioSys.speak('ICカードでお願いします');
+        document.getElementById('ck-ic-ok').addEventListener('click', () => {
+          AudioSys.sfx('pay'); G.yenEarned += totalYen; G.score += 55; G.streak++; G.roundsCleared++; updateHUD();
+          AudioSys.speak('ありがとうございました！またお越しくださいませ！');
+          finishRound(`🏪 IC 卡結帳完成！（收款 ¥${totalYen}）`);
+        });
+      }
+    }
+
+    function renderClerkDock() {
+      const dock = document.getElementById('clerk-dock');
+      const targetIdx = G.clerkScanQueue[G.clerkQueuePos];
+      const allScanned = G.clerkQueuePos >= G.clerkScanQueue.length;
+      const totalYen = G.clerkItems.reduce((s, it) => s + PRODUCTS[it.id].price, 0);
+
+      if (allScanned && !G.clerkHeated) {
+        dock.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div style="font-size:12px; font-weight:800; color:#be123c;">🔥 客人請求微波加熱熟食／便當！</div>
+              <div style="font-size:16px; font-weight:800; margin-top:2px;">「すみません、あたためてください！」</div>
+            </div>
+            <button id="ck-heat-btn" class="btn btn-sakura" style="padding:10px 20px;">🔥 レンジで温める！（微波加熱）</button>
+          </div>
+        `;
+        AudioSys.speak('すみません、温めてください');
+        document.getElementById('ck-heat-btn').addEventListener('click', () => {
+          const btn = document.getElementById('ck-heat-btn');
+          btn.disabled = true; btn.textContent = '⏳ 加熱中… チーン♪';
+          AudioSys.tone(440, 0.25, 'sine', 0.22);
+          setTimeout(() => {
+            AudioSys.tone(1318, 0.35, 'sine', 0.35);
+            G.clerkHeated = true; G.score += 20; G.streak++; updateHUD();
+            toast('🔥 チーン♪ 微波加熱完成！（+20 分）');
+            proceedClerkFinish(totalYen);
+          }, 850);
+        });
+        return;
+      }
+
+      if (allScanned) { proceedClerkFinish(totalYen); return; }
+
+      const targetProd = PRODUCTS[G.clerkItems[targetIdx].id];
+      dock.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:11.5px; font-weight:800; color:var(--indigo);">📟 さくらPOS（隨機順序掃碼！請找出對應商品） · 進度 ${G.clerkQueuePos}/${G.clerkScanQueue.length}</div>
+            <div style="font-size:21px; font-weight:800; color:var(--ink); margin-top:2px;">
+              「${itemDisplayLabel(targetProd)}」
+              <button id="ck-speak-item" class="btn btn-indigo btn-sm" style="margin-left:8px; padding:3px 10px;">🔊 聽發音</button>
+              ${G.level === 'b1b2' ? `<button id="ck-kana-item" class="btn btn-ghost btn-sm" style="padding:3px 10px;">💡 假名</button>` : ''}
+            </div>
+          </div>
+          <div style="font-size:13px; font-weight:800; color:var(--sakura-deep);">合計：¥${totalYen}${G.clerkNeedsHeat ? ' · 🔥需加熱' : ''}</div>
+        </div>
+        <div class="clerk-tray">
+          ${G.clerkItems.map((it, i) => {
+            const p = PRODUCTS[it.id];
+            return `<button class="tray-item-btn ${it.scanned ? 'scanned' : ''}" data-scan="${i}" ${it.scanned ? 'disabled' : ''}>
+              <span style="height:38px; display:flex; align-items:center; justify-content:center;">${renderProductIcon(p, 38)}</span>
+              <span style="font-size:12px; font-weight:800; color:#64748b;">¥${p.price}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      `;
+      document.getElementById('ck-speak-item').addEventListener('click', () => AudioSys.speak(targetProd.kana));
+      const kb = document.getElementById('ck-kana-item');
+      if (kb) kb.addEventListener('click', () => toast(`💡 讀音：${targetProd.kana}`));
+
+      dock.querySelectorAll('[data-scan]').forEach(btn => btn.addEventListener('click', () => {
+        if (G.clerkBusy) return;
+        const idx = Number(btn.dataset.scan);
+        if (idx === targetIdx) {
+          G.clerkItems[idx].scanned = true;
+          AudioSys.sfx('scan'); G.laserTimer = 0.24;
+          G.score += 15; G.streak++;
+          const m = G.clerkTrayGroup.children.find(c => c.userData.clerkIdx === idx);
+          if (m) m.visible = false;
+          G.clerkQueuePos++; updateHUD();
+
+          if (G.clerkInterruptsLeft.length > 0 && (G.clerkQueuePos === 2 || G.clerkQueuePos === G.clerkScanQueue.length - 1)) {
+            triggerClerkInterruption(G.clerkInterruptsLeft.shift()); return;
+          }
+          if (G.clerkQueuePos >= G.clerkScanQueue.length) {
+            if (G.clerkInterruptsLeft.length > 0) triggerClerkInterruption(G.clerkInterruptsLeft.shift());
+            else renderClerkDock();
+          } else {
+            renderClerkDock();
+            const nextIdx = G.clerkScanQueue[G.clerkQueuePos];
+            AudioSys.speak(PRODUCTS[G.clerkItems[nextIdx].id].kana);
+          }
+        } else {
+          G.streak = 0; AudioSys.sfx('wrong'); updateHUD();
+          toast(`📟 不對喔！POS 機要掃描的是「${itemDisplayLabel(targetProd)}」！`);
+        }
+      }));
+    }
+
+    function triggerClerkInterruption(intr) {
+      G.clerkBusy = true;
+      const opts = [...intr.opts].sort(() => Math.random() - 0.5);
+      let selectedGood = null, showKana = false;
+      function draw() {
+        openModal(`
+          <div class="modal-head">
+            <div><h2 class="modal-title">💬 お客さんからの質問（客人突然提問！）</h2><div class="modal-sub">先選出最得體的店員回應，再用麥克風唸出來！</div></div>
+            <button id="ci-listen" class="btn btn-indigo btn-sm">🔊 再聽客人說</button>
+          </div>
+          <div class="speech-bubble">
+            <div style="font-size:11.5px; font-weight:800; color:var(--sakura-deep);">🧑 お客さん：</div>
+            <div style="font-size:16px; font-weight:800; margin-top:3px;">「${intr.custJp}」</div>
+            <div class="zh-box ${G.zhHints ? '' : 'hidden'}">${intr.custZh}</div>
+          </div>
+          ${!selectedGood ? `
+            <div style="font-size:12.5px; font-weight:800; margin-top:8px;">1. 選擇最得體的店員回應：</div>
+            <div class="reply-list">${opts.map((o, i) => `<button class="reply-btn" data-cio="${i}">🏪 「${o.jp}」</button>`).join('')}</div>
+          ` : `
+            <div style="background:#eef2ff; border:2px solid #818cf8; border-radius:16px; padding:12px; text-align:center; margin-top:10px;">
+              <div style="font-size:12px; font-weight:800; color:var(--indigo);">2. 請開口唸出這句店員回應（BGM 自動降低）：</div>
+              <div style="font-size:16.5px; font-weight:800; margin:6px 0;">「${selectedGood.jp}」</div>
+              ${showKana ? `<div style="font-size:12.5px; color:#4f46e5; font-weight:700;">💡 ${selectedGood.kana}</div>` : ''}
+              <div id="ci-mic-st" style="font-size:12px; color:#4f46e5; font-weight:700; min-height:20px; margin:6px 0;">點擊「🎤 說出回應」練習店員口說！</div>
+              <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                <button id="ci-demo" class="btn btn-indigo btn-sm">🔊 聽示範</button>
+                <button id="ci-kana" class="btn btn-ghost btn-sm">💡 假名讀音</button>
+                <button id="ci-mic" class="btn btn-sakura">🎤 說出回應</button>
+                <button id="ci-done" class="btn btn-sage btn-sm">✅ 已跟讀完成</button>
+              </div>
+            </div>
+          `}
+        `);
+        document.getElementById('ci-listen').addEventListener('click', () => AudioSys.speak(intr.custJp));
+        if (!selectedGood) {
+          document.querySelectorAll('[data-cio]').forEach(btn => btn.addEventListener('click', () => {
+            const pick = opts[Number(btn.dataset.cio)];
+            if (pick.ok) { selectedGood = pick; AudioSys.sfx('good'); draw(); setTimeout(() => AudioSys.speak(pick.jp), 180); }
+            else { G.streak = 0; AudioSys.sfx('wrong'); updateHUD(); toast('🤔 這樣回答不太符合客人的問題喔，再選一次！'); }
+          }));
+        } else {
+          const finishInterrupt = () => {
+            AudioSys.sfx('good'); G.score += 35; G.streak++; G.clerkBusy = false; closeModal(); updateHUD();
+            renderClerkDock();
+            if (G.clerkQueuePos < G.clerkScanQueue.length) {
+              const nextIdx = G.clerkScanQueue[G.clerkQueuePos];
+              AudioSys.speak(PRODUCTS[G.clerkItems[nextIdx].id].kana);
+            }
+          };
+          document.getElementById('ci-demo').addEventListener('click', () => AudioSys.speak(selectedGood.jp));
+          document.getElementById('ci-kana').addEventListener('click', () => { showKana = true; draw(); });
+          document.getElementById('ci-done').addEventListener('click', finishInterrupt);
+          document.getElementById('ci-mic').addEventListener('click', () => {
+            startSpeechRecognition(selectedGood.kw, (ok, heard) => {
+              const el = document.getElementById('ci-mic-st');
+              if (ok) { if (el) el.textContent = `🎉 素晴らしい接客！（辨識：「${heard}」）`; setTimeout(finishInterrupt, 550); }
+              else if (el) el.textContent = `辨識到「${heard}」——再試一次或點「✅ 已跟讀完成」！`;
+            }, msg => { const el = document.getElementById('ci-mic-st'); if (el) el.textContent = msg; });
+          });
+        }
+      }
+      draw();
+      setTimeout(() => AudioSys.speak(intr.custJp), 200);
+    }
+
+    // =========================================================================
+    // 6. ROUND PROGRESSION, CERTIFICATE & ANIMATION LOOP
+    // =========================================================================
+    function openCertModal() {
+      const dateStr = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+      const safeName = G.playerName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      openModal(`
+        <div style="background:linear-gradient(145deg,#fff9f7,#fff1f5,#eef2ff); border:5px double #e85d75; border-radius:18px; padding:20px; text-align:center;">
+          <div style="font-size:12px; font-weight:800; color:#4f46e5; letter-spacing:1.2px;">✦ さくらマート 3D · 日本語学習修了証 ✦</div>
+          <h2 class="modal-title" style="font-size:24px; margin:6px 0;">櫻花便利商店日語證書</h2>
+          <div style="font-size:26px; font-weight:800; border-bottom:2.5px solid #e85d75; display:inline-block; padding:2px 22px; margin:6px 0;">${safeName}</div>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:12px 0;">
+            <div style="background:#fff; border:1.5px solid #fbcfe8; border-radius:12px; padding:8px;"><div style="font-size:19px; font-weight:800; color:#be123c;">${G.roundsCleared}</div><div style="font-size:11px; color:var(--ink-soft);">通關回合數</div></div>
+            <div style="background:#fff; border:1.5px solid #fbcfe8; border-radius:12px; padding:8px;"><div style="font-size:19px; font-weight:800; color:#4f46e5;">⭐ ${G.score}</div><div style="font-size:11px; color:var(--ink-soft);">學習總分</div></div>
+            <div style="background:#fff; border:1.5px solid #fbcfe8; border-radius:12px; padding:8px;"><div style="font-size:19px; font-weight:800; color:#065f46;">¥${G.yenEarned}</div><div style="font-size:11px; color:var(--ink-soft);">累計交易額</div></div>
+          </div>
+          <div style="font-size:12px; color:var(--ink-soft); font-weight:700;">模式：${G.mode === 'customer' ? '顧客' : '店員'} · ${G.level === 'a1a2' ? 'CEFR A1–A2' : 'CEFR B1–B2'} · ${dateStr}</div>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:12px;">
+          <button id="cert-dl" class="btn btn-indigo btn-sm">⬇️ 下載 PNG 證書</button>
+          <button id="m-close" class="btn btn-ghost btn-sm">關閉</button>
+        </div>
+      `);
+      document.getElementById('m-close').addEventListener('click', closeModal);
+      document.getElementById('cert-dl').addEventListener('click', () => {
+        const c = document.createElement('canvas'); c.width = 1100; c.height = 700; const ctx = c.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 1100, 700);
+        g.addColorStop(0, '#fff9f7'); g.addColorStop(0.5, '#fff1f5'); g.addColorStop(1, '#eef2ff');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, 1100, 700);
+        ctx.strokeStyle = '#e85d75'; ctx.lineWidth = 14; ctx.strokeRect(24, 24, 1052, 652);
+        ctx.textAlign = 'center'; ctx.fillStyle = '#4f46e5'; ctx.font = 'bold 22px sans-serif';
+        ctx.fillText('SAKURA MART 3D · JAPANESE KONBINI CERTIFICATE', 550, 96);
+        ctx.fillStyle = '#be123c'; ctx.font = 'bold 46px sans-serif'; ctx.fillText('さくらマート 日本語学習修了証', 550, 162);
+        ctx.fillStyle = '#27222b'; ctx.font = 'bold 50px sans-serif'; ctx.fillText(G.playerName, 550, 258);
+        ctx.fillStyle = '#312e81'; ctx.font = 'bold 28px sans-serif';
+        ctx.fillText(`Cleared Rounds: ${G.roundsCleared}   ·   Score: ${G.score}   ·   Total: ¥${G.yenEarned}`, 550, 380);
+        ctx.fillStyle = '#645b6b'; ctx.font = 'bold 22px sans-serif';
+        ctx.fillText(`${G.mode === 'customer' ? 'Customer Mode' : 'Clerk Mode'} · ${G.level === 'a1a2' ? 'CEFR A1–A2' : 'CEFR B1–B2'} · ${dateStr}`, 550, 460);
+        const a = document.createElement('a'); a.download = 'sakura_mart_jp_certificate.png'; a.href = c.toDataURL('image/png'); a.click();
+        toast('📄 證書 PNG 已下載！');
+      });
+    }
+
+    function finishRound(msg) {
+      const rank = G.streak >= 5 ? 'S' : (G.streak >= 3 ? 'A' : 'B');
+      if (G.round >= 10) {
+        openModal(`
+          <div style="text-align:center; padding:8px 0;">
+            <div style="font-size:48px;">🏆</div>
+            <h2 class="modal-title">🎉 全 10 回合完全通關！（評價 ${rank}）</h2>
+            <p style="font-size:14.5px; font-weight:700; margin:8px 0;">${G.playerName} 完成了「${G.mode === 'customer' ? '顧客模式' : '店員模式'} · ${G.level === 'a1a2' ? 'CEFR A1–A2' : 'CEFR B1–B2'}」全部 10 回合！</p>
+            <div style="background:#eef2ff; border:2px solid #818cf8; border-radius:16px; padding:12px; margin:10px 0; font-weight:800;">
+              ⭐ 總分：${G.score} 分 · 💴 累計交易額：¥${G.yenEarned}
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:12px;">
+              <button id="fin-cert" class="btn btn-gold">🏆 領取學習證書</button>
+              <button id="fin-menu" class="btn btn-indigo">🏠 返回主選單</button>
+            </div>
+          </div>
+        `);
+        document.getElementById('fin-cert').addEventListener('click', openCertModal);
+        document.getElementById('fin-menu').addEventListener('click', () => { closeModal(); backToMenu(); });
+        return;
+      }
+      openModal(`
+        <div style="text-align:center; padding:8px 0;">
+          <div style="font-size:44px;">🌸</div>
+          <h2 class="modal-title">Round ${G.round} / 10 クリア！（評價 ${rank}）</h2>
+          <p style="font-size:15px; font-weight:800; margin:8px 0;">${msg}</p>
+          <p style="font-size:13px; color:var(--ink-soft); font-weight:700;">⭐ 分數：${G.score} · 🔥 連擊：${G.streak} · 💴 累計：¥${G.yenEarned}</p>
+          <button id="btn-next-round" class="btn btn-indigo" style="margin-top:10px; padding:11px 24px;">➡️ 前往 Round ${G.round + 1}</button>
+        </div>
+      `);
+      document.getElementById('btn-next-round').addEventListener('click', () => {
+        closeModal(); G.round++;
+        G.mode === 'customer' ? startCustomerRound() : startClerkRound();
+      });
+    }
+
+    function backToMenu() {
+      G.running = false; G.fpBasketGroup.visible = false;
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('crosshair').classList.add('hidden');
+      document.getElementById('clerk-dock').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+    }
+
+    function openModal(html) { G.modalOpen = true; document.getElementById('modal-box').innerHTML = html; document.getElementById('modal-backdrop').classList.remove('hidden'); }
+    function closeModal() { G.modalOpen = false; document.getElementById('modal-backdrop').classList.add('hidden'); }
+    function toast(msg) {
+      const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 3800);
+    }
+    function updateHUD() {
+      document.getElementById('hud-mode-badge').textContent = `${G.mode === 'customer' ? '🛒 顧客' : '🏪 店員'} · ${G.level === 'a1a2' ? 'A1–A2' : 'B1–B2'}`;
+      document.getElementById('hud-round').textContent = G.round;
+      document.getElementById('hud-score').textContent = G.score;
+      document.getElementById('hud-streak').textContent = G.streak;
+      document.getElementById('hud-yen').textContent = `¥${G.yenEarned}`;
+      document.getElementById('btn-zh-toggle').textContent = `🌐 中文: ${G.zhHints ? 'ON' : 'OFF'}`;
+      document.getElementById('btn-mute').textContent = AudioSys.muted ? '🔇' : '🔊';
+    }
+
+    function interactNearest() {
+      if (G.modalOpen || !G.running || G.mode !== 'customer' || !G.nearest) return;
+      if (G.nearest.kind === 'aisle') openAisleModal(G.nearest.aisleId);
+      else if (G.nearest.kind === 'register') startCustomerCheckout();
+    }
+
+    function initThree() {
+      const canvas = document.getElementById('game-canvas');
+      G.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      G.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      G.renderer.setSize(window.innerWidth, window.innerHeight);
+      G.renderer.shadowMap.enabled = true;
+      G.renderer.outputColorSpace = THREE.SRGBColorSpace;
+      G.toonGrad = createToonGrad();
+      G.camera = new THREE.PerspectiveCamera(62, window.innerWidth / window.innerHeight, 0.1, 80);
+      buildKonbiniScene();
+      window.addEventListener('resize', () => {
+        G.camera.aspect = window.innerWidth / window.innerHeight;
+        G.camera.updateProjectionMatrix();
+        G.renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, G.clock.getDelta()), t = G.clock.elapsedTime;
+
+      if (G.clerkNPC) G.clerkNPC.position.y = Math.sin(t * 2.5) * 0.03;
+      if (G.clerkCustomerMesh && G.clerkCustomerMesh.visible) {
+        // Smooth customer walk-up animation to counter!
+        if (G.custWalkZ < 5.25) {
+          G.custWalkZ = Math.min(5.25, G.custWalkZ + dt * 3.4);
+          G.clerkCustomerMesh.position.z = G.custWalkZ;
+          G.clerkCustomerMesh.position.y = Math.abs(Math.sin(t * 10)) * 0.09;
+        } else {
+          G.clerkCustomerMesh.position.y = Math.sin(t * 2.8) * 0.035;
+        }
+      }
+      if (G.laserTimer > 0) { G.laserTimer -= dt; G.laserBeam.visible = G.laserTimer > 0; }
+
+      if (!G.running) {
+        G.camera.position.set(Math.sin(t * 0.22) * 3.6, 2.35, 1.8);
+        G.camera.lookAt(0, 1.45, -4.5);
+      } else if (G.mode === 'clerk') {
+        G.camera.position.lerp(new THREE.Vector3(0, 1.72, 7.65), 0.16);
+        G.camera.lookAt(0, 1.38, 4.2);
+      } else if (G.checkoutCamMode) {
+        G.camera.position.lerp(new THREE.Vector3(0, 1.72, 5.15), 0.14);
+        G.camera.lookAt(0, 1.48, 7.65);
+      } else if (!G.modalOpen) {
+        let mx = 0, mz = 0;
+        if (G.keys.KeyW || G.keys.ArrowUp) mz -= 1;
+        if (G.keys.KeyS || G.keys.ArrowDown) mz += 1;
+        if (G.keys.KeyA || G.keys.ArrowLeft) mx -= 1;
+        if (G.keys.KeyD || G.keys.ArrowRight) mx += 1;
+        if (mx !== 0 || mz !== 0) {
+          const mv = new THREE.Vector3(mx, 0, mz).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), G.yaw);
+          const nx = G.pos.x + mv.x * 5.6 * dt, nz = G.pos.z + mv.z * 5.6 * dt;
+          const hitIsland = (x, z) => Math.abs(x) < 1.85 && Math.abs(z + 1.6) < 1.25;
+          if (nx > -5.4 && nx < 5.4 && !hitIsland(nx, G.pos.z)) G.pos.x = nx;
+          if (nz > -4.6 && nz < 5.3 && !hitIsland(G.pos.x, nz)) G.pos.z = nz;
+          G.fpBasketGroup.position.y = -0.44 + Math.sin(t * 10) * 0.014;
+        }
+        G.camera.position.copy(G.pos);
+        const lookDir = new THREE.Vector3(0, 0, -1).applyEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ'));
+        G.camera.lookAt(G.pos.clone().add(lookDir));
+      }
+
+      let best = null, bestD = 4.6;
+      G.interactables.forEach(it => {
+        const d = Math.hypot(it.x - G.pos.x, it.z - G.pos.z);
+        if (G.running && G.mode === 'customer' && !G.modalOpen && !G.checkoutCamMode) {
+          if (d < bestD) { bestD = d; best = it; }
+          const v = new THREE.Vector3(it.x, it.y, it.z); v.project(G.camera);
+          if (v.z < 1 && d < 14) {
+            it.labelEl.style.left = `${(v.x * 0.5 + 0.5) * window.innerWidth}px`;
+            it.labelEl.style.top  = `${(-v.y * 0.5 + 0.5) * window.innerHeight}px`;
+            it.labelEl.style.opacity = '1';
+          } else it.labelEl.style.opacity = '0';
+        } else {
+          it.labelEl.style.opacity = '0';
+        }
+      });
+      G.nearest = best;
+      const pill = document.getElementById('interact-pill');
+      if (best && G.running && G.mode === 'customer' && !G.modalOpen && !G.checkoutCamMode) {
+        pill.textContent = `[E] ${best.prompt}`; pill.classList.remove('hidden');
+      } else {
+        pill.classList.add('hidden');
+      }
+
+      G.renderer.render(G.scene, G.camera);
+    }
+
+    window.addEventListener('load', () => {
+      initThree();
+
+      document.querySelectorAll('#mode-grid .choice-card').forEach(el => el.addEventListener('click', () => {
+        G.mode = el.dataset.mode;
+        document.querySelectorAll('#mode-grid .choice-card').forEach(c => c.classList.toggle('selected', c === el));
+      }));
+      document.querySelectorAll('#level-grid .choice-card').forEach(el => el.addEventListener('click', () => {
+        G.level = el.dataset.level;
+        document.querySelectorAll('#level-grid .choice-card').forEach(c => c.classList.toggle('selected', c === el));
+      }));
+      document.getElementById('btn-start-zh').addEventListener('click', () => {
+        G.zhHints = !G.zhHints;
+        document.getElementById('btn-start-zh').textContent = `🌐 繁體中文提示: ${G.zhHints ? 'ON' : 'OFF'}`;
+        document.getElementById('start-zh-box').classList.toggle('hidden', !G.zhHints);
+      });
+
+      document.getElementById('btn-start-game').addEventListener('click', () => {
+        AudioSys.init();
+        G.playerName = document.getElementById('input-player-name').value.trim() || 'ハル';
+        G.round = 1; G.score = 0; G.streak = 0; G.yenEarned = 0; G.roundsCleared = 0; G.running = true;
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        if (G.mode === 'customer') startCustomerRound();
+        else startClerkRound();
+      });
+
+      document.getElementById('btn-cert').addEventListener('click', openCertModal);
+      document.getElementById('btn-menu').addEventListener('click', backToMenu);
+      document.getElementById('btn-zh-toggle').addEventListener('click', () => {
+        G.zhHints = !G.zhHints; updateHUD();
+        G.interactables.forEach(it => {
+          const base = it.kind === 'register' ? '💴 レジ（お会計）' : `${AISLES[it.aisleId].icon} ${AISLES[it.aisleId].jp}`;
+          const zh = it.kind === 'register' ? '結帳櫃檯' : AISLES[it.aisleId].zh;
+          it.labelEl.innerHTML = `${base}${G.zhHints ? `<span class="zh">${zh}</span>` : ''}`;
+        });
+      });
+      document.getElementById('btn-mute').addEventListener('click', () => { AudioSys.setMuted(!AudioSys.muted); updateHUD(); });
+      document.getElementById('vol-slider').addEventListener('input', e => { AudioSys.init(); AudioSys.setVol(Number(e.target.value) / 100); });
+      document.getElementById('btn-list-hint').addEventListener('click', () => { G.listShowKana = !G.listShowKana; renderChecklist(); });
+      document.getElementById('interact-pill').addEventListener('click', interactNearest);
+
+      window.addEventListener('keydown', e => {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        G.keys[e.code] = true;
+        if (e.code === 'KeyE') interactNearest();
+        else if (e.code === 'Escape' && G.modalOpen) closeModal();
+      });
+      window.addEventListener('keyup', e => { G.keys[e.code] = false; });
+
+      const canvas = document.getElementById('game-canvas');
+      canvas.addEventListener('mousedown', e => {
+        if (!G.running || G.modalOpen || G.mode !== 'customer') return;
+        G.dragging = true; G.lastX = e.clientX; G.lastY = e.clientY;
+      });
+      window.addEventListener('mousemove', e => {
+        if (!G.dragging) return;
+        G.yaw -= (e.clientX - G.lastX) * 0.0065;
+        G.pitch = Math.max(-0.45, Math.min(0.45, G.pitch - (e.clientY - G.lastY) * 0.005));
+        G.lastX = e.clientX; G.lastY = e.clientY;
+      });
+      window.addEventListener('mouseup', () => { G.dragging = false; });
+
+      document.querySelectorAll('.touch-btn').forEach(btn => {
+        btn.addEventListener('touchstart', e => { e.preventDefault(); G.keys[btn.dataset.key] = true; });
+        btn.addEventListener('touchend', e => { e.preventDefault(); G.keys[btn.dataset.key] = false; });
+      });
+
+      animate();
+    });
+  </script>
+</body>
+</html>
