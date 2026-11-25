@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX DRIFT: TAIWAN GP — 3D Mandarin Racing | TLCP@Games</title>
+<script data-goatcounter="https://tlcp-games.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&family=Noto+Sans+TC:wght@500;700;900&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070913;
+    --panel: rgba(11, 16, 32, 0.86);
+    --border: rgba(56, 189, 248, 0.35);
+    --p1: #00f0ff;
+    --p2: #ff2e93;
+    --gold: #facc15;
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: 'Noto Sans TC', 'Noto Sans JP', system-ui, sans-serif;
+  }
+  #game-canvas {
+    position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1;
+  }
+  #speed-lines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 2; opacity: 0;
+    background: radial-gradient(circle at center, transparent 42%, rgba(0, 240, 255, 0.16) 80%, rgba(255, 46, 147, 0.25) 100%);
+    transition: opacity 0.18s ease;
+  }
+  #speed-lines.active { opacity: 1; }
+
+  #back-hub-btn {
+    position: fixed; top: 14px; left: 14px; z-index: 60;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 999px;
+    background: rgba(11, 16, 32, 0.85); border: 1px solid rgba(255,255,255,0.18);
+    color: #e2e8f0; text-decoration: none; font-size: 13px; font-weight: 700;
+    backdrop-filter: blur(8px); transition: all 0.2s;
+  }
+  #back-hub-btn:hover { border-color: var(--p1); color: var(--p1); transform: translateY(-1px); }
+
+  #audio-controls {
+    position: fixed; top: 14px; right: 14px; z-index: 60;
+    display: flex; gap: 8px;
+  }
+  .hud-icon-btn {
+    padding: 8px 12px; border-radius: 999px; cursor: pointer;
+    background: rgba(11, 16, 32, 0.85); border: 1px solid rgba(255,255,255,0.18);
+    color: #f8fafc; font-size: 13px; font-weight: 700; backdrop-filter: blur(8px);
+    transition: all 0.2s;
+  }
+  .hud-icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Start Screen — translucent overlay so live 3D starting grid is visible */
+  #start-screen {
+    position: fixed; inset: 0; z-index: 50;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: linear-gradient(180deg, rgba(7, 9, 19, 0.12) 0%, rgba(7, 9, 19, 0.45) 50%, rgba(7, 9, 19, 0.88) 100%);
+    padding: 18px 20px 22px; overflow-y: auto;
+  }
+  .menu-card {
+    width: min(920px, 100%); border-radius: 20px; padding: 20px 24px;
+    background: linear-gradient(155deg, rgba(11, 18, 36, 0.78), rgba(7, 10, 22, 0.86));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    box-shadow: 0 20px 55px rgba(0, 0, 0, 0.65), 0 0 36px rgba(0, 240, 255, 0.14);
+  }
+  #minimap-wrap {
+    position: fixed; top: 60px; right: 16px; z-index: 14;
+    width: 126px; height: 126px; border-radius: 14px;
+    background: rgba(9, 13, 28, 0.78); border: 1px solid rgba(56, 189, 248, 0.35);
+    backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center;
+  }
+  #minimap-canvas { width: 118px; height: 118px; display: block; }
+  .title-badge {
+    display: inline-block; padding: 4px 12px; border-radius: 999px;
+    background: rgba(0, 240, 255, 0.14); border: 1px solid var(--p1);
+    color: var(--p1); font-family: 'Orbitron', sans-serif; font-size: 11px; letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .game-title {
+    font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+    font-size: clamp(28px, 4.2vw, 44px); font-weight: 900; letter-spacing: 1px;
+    background: linear-gradient(90deg, #ffffff 0%, #00f0ff 50%, #ff2e93 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.15;
+  }
+  .subtitle { color: var(--muted); font-size: 14px; margin-top: 6px; margin-bottom: 20px; }
+
+  .setup-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
+    margin-bottom: 18px;
+  }
+  .setup-box {
+    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  .setup-label {
+    font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: 1px;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .sel-btn {
+    flex: 1; min-width: 115px; padding: 11px 12px; border-radius: 11px; cursor: pointer;
+    background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #cbd5e1; font-weight: 700; font-size: 13px; text-align: center;
+    transition: all 0.18s;
+  }
+  .sel-btn small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+  .sel-btn.active {
+    background: rgba(0, 240, 255, 0.16); border-color: var(--p1); color: #fff;
+    box-shadow: 0 0 18px rgba(0, 240, 255, 0.22);
+  }
+  .sel-btn.active-p2 {
+    background: rgba(255, 46, 147, 0.18); border-color: var(--p2); color: #fff;
+    box-shadow: 0 0 18px rgba(255, 46, 147, 0.25);
+  }
+
+  .stage-strip {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 18px;
+  }
+  @media (max-width: 720px) { .stage-strip { grid-template-columns: repeat(2, 1fr); } }
+  .stage-chip {
+    padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    color: #cbd5e1; font-size: 12px; text-align: left; transition: all 0.15s;
+  }
+  .stage-chip b { display: block; font-family: 'Orbitron', sans-serif; font-size: 10px; color: var(--p1); }
+  .stage-chip span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+  .stage-chip.active {
+    background: rgba(250, 204, 21, 0.15); border-color: var(--gold); color: #fff;
+  }
+
+  .controls-bar {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center;
+    padding: 12px 16px; border-radius: 12px; background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.08); margin-bottom: 18px; font-size: 12px;
+  }
+  .key-badge {
+    display: inline-block; padding: 2px 7px; border-radius: 5px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
+    font-family: 'Orbitron', sans-serif; font-size: 11px; color: #fff; margin: 0 2px;
+  }
+  .start-cta {
+    width: 100%; padding: 15px 24px; border: none; border-radius: 14px; cursor: pointer;
+    background: linear-gradient(90deg, #00f0ff, #3b82f6, #ff2e93);
+    color: #fff; font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+    font-size: 18px; font-weight: 900; letter-spacing: 1.5px;
+    box-shadow: 0 10px 30px rgba(0, 240, 255, 0.35);
+    transition: transform 0.15s, filter 0.15s;
+  }
+  .start-cta:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+  /* In-Game HUD */
+  #hud-layer {
+    position: fixed; inset: 0; z-index: 10; pointer-events: none; display: none;
+  }
+  #split-divider {
+    position: fixed; top: 0; bottom: 0; left: 50%; width: 3px; transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--p1), var(--gold), var(--p2));
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.8); display: none; z-index: 11;
+  }
+  #stage-banner {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+    padding: 7px 18px; border-radius: 999px;
+    background: rgba(11, 16, 32, 0.86); border: 1px solid rgba(250, 204, 21, 0.45);
+    font-size: 13px; font-weight: 800; color: #fff; backdrop-filter: blur(8px);
+    display: flex; align-items: center; gap: 10px; white-space: nowrap;
+  }
+  #stage-banner .cefr-tag {
+    padding: 2px 8px; border-radius: 999px; background: rgba(0, 240, 255, 0.18);
+    color: var(--p1); font-family: 'Orbitron', sans-serif; font-size: 11px;
+  }
+
+  .player-hud {
+    position: fixed; bottom: 16px; display: flex; flex-direction: column; gap: 8px;
+    width: min(320px, 44vw);
+  }
+  #hud-p1 { left: 16px; }
+  #hud-p2 { right: 16px; display: none; align-items: flex-end; text-align: right; }
+
+  .telemetry-card {
+    width: 100%; padding: 12px 16px; border-radius: 16px;
+    background: rgba(9, 13, 28, 0.84); border: 1px solid rgba(0, 240, 255, 0.4);
+    backdrop-filter: blur(8px); box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+  }
+  #hud-p2 .telemetry-card { border-color: rgba(255, 46, 147, 0.45); }
+
+  .telemetry-top {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+  }
+  .p-tag {
+    font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 900;
+    color: var(--p1); letter-spacing: 1px;
+  }
+  #hud-p2 .p-tag { color: var(--p2); }
+  .lap-pos { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 800; color: var(--gold); }
+
+  .speed-row { display: flex; align-items: baseline; gap: 8px; }
+  #hud-p2 .speed-row { justify-content: flex-end; }
+  .speed-num {
+    font-family: 'Orbitron', sans-serif; font-size: 36px; font-weight: 900; line-height: 1;
+    color: #fff; text-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+  }
+  .speed-unit { font-family: 'Orbitron', sans-serif; font-size: 11px; color: var(--muted); }
+  .gear-pill {
+    margin-left: auto; padding: 3px 9px; border-radius: 7px;
+    background: rgba(255,255,255,0.1); font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 800;
+  }
+  #hud-p2 .gear-pill { margin-left: 0; margin-right: auto; }
+
+  .rpm-track {
+    width: 100%; height: 7px; border-radius: 999px; background: rgba(255,255,255,0.1);
+    overflow: hidden; margin-top: 8px;
+  }
+  .rpm-fill {
+    height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, #00f0ff, #facc15, #ff2e93);
+    transition: width 0.08s linear;
+  }
+  .item-slot {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-top: 8px; padding-top: 7px; border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px; color: #e2e8f0;
+  }
+  .item-badge {
+    padding: 3px 9px; border-radius: 8px; background: rgba(250, 204, 21, 0.16);
+    border: 1px solid rgba(250, 204, 21, 0.45); color: var(--gold); font-weight: 800;
+  }
+
+  #toast-feed {
+    position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 20;
+    display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none;
+  }
+  .toast-msg {
+    padding: 7px 16px; border-radius: 999px; background: rgba(15, 23, 42, 0.92);
+    border: 1px solid var(--p1); color: #fff; font-size: 13px; font-weight: 700;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.45); animation: popIn 0.2s ease;
+  }
+  @keyframes popIn { from { opacity: 0; transform: translateY(-8px) scale(0.95); } to { opacity: 1; transform: none; } }
+
+  /* Countdown Overlay */
+  #countdown-overlay {
+    position: fixed; inset: 0; z-index: 40; display: none;
+    align-items: center; justify-content: center; pointer-events: none;
+    font-family: 'Orbitron', sans-serif; font-size: clamp(64px, 12vw, 130px);
+    font-weight: 900; color: var(--gold);
+    text-shadow: 0 0 40px rgba(250, 204, 21, 0.8), 0 8px 0 rgba(0,0,0,0.6);
+  }
+
+  /* Surprise Japanese Quiz Modal */
+  #quiz-modal {
+    position: fixed; inset: 0; z-index: 55; display: none;
+    align-items: center; justify-content: center; padding: 18px;
+    background: rgba(5, 8, 20, 0.78); backdrop-filter: blur(8px);
+  }
+  .quiz-card {
+    width: min(560px, 100%); border-radius: 20px; padding: 24px 26px;
+    background: linear-gradient(160deg, #0f172a, #090d1e);
+    border: 2px solid var(--p1); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+  }
+  .quiz-card.p2-turn { border-color: var(--p2); }
+  .quiz-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .quiz-player-pill {
+    padding: 4px 12px; border-radius: 999px; font-family: 'Orbitron', sans-serif;
+    font-size: 12px; font-weight: 900; background: rgba(0, 240, 255, 0.2); color: var(--p1);
+  }
+  .quiz-card.p2-turn .quiz-player-pill { background: rgba(255, 46, 147, 0.22); color: var(--p2); }
+  .quiz-type-pill {
+    padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;
+    background: rgba(250, 204, 21, 0.18); color: var(--gold); border: 1px solid rgba(250, 204, 21, 0.4);
+  }
+  .quiz-reward-note { font-size: 13px; color: #cbd5e1; margin-bottom: 10px; }
+  .quiz-prompt-box {
+    padding: 16px; border-radius: 14px; background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12); margin-bottom: 14px;
+  }
+  .quiz-jp-main {
+    font-family: 'Noto Sans JP', sans-serif; font-size: 24px; font-weight: 900;
+    color: #fff; line-height: 1.4;
+  }
+  .quiz-zh-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .quiz-hint-text {
+    display: none; margin-top: 8px; padding: 6px 10px; border-radius: 8px;
+    background: rgba(56, 189, 248, 0.14); color: #7dd3fc; font-size: 13px; font-weight: 700;
+  }
+  .quiz-tools-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .q-tool-btn {
+    padding: 7px 12px; border-radius: 9px; cursor: pointer;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+    color: #fff; font-size: 12px; font-weight: 700;
+  }
+  .q-tool-btn:hover { border-color: var(--p1); color: var(--p1); }
+
+  .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 520px) { .quiz-options { grid-template-columns: 1fr; } }
+  .q-opt-btn {
+    padding: 13px 14px; border-radius: 12px; cursor: pointer; text-align: left;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.16);
+    color: #f8fafc; font-size: 14px; font-weight: 700; transition: all 0.14s;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .q-opt-btn:hover { background: rgba(0, 240, 255, 0.15); border-color: var(--p1); transform: translateY(-1px); }
+  .q-opt-key {
+    width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.12); font-family: 'Orbitron', sans-serif; font-size: 11px;
+  }
+  .q-opt-btn.correct { background: rgba(34, 197, 94, 0.25); border-color: var(--green); }
+  .q-opt-btn.wrong { background: rgba(239, 68, 68, 0.25); border-color: var(--red); }
+
+  .speak-box { display: none; flex-direction: column; gap: 10px; align-items: center; text-align: center; }
+  .mic-btn {
+    padding: 14px 26px; border-radius: 999px; border: none; cursor: pointer;
+    background: linear-gradient(90deg, #ff2e93, #f97316); color: #fff;
+    font-size: 15px; font-weight: 900; box-shadow: 0 8px 24px rgba(255, 46, 147, 0.4);
+  }
+  .mic-btn.listening { animation: pulseMic 1s infinite; }
+  @keyframes pulseMic { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  .speak-transcript { font-size: 13px; color: #7dd3fc; min-height: 20px; }
+
+  /* Finish Modal */
+  #finish-modal {
+    position: fixed; inset: 0; z-index: 58; display: none;
+    align-items: center; justify-content: center; padding: 20px;
+    background: rgba(5, 8, 20, 0.85); backdrop-filter: blur(8px);
+  }
+  .finish-card {
+    width: min(560px, 100%); border-radius: 22px; padding: 28px; text-align: center;
+    background: linear-gradient(160deg, #0f172a, #090d1e);
+    border: 2px solid var(--gold); box-shadow: 0 25px 70px rgba(0,0,0,0.8);
+  }
+  .finish-title {
+    font-family: 'Orbitron', 'Noto Sans TC', sans-serif; font-size: 28px; font-weight: 900;
+    color: var(--gold); margin-bottom: 8px;
+  }
+  .standings-list {
+    margin: 16px 0 20px; display: flex; flex-direction: column; gap: 8px; text-align: left;
+  }
+  .standing-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px; border-radius: 11px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1); font-size: 14px; font-weight: 700;
+  }
+  .finish-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 12px 22px; border-radius: 12px; border: none; cursor: pointer;
+    background: linear-gradient(90deg, #00f0ff, #3b82f6); color: #fff; font-weight: 800; font-size: 14px;
+  }
+  .btn-secondary {
+    padding: 12px 20px; border-radius: 12px; cursor: pointer;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-weight: 700; font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+<div id="speed-lines"></div>
+<a href="../../index.html" id="back-hub-btn"><span>←</span><span>TLCP@Games</span></a>
+<div id="audio-controls">
+  <button id="bgm-toggle" class="hud-icon-btn" type="button">🎵 BGM: ON</button>
+  <button id="restart-btn" class="hud-icon-btn" type="button" style="display:none;">↺ Menu</button>
+</div>
+
+<div id="start-screen">
+  <div class="menu-card">
+    <div class="title-badge">TLCP@GAMES // 3D MANDARIN RACING</div>
+    <h1 class="game-title">APEX DRIFT: TAIWAN GP</h1>
+    <p class="subtitle">Built for English speakers learning Mandarin — hit Boost Portals and Item Boxes to trigger surprise Listening, Speaking & Reading Mandarin challenges!</p>
+
+    <div class="setup-grid">
+      <div class="setup-box">
+        <div class="setup-label">1. Race Mode</div>
+        <div class="pill-row">
+          <button class="sel-btn active" data-mode="1p" type="button">
+            🏎️ 1P Career Tour
+            <small>10 Taiwan Circuits · vs AI</small>
+          </button>
+          <button class="sel-btn" data-mode="2p" type="button">
+            ⚡ 2P Split-Screen
+            <small>Same Laptop · Dual View</small>
+          </button>
+        </div>
+      </div>
+
+      <div class="setup-box">
+        <div class="setup-label">2. Mandarin Difficulty (CEFR)</div>
+        <div class="pill-row">
+          <button class="sel-btn active" data-level="a1a2" type="button">
+            🌱 CEFR A1–A2
+            <small>Everyday Travel & Directions</small>
+          </button>
+          <button class="sel-btn" data-level="b1b2" type="button">
+            🔥 CEFR B1–B2
+            <small>Idioms, Strategy & Context</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-box" style="margin-bottom: 16px;">
+      <div class="setup-label">3. Select Starting Circuit (10 Stages)</div>
+      <div class="stage-strip" id="stage-strip"></div>
+    </div>
+
+    <div class="controls-bar">
+      <div><strong style="color:var(--p1);">P1 Blue:</strong> <span class="key-badge">W</span><span class="key-badge">A</span><span class="key-badge">S</span><span class="key-badge">D</span> Drive / <span class="key-badge">F</span> Item</div>
+      <div><strong style="color:var(--p2);">P2 Pink:</strong> <span class="key-badge">↑</span><span class="key-badge">←</span><span class="key-badge">↓</span><span class="key-badge">→</span> Drive / <span class="key-badge">Enter</span> Item</div>
+      <div style="color:var(--gold);">🌀 Portal = Mandarin Turbo ｜ 📦 Box = Power-Up ｜ 🟢 Arrows = Speed Pad ｜ 🚧 Barricade = Crash Slowdown ｜ 🛢️ Oil Slick = Skid</div>
+    </div>
+
+    <button id="start-race-btn" class="start-cta" type="button">START ENGINE // LAUNCH RACE</button>
+  </div>
+</div>
+
+<div id="hud-layer">
+  <div id="split-divider"></div>
+  <div id="stage-banner">
+    <span id="hud-stage-name">STAGE 1: TAIPEI HARBOURWAY</span>
+    <span class="cefr-tag" id="hud-cefr-tag">A1–A2</span>
+    <span class="cefr-tag" id="hud-timer" style="background:rgba(250,204,21,0.18);color:var(--gold);">00:00.0</span>
+  </div>
+  <div id="toast-feed"></div>
+  <div id="minimap-wrap"><canvas id="minimap-canvas" width="120" height="120"></canvas></div>
+
+  <div id="hud-p1" class="player-hud">
+    <div class="telemetry-card">
+      <div class="telemetry-top">
+        <span class="p-tag">P1 // VALKYRIE-X</span>
+        <span class="lap-pos" id="p1-lap-pos">LAP 1/2 · #1</span>
+      </div>
+      <div class="speed-row">
+        <span class="speed-num" id="p1-speed">0</span>
+        <span class="speed-unit">KM/H</span>
+        <span class="gear-pill" id="p1-gear">N</span>
+      </div>
+      <div class="rpm-track"><div class="rpm-fill" id="p1-rpm"></div></div>
+      <div class="item-slot">
+        <span>Item [F]</span>
+        <span class="item-badge" id="p1-item">None</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud-p2" class="player-hud">
+    <div class="telemetry-card">
+      <div class="telemetry-top">
+        <span class="lap-pos" id="p2-lap-pos">LAP 1/2 · #2</span>
+        <span class="p-tag">P2 // SHOGUN-R</span>
+      </div>
+      <div class="speed-row">
+        <span class="gear-pill" id="p2-gear">N</span>
+        <span class="speed-unit">KM/H</span>
+        <span class="speed-num" id="p2-speed">0</span>
+      </div>
+      <div class="rpm-track"><div class="rpm-fill" id="p2-rpm"></div></div>
+      <div class="item-slot">
+        <span class="item-badge" id="p2-item">None</span>
+        <span>Item [Enter]</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="countdown-overlay">3</div>
+
+<div id="quiz-modal">
+  <div class="quiz-card" id="quiz-card">
+    <div class="quiz-header">
+      <span class="quiz-player-pill" id="quiz-player-pill">P1 CHALLENGE</span>
+      <span class="quiz-type-pill" id="quiz-type-pill">📖 Reading Challenge</span>
+    </div>
+    <div class="quiz-reward-note" id="quiz-reward-note">Answer correctly to claim your reward!</div>
+    <div class="quiz-prompt-box">
+      <div class="quiz-jp-main" id="quiz-jp-main"></div>
+      <div class="quiz-zh-sub" id="quiz-zh-sub"></div>
+      <div class="quiz-hint-text" id="quiz-hint-text"></div>
+    </div>
+    <div class="quiz-tools-row">
+      <button id="quiz-audio-btn" class="q-tool-btn" type="button">🔊 Play Mandarin Audio</button>
+      <button id="quiz-hint-btn" class="q-tool-btn" type="button">💡 Pinyin Hint</button>
+    </div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="speak-box" id="speak-box">
+      <button id="mic-record-btn" class="mic-btn" type="button">🎙️ Press & Speak Mandarin</button>
+      <div class="speak-transcript" id="speak-transcript">Read the Mandarin sentence aloud</div>
+      <button id="speak-fallback-btn" class="q-tool-btn" type="button">No mic? Switch to Multiple Choice</button>
+    </div>
+  </div>
+</div>
+
+<div id="finish-modal">
+  <div class="finish-card">
+    <div class="finish-title" id="finish-title">🏁 CHECKERED FLAG!</div>
+    <p id="finish-subtitle" style="color:var(--muted); font-size:14px;"></p>
+    <div class="standings-list" id="standings-list"></div>
+    <div class="finish-actions">
+      <button id="next-stage-btn" class="btn-primary" type="button">Next Circuit →</button>
+      <button id="retry-stage-btn" class="btn-secondary" type="button">↺ Retry Stage</button>
+      <button id="back-menu-btn" class="btn-secondary" type="button">🏠 Main Menu</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+// ==================== 10 JAPANESE CIRCUITS ====================
+const STAGES = [
+  { id: 1, name: "TAIPEI HARBOURWAY", zh: "台北港灣高速", sky: 0x060b1f, fog: 0x091330, neon: 0x00f0ff, accent: 0xff2e93, laps: 2, aiSpeed: 0.94, curveAmp: 1.15, elevAmp: 10, barriers: 4, slicks: 0 },
+  { id: 2, name: "KAOHSIUNG NIGHTS", zh: "高雄港都夜景", sky: 0x08071c, fog: 0x131036, neon: 0x38bdf8, accent: 0xfacc15, laps: 2, aiSpeed: 0.96, curveAmp: 1.25, elevAmp: 12, barriers: 5, slicks: 1 },
+  { id: 3, name: "TAMSUI COAST DRIVE", zh: "淡水黃金海岸", sky: 0x1e112a, fog: 0x2d183d, neon: 0xf472b6, accent: 0x34d399, laps: 2, aiSpeed: 0.97, curveAmp: 1.35, elevAmp: 14, barriers: 5, slicks: 2 },
+  { id: 4, name: "TAROKO GORGE PASS", zh: "太魯閣雲峽道", sky: 0x071a1e, fog: 0x0d2b30, neon: 0x2dd4bf, accent: 0xfb923c, laps: 2, aiSpeed: 0.99, curveAmp: 1.50, elevAmp: 18, barriers: 6, slicks: 2 },
+  { id: 5, name: "JIUFEN NEON HILLS", zh: "九份霓虹山峠", sky: 0x1b0918, fog: 0x2b0f26, neon: 0xf43f5e, accent: 0xfacc15, laps: 2, aiSpeed: 1.00, curveAmp: 1.55, elevAmp: 17, barriers: 6, slicks: 3 },
+  { id: 6, name: "TAICHUNG SKY RING", zh: "台中天際環道", sky: 0x090f24, fog: 0x121d42, neon: 0x818cf8, accent: 0x00f0ff, laps: 3, aiSpeed: 1.01, curveAmp: 1.40, elevAmp: 14, barriers: 6, slicks: 3 },
+  { id: 7, name: "HSINCHU TECH GP", zh: "新竹科技賽道", sky: 0x061512, fog: 0x0b2620, neon: 0x22c55e, accent: 0x38bdf8, laps: 3, aiSpeed: 1.03, curveAmp: 1.60, elevAmp: 16, barriers: 7, slicks: 3 },
+  { id: 8, name: "ALISHAN CLOUDWAY", zh: "阿里山雲海道", sky: 0x0b1629, fog: 0x172b4d, neon: 0x7dd3fc, accent: 0xe879f9, laps: 3, aiSpeed: 1.04, curveAmp: 1.50, elevAmp: 15, barriers: 7, slicks: 4 },
+  { id: 9, name: "KENTING THUNDER BAY", zh: "墾丁雷鳴灣道", sky: 0x140b24, fog: 0x241340, neon: 0xc084fc, accent: 0xfacc15, laps: 3, aiSpeed: 1.05, curveAmp: 1.65, elevAmp: 20, barriers: 8, slicks: 4 },
+  { id: 10, name: "TAIWAN GP FINALS", zh: "台灣GP終極決賽", sky: 0x05050f, fog: 0x140924, neon: 0xfacc15, accent: 0xff2e93, laps: 3, aiSpeed: 1.07, curveAmp: 1.72, elevAmp: 22, barriers: 8, slicks: 5 }
+];
+
+// ==================== QUESTION BANK (A1-A2 & B1-B2) ====================
+const QUESTIONS = {
+  a1a2: [
+    { zh: "請問加油站在哪裡？", pinyin: "Qǐngwèn jiāyóuzhàn zài nǎlǐ?", en: "Excuse me, where is the gas station?", answer: "Excuse me, where is the gas station?", opts: ["Excuse me, where is the gas station?", "How much is this car?", "What time is it now?", "Where is the restroom?"] },
+    { zh: "請一直往前開。", pinyin: "Qǐng yīzhí wǎng qián kāi.", en: "Please keep driving straight ahead.", answer: "Please keep driving straight ahead.", opts: ["Please keep driving straight ahead.", "Please turn left here.", "Please pull over and stop.", "Please drive a bit slower."] },
+    { zh: "下一個紅綠燈右轉。", pinyin: "Xià yīgè hónglǜdēng yòuzhuǎn.", en: "Turn right at the next traffic light.", answer: "Turn right at the next traffic light.", opts: ["Turn right at the next traffic light.", "Turn left at the next corner.", "Get off at the train station.", "No entry ahead."] },
+    { zh: "開車前請繫好安全帶。", pinyin: "Kāichē qián qǐng jì hǎo ānquándài.", en: "Please fasten your seatbelt before driving.", answer: "Please fasten your seatbelt before driving.", opts: ["Please fasten your seatbelt before driving.", "Please close the car door.", "Please roll down the window.", "Please start the engine."] },
+    { zh: "到機場需要三十分鐘。", pinyin: "Dào jīchǎng xūyào sānshí fēnzhōng.", en: "It takes thirty minutes to get to the airport.", answer: "It takes thirty minutes to get to the airport.", opts: ["It takes thirty minutes to get to the airport.", "The airport is at Exit 3.", "The flight departs at 3 o'clock.", "The fare is thirty dollars."] },
+    { zh: "開慢一點，前面很危險。", pinyin: "Kāi màn yīdiǎn, qiánmiàn hěn wéixiǎn.", en: "Slow down, it's dangerous ahead.", answer: "Slow down, it's dangerous ahead.", opts: ["Slow down, it's dangerous ahead.", "Speed up, the road is clear.", "The weather is very sunny.", "You can park here for free."] },
+    { zh: "這裡不可以停車。", pinyin: "Zhèlǐ bù kěyǐ tíngchē.", en: "You cannot park here.", answer: "You cannot park here.", opts: ["You cannot park here.", "This is a public parking lot.", "You can make a U-turn here.", "This is a one-way street."] },
+    { zh: "這台跑車非常快！", pinyin: "Zhè tái pǎochē fēicháng kuài!", en: "This sports car is super fast!", answer: "This sports car is super fast!", opts: ["This sports car is super fast!", "This car is very quiet.", "This car is really cheap.", "This car broke down."] },
+    { zh: "外面開始下雨了。", pinyin: "Wàimiàn kāishǐ xiàyǔ le.", en: "It is starting to rain outside.", answer: "It is starting to rain outside.", opts: ["It is starting to rain outside.", "The sky is clearing up.", "It is starting to snow.", "The wind is getting strong."] },
+    { zh: "我需要先看一下地圖。", pinyin: "Wǒ xūyào xiān kàn yīxià dìtú.", en: "I need to check the map first.", answer: "I need to check the map first.", opts: ["I need to check the map first.", "I want to buy a train ticket.", "I want to rent a new car.", "I forgot my car keys."] },
+    { zh: "市中心離這裡多遠？", pinyin: "Shìzhōngxīn lí zhèlǐ duō yuǎn?", en: "How far is downtown from here?", answer: "How far is downtown from here?", opts: ["How far is downtown from here?", "Is there an event downtown today?", "Does this road go to the beach?", "How much is parking per hour?"] },
+    { zh: "小心前面的急轉彎！", pinyin: "Xiǎoxīn qiánmiàn de jízhuǎnwān!", en: "Watch out for the sharp turn ahead!", answer: "Watch out for the sharp turn ahead!", opts: ["Watch out for the sharp turn ahead!", "There is a gas station ahead!", "The race is already over!", "Please turn on your headlights!"] }
+  ],
+  b1b2: [
+    { zh: "注意，前方有一連串的急彎。", pinyin: "Zhùyì, qiánfāng yǒu yī liánchuàn de jíwān.", en: "Caution: there is a series of sharp bends ahead.", answer: "Caution: there is a series of sharp bends ahead.", opts: ["Caution: there is a series of sharp bends ahead.", "Caution: the road ahead is closed for construction.", "A toll booth is coming up soon.", "There is a large rest area ahead."] },
+    { zh: "我們塞在車陣裡，可能會遲到。", pinyin: "Wǒmen sāi zài chēzhèn lǐ, kěnéng huì chídào.", en: "We're stuck in heavy traffic and might be late.", answer: "We're stuck in heavy traffic and might be late.", opts: ["We're stuck in heavy traffic and might be late.", "We got lost and need GPS.", "The car broke down and won't move.", "We left early so we arrived on time."] },
+    { zh: "切進超車道並加速前進。", pinyin: "Qiē jìn chāochēdào bìng jiāsù qiánjìn.", en: "Merge into the passing lane and accelerate.", answer: "Merge into the passing lane and accelerate.", opts: ["Merge into the passing lane and accelerate.", "Pull over to the shoulder and rest.", "Keep a safe distance and cruise.", "Take the next highway exit."] },
+    { zh: "因為暴風雨，路面變得非常濕滑。", pinyin: "Yīnwèi bàofēngyǔ, lùmiàn biàn de fēicháng shīhuá.", en: "The road has become very slippery due to the storm.", answer: "The road has become very slippery due to the storm.", opts: ["The road has become very slippery due to the storm.", "Visibility dropped sharply due to fog.", "The track is dry enough for full throttle.", "Tire pressure is low and needs a check."] },
+    { zh: "她在最後一秒超越了對手！", pinyin: "Tā zài zuìhòu yī miǎo chāoyuè le duìshǒu!", en: "She overtook her rival at the very last second!", answer: "She overtook her rival at the very last second!", opts: ["She overtook her rival at the very last second!", "She crashed right before the finish line!", "She received a ten-second penalty!", "She pitted early to swap tires!"] },
+    { zh: "在耐力賽中，節省油耗至關重要。", pinyin: "Zài nàilìsài zhōng, jiéshěng yóuhào zhìguān zhòngyào.", en: "Saving fuel is crucial in endurance races.", answer: "Saving fuel is crucial in endurance races.", opts: ["Saving fuel is crucial in endurance races.", "Flooring the throttle non-stop is all that matters.", "Tuning the engine boosts horsepower the most.", "Warm-up laps matter more than tactics."] },
+    { zh: "維修團隊三秒內就換好四顆輪胎。", pinyin: "Wéixiū tuánduì sān miǎo nèi jiù huàn hǎo sì kē lúntāi.", en: "The pit crew changed all four tires in under three seconds.", answer: "The pit crew changed all four tires in under three seconds.", opts: ["The pit crew changed all four tires in under three seconds.", "Pump number three is under maintenance.", "The race officially starts in three minutes.", "My rival passed me three meters from the line."] },
+    { zh: "先研究賽道特徵，再擬定戰略吧。", pinyin: "Xiān yánjiū sàidào tèzhēng, zài nǐdìng zhànlüè ba.", en: "Let's study the circuit layout before planning our strategy.", answer: "Let's study the circuit layout before planning our strategy.", opts: ["Let's study the circuit layout before planning our strategy.", "Let's just rely on pure instinct for every turn.", "Let's ask the referee about today's rules first.", "Let's switch to an all-wheel-drive car."] },
+    { zh: "上高速公路前絕不能疏忽安全檢查。", pinyin: "Shàng gāosù gōnglù qián jué bù néng shūhū ānquán jiǎnchá.", en: "Never neglect safety checks before hitting the highway.", answer: "Never neglect safety checks before hitting the highway.", opts: ["Never neglect safety checks before hitting the highway.", "Always turn the stereo up on the highway.", "Roll the windows down for fresh air.", "Slow down before crossing the finish line."] },
+    { zh: "他決心在本賽季奪下冠軍獎盃。", pinyin: "Tā juéxīn zài běn sàijì duóxià guànjūn jiǎngbēi.", en: "He is determined to claim the championship trophy this season.", answer: "He is determined to claim the championship trophy this season.", opts: ["He is determined to claim the championship trophy this season.", "He decided to withdraw for safety reasons.", "He plans to enter the pit lane on the final lap.", "He wants to lend his race car to a teammate."] },
+    { zh: "進彎前平順煞車能讓你出彎更快。", pinyin: "Jìn wān qián píngshùn shāchē néng ràng nǐ chū wān gèng kuài.", en: "Braking smoothly before a corner helps you exit faster.", answer: "Braking smoothly before a corner helps you exit faster.", opts: ["Braking smoothly before a corner helps you exit faster.", "Always pull the handbrake mid-corner to speed up.", "Keep weaving lanes on every straightaway.", "Scraping the guardrail saves lap time."] },
+    { zh: "儘管開局不利，我們仍上演了驚人逆轉。", pinyin: "Jǐnguǎn kāijú bùlì, wǒmen réng shàngyǎn le jīngrén nìzhuǎn.", en: "Despite a rough start, we pulled off an amazing comeback.", answer: "Despite a rough start, we pulled off an amazing comeback.", opts: ["Despite a rough start, we pulled off an amazing comeback.", "Despite leading early, we had to retire.", "The race was postponed due to heavy rain.", "The team revealed a brand-new livery."] }
+  ]
+};
+
+const POWERUPS = [
+  { id: 'missile', label: '🚀 Homing Missile', desc: 'Locks onto the leader ahead!' },
+  { id: 'nitro', label: '🔥 Super Nitro', desc: 'Instant overdrive speed burst!' },
+  { id: 'shield', label: '🛡️ Energy Shield', desc: 'Blocks missiles, EMPs & barriers!' },
+  { id: 'emp', label: '⚡ Shockwave EMP', desc: 'Slows down nearby rivals!' }
+];
+
+// ==================== WEB AUDIO ENGINE (156 BPM EUROBEAT + SFX + DUCKING) ====================
+class RacingAudio {
+  constructor() {
+    this.ctx = null;
+    this.master = null;
+    this.bgmGain = null;
+    this.enabled = true;
+    this.playingBgm = false;
+    this.step = 0;
+    this.timer = null;
+  }
+  init() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      return;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.65;
+    this.master.connect(this.ctx.destination);
+    this.bgmGain = this.ctx.createGain();
+    this.bgmGain.gain.value = 0.38;
+    this.bgmGain.connect(this.master);
+  }
+  duck(isDuck) {
+    if (!this.bgmGain || !this.ctx) return;
+    const target = isDuck ? 0.05 : (this.enabled ? 0.38 : 0);
+    this.bgmGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.08);
+  }
+  toggle() {
+    this.enabled = !this.enabled;
+    if (this.bgmGain && this.ctx) {
+      this.bgmGain.gain.setTargetAtTime(this.enabled ? 0.38 : 0, this.ctx.currentTime, 0.05);
+    }
+    return this.enabled;
+  }
+  startBGM() {
+    this.init();
+    if (!this.ctx || this.playingBgm) return;
+    this.playingBgm = true;
+    const sixteenth = (60 / 156) / 4; // 156 BPM fast eurobeat
+    const bassNotes = [55, 55, 110, 55, 65.41, 65.41, 130.81, 65.41, 73.42, 73.42, 146.83, 73.42, 61.74, 61.74, 123.47, 82.41];
+    const leadNotes = [440, 0, 523.25, 587.33, 659.25, 0, 587.33, 523.25, 440, 493.88, 523.25, 0, 659.25, 783.99, 880, 783.99];
+    this.timer = setInterval(() => {
+      if (!this.playingBgm || !this.enabled || this.ctx.state !== 'running') return;
+      const t = this.ctx.currentTime;
+      const s = this.step % 16;
+      // Four-on-the-floor kick
+      if (s % 4 === 0) {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(140, t);
+        osc.frequency.exponentialRampToValueAtTime(38, t + 0.11);
+        g.gain.setValueAtTime(0.55, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(g); g.connect(this.bgmGain);
+        osc.start(t); osc.stop(t + 0.13);
+      }
+      // Offbeat hi-hat
+      if (s % 2 === 1) {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(s % 4 === 2 ? 900 : 4800, t);
+        g.gain.setValueAtTime(0.06, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.connect(g); g.connect(this.bgmGain);
+        osc.start(t); osc.stop(t + 0.05);
+      }
+      // Octave Eurobeat bass
+      const bf = bassNotes[s];
+      const bOsc = this.ctx.createOscillator();
+      const bG = this.ctx.createGain();
+      bOsc.type = 'sawtooth';
+      bOsc.frequency.setValueAtTime(bf, t);
+      bG.gain.setValueAtTime(0.18, t);
+      bG.gain.exponentialRampToValueAtTime(0.01, t + sixteenth * 0.9);
+      bOsc.connect(bG); bG.connect(this.bgmGain);
+      bOsc.start(t); bOsc.stop(t + sixteenth);
+
+      // Synth lead
+      const lf = leadNotes[s];
+      if (lf > 0) {
+        const lOsc = this.ctx.createOscillator();
+        const lG = this.ctx.createGain();
+        lOsc.type = 'triangle';
+        lOsc.frequency.setValueAtTime(lf, t);
+        lG.gain.setValueAtTime(0.14, t);
+        lG.gain.exponentialRampToValueAtTime(0.005, t + sixteenth * 1.4);
+        lOsc.connect(lG); lG.connect(this.bgmGain);
+        lOsc.start(t); lOsc.stop(t + sixteenth * 1.5);
+      }
+      this.step++;
+    }, sixteenth * 1000);
+  }
+  playSFX(type) {
+    this.init();
+    if (!this.ctx || !this.enabled) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    if (type === 'boost') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(880, t + 0.35);
+      g.gain.setValueAtTime(0.24, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.4);
+    } else if (type === 'missile') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(720, t);
+      osc.frequency.exponentialRampToValueAtTime(160, t + 0.28);
+      g.gain.setValueAtTime(0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.31);
+    } else if (type === 'hit') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(130, t);
+      osc.frequency.exponentialRampToValueAtTime(42, t + 0.25);
+      g.gain.setValueAtTime(0.32, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.28);
+    } else if (type === 'beep') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, t);
+      g.gain.setValueAtTime(0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.15);
+    } else if (type === 'go') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1046.5, t);
+      g.gain.setValueAtTime(0.28, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      osc.connect(g); g.connect(this.master);
+      osc.start(t); osc.stop(t + 0.33);
+    }
+  }
+}
+const audio = new RacingAudio();
+
+function speakZH(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-TW';
+  u.rate = 0.96;
+  audio.duck(true);
+  u.onend = () => audio.duck(false);
+  u.onerror = () => audio.duck(false);
+  window.speechSynthesis.speak(u);
+}
+
+// ==================== GAME STATE ====================
+const G = {
+  mode: '1p',
+  level: 'a1a2',
+  stageIdx: 0,
+  running: false,
+  paused: false,
+  countdown: 0,
+  keys: {},
+  renderer: null,
+  scene: null,
+  cam1: null,
+  cam2: null,
+  trackCurve: null,
+  trackLength: 1000,
+  trackGroup: null,
+  racers: [],
+  portals: [],
+  boxes: [],
+  barriers: [],
+  slicks: [],
+  speedPads: [],
+  minimapPts: [],
+  missiles: [],
+  previewMode: true,
+  activeQuiz: null,
+  quizLock: false,
+  globalQuizCooldown: 0,
+  raceElapsed: 0,
+  finishOrder: [],
+  lastTime: 0
+};
+
+// ==================== UI SETUP ====================
+const stageStrip = document.getElementById('stage-strip');
+STAGES.forEach((st, idx) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'stage-chip' + (idx === 0 ? ' active' : '');
+  btn.innerHTML = `<b>STAGE ${st.id}</b><span>${st.name}</span>`;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.stage-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    G.stageIdx = idx;
+    if (G.previewMode) setupGridPreview(idx);
+  });
+  stageStrip.appendChild(btn);
+});
+
+document.querySelectorAll('[data-mode]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active', 'active-p2'));
+    btn.classList.add(btn.dataset.mode === '2p' ? 'active-p2' : 'active');
+    G.mode = btn.dataset.mode;
+    if (G.previewMode) setupGridPreview(G.stageIdx);
+  });
+});
+
+document.querySelectorAll('[data-level]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-level]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    G.level = btn.dataset.level;
+  });
+});
+
+document.getElementById('bgm-toggle').addEventListener('click', () => {
+  const on = audio.toggle();
+  document.getElementById('bgm-toggle').textContent = on ? '🎵 BGM: ON' : '🔇 BGM: OFF';
+});
+
+document.getElementById('restart-btn').addEventListener('click', returnToMenu);
+document.getElementById('back-menu-btn').addEventListener('click', returnToMenu);
+document.getElementById('retry-stage-btn').addEventListener('click', () => {
+  document.getElementById('finish-modal').style.display = 'none';
+  startRace(G.stageIdx);
+});
+document.getElementById('next-stage-btn').addEventListener('click', () => {
+  document.getElementById('finish-modal').style.display = 'none';
+  const next = (G.stageIdx + 1) % STAGES.length;
+  G.stageIdx = next;
+  startRace(next);
+});
+
+document.getElementById('start-race-btn').addEventListener('click', () => {
+  audio.startBGM();
+  startRace(G.stageIdx);
+});
+
+// ==================== THREE.JS INIT ====================
+function initThree() {
+  const canvas = document.getElementById('game-canvas');
+  G.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  G.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  G.renderer.setSize(window.innerWidth, window.innerHeight);
+  G.renderer.shadowMap.enabled = false;
+
+  G.scene = new THREE.Scene();
+  G.cam1 = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.5, 1600);
+  G.cam2 = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.5, 1600);
+
+  window.addEventListener('resize', () => {
+    if (!G.renderer) return;
+    G.renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+function buildSupercarMesh(primaryColor, accentColor) {
+  const group = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: primaryColor, metalness: 0.72, roughness: 0.22 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.4, roughness: 0.5 });
+  const glassMat = new THREE.MeshStandardMaterial({ color: 0x020617, metalness: 0.9, roughness: 0.1 });
+  const glowMat = new THREE.MeshBasicMaterial({ color: accentColor });
+
+  // Lower chassis
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.52, 4.5), bodyMat);
+  chassis.position.y = 0.5;
+  group.add(chassis);
+
+  // Front splitter & nose
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.26, 1.1), darkMat);
+  nose.position.set(0, 0.34, 2.0);
+  group.add(nose);
+
+  // Cabin canopy
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.48, 2.0), glassMat);
+  cabin.position.set(0, 0.95, -0.15);
+  group.add(cabin);
+
+  // GT Rear Wing
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.1, 0.55), bodyMat);
+  wing.position.set(0, 1.15, -2.0);
+  group.add(wing);
+  const strutL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.45, 0.25), darkMat);
+  strutL.position.set(-0.65, 0.9, -2.0);
+  const strutR = strutL.clone(); strutR.position.x = 0.65;
+  group.add(strutL, strutR);
+
+  // Headlights & Taillight bar
+  const headL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.1), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  headL.position.set(-0.65, 0.56, 2.26);
+  const headR = headL.clone(); headR.position.x = 0.65;
+  const tailBar = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.12, 0.1), glowMat);
+  tailBar.position.set(0, 0.62, -2.26);
+  group.add(headL, headR, tailBar);
+
+  // Underglow strip
+  const under = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 3.8), new THREE.MeshBasicMaterial({ color: accentColor, transparent: true, opacity: 0.45, side: THREE.DoubleSide }));
+  under.rotation.x = Math.PI / 2;
+  under.position.y = 0.16;
+  group.add(under);
+
+  // Wheels
+  const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.32, 14);
+  wheelGeo.rotateZ(Math.PI / 2);
+  const rimMat = new THREE.MeshBasicMaterial({ color: accentColor });
+  const wheels = [];
+  [[-1.08, 0.42, 1.4], [1.08, 0.42, 1.4], [-1.08, 0.42, -1.4], [1.08, 0.42, -1.4]].forEach(([x, y, z]) => {
+    const w = new THREE.Mesh(wheelGeo, darkMat);
+    w.position.set(x, y, z);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.34, 10).rotateZ(Math.PI / 2), rimMat);
+    w.add(hub);
+    group.add(w);
+    wheels.push(w);
+  });
+
+  // Energy Shield bubble (hidden until active)
+  const shield = new THREE.Mesh(
+    new THREE.SphereGeometry(2.7, 16, 12),
+    new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.45 })
+  );
+  shield.position.y = 0.8;
+  shield.visible = false;
+  group.add(shield);
+
+  group.userData = { wheels, shield };
+  return group;
+}
+
+function buildTrack(stage) {
+  if (G.trackGroup) G.scene.remove(G.trackGroup);
+  G.trackGroup = new THREE.Group();
+  G.scene.background = new THREE.Color(stage.sky);
+  G.scene.fog = new THREE.FogExp2(stage.fog, 0.0014);
+
+  // Lighting
+  const hemi = new THREE.HemisphereLight(0xdbeafe, 0x0f172a, 1.25);
+  const dir = new THREE.DirectionalLight(0xffffff, 1.15);
+  dir.position.set(60, 110, 40);
+  G.trackGroup.add(hemi, dir);
+
+  // Complex multi-harmonic circuit with hairpins, S-chicanes, and elevation hills
+  const pts = [];
+  const N = 26;
+  const R = 415;
+  for (let i = 0; i < N; i++) {
+    const a = (i / N) * Math.PI * 2;
+    // Keep start/finish straight (near a=0 / 2pi) clean and flat for clear grid visibility
+    const straightMask = Math.min(1, Math.sin(a * 0.5) * 2.2);
+    const rad = R
+      + (Math.sin(a * 2 + stage.id * 1.1) * 75
+      + Math.cos(a * 3 - stage.id * 0.8) * 58
+      + Math.sin(a * 5 + stage.id * 0.5) * 34) * stage.curveAmp * straightMask;
+    const y = (Math.sin(a * 2 + stage.id * 0.7) * 0.6 + Math.sin(a * 4) * 0.4) * (stage.elevAmp || 14) * straightMask;
+    pts.push(new THREE.Vector3(Math.cos(a) * rad, y, Math.sin(a) * rad));
+  }
+  G.trackCurve = new THREE.CatmullRomCurve3(pts, true, 'catmullrom', 0.5);
+  G.trackLength = G.trackCurve.getLength();
+
+  // Precompute 2D minimap points
+  G.minimapPts = [];
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (let i = 0; i < 80; i++) {
+    const p = G.trackCurve.getPointAt(i / 80);
+    G.minimapPts.push({ x: p.x, z: p.z });
+    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+    if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
+  }
+  G.minimapBounds = { minX, maxX, minZ, maxZ };
+
+  // Ground plane
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(2800, 2800),
+    new THREE.MeshStandardMaterial({ color: 0x050814, roughness: 0.95 })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -14;
+  G.trackGroup.add(ground);
+
+  // Track segments (asphalt + neon rails)
+  const segs = 340;
+  const roadW = 22;
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x161c2e, roughness: 0.72, metalness: 0.15 });
+  const railMat = new THREE.MeshBasicMaterial({ color: stage.neon });
+  const accentMat = new THREE.MeshBasicMaterial({ color: stage.accent });
+  const stripeMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+
+  for (let i = 0; i < segs; i++) {
+    const u0 = i / segs;
+    const u1 = ((i + 1) % segs) / segs;
+    const p0 = G.trackCurve.getPointAt(u0);
+    const p1 = G.trackCurve.getPointAt(u1);
+    const mid = p0.clone().add(p1).multiplyScalar(0.5);
+    const segLen = p0.distanceTo(p1) + 0.6;
+
+    const seg = new THREE.Group();
+    seg.position.copy(mid);
+    seg.lookAt(p1);
+
+    const road = new THREE.Mesh(new THREE.BoxGeometry(roadW, 0.5, segLen), roadMat);
+    road.position.y = -0.25;
+    seg.add(road);
+
+    const railL = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.75, segLen), i % 2 === 0 ? railMat : accentMat);
+    railL.position.set(-roadW / 2, 0.35, 0);
+    const railR = railL.clone();
+    railR.position.x = roadW / 2;
+    seg.add(railL, railR);
+
+    if (i % 2 === 0) {
+      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.04, segLen * 0.55), stripeMat);
+      dash.position.y = 0.02;
+      seg.add(dash);
+    }
+    G.trackGroup.add(seg);
+
+    // Skyline neon towers outside track every 7 segments
+    if (i % 7 === 0) {
+      const tan = G.trackCurve.getTangentAt(u0);
+      const right = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(0, 1, 0)).normalize();
+      const side = (i % 14 === 0 ? 1 : -1) * (24 + (i % 3) * 8);
+      const h = 18 + ((i * 13 + stage.id * 7) % 36);
+      const tower = new THREE.Mesh(
+        new THREE.BoxGeometry(8, h, 8),
+        new THREE.MeshStandardMaterial({ color: 0x0b1224, emissive: i % 14 === 0 ? stage.neon : stage.accent, emissiveIntensity: 0.25 })
+      );
+      tower.position.copy(p0).addScaledVector(right, side);
+      tower.position.y = h / 2 - 4;
+      G.trackGroup.add(tower);
+    }
+  }
+
+  // Start/Finish Arch
+  const sPos = G.trackCurve.getPointAt(0);
+  const sLook = G.trackCurve.getPointAt(0.01);
+  const arch = new THREE.Group();
+  arch.position.copy(sPos);
+  arch.lookAt(sLook);
+  const pillarGeo = new THREE.BoxGeometry(1.1, 10, 1.1);
+  const pL = new THREE.Mesh(pillarGeo, railMat); pL.position.set(-11, 5, 0);
+  const pR = new THREE.Mesh(pillarGeo, railMat); pR.position.set(11, 5, 0);
+  const banner = new THREE.Mesh(new THREE.BoxGeometry(23.5, 2.2, 1.2), accentMat);
+  banner.position.set(0, 9.5, 0);
+  arch.add(pL, pR, banner);
+  G.trackGroup.add(arch);
+
+  // Speed Boost Portals (1 per lap — ~3-5 total encounters across full race)
+  G.portals = [];
+  [0.34].forEach(u => {
+    const p = G.trackCurve.getPointAt(u);
+    const l = G.trackCurve.getPointAt((u + 0.01) % 1);
+    const portal = new THREE.Group();
+    portal.position.copy(p);
+    portal.lookAt(l);
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(4.8, 0.36, 12, 32),
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff })
+    );
+    ring.position.y = 3.4;
+    const inner = new THREE.Mesh(
+      new THREE.CircleGeometry(4.4, 24),
+      new THREE.MeshBasicMaterial({ color: 0x00f0ff, transparent: true, opacity: 0.24, side: THREE.DoubleSide })
+    );
+    inner.position.y = 3.4;
+    portal.add(ring, inner);
+    G.trackGroup.add(portal);
+    G.portals.push({ u, offset: 0, mesh: portal, cooldown: 0 });
+  });
+
+  // Power-Up Item Boxes (1 station per lap, well spaced from portal)
+  G.boxes = [];
+  [0.72].forEach((u) => {
+    const p = G.trackCurve.getPointAt(u);
+    const tan = G.trackCurve.getTangentAt(u);
+    const right = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(0, 1, 0)).normalize();
+    const lateral = 0;
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 2.4, 2.4),
+      new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xf97316, emissiveIntensity: 0.7, metalness: 0.3, roughness: 0.2 })
+    );
+    box.position.copy(p).addScaledVector(right, lateral);
+    box.position.y += 1.7;
+    G.trackGroup.add(box);
+    G.boxes.push({ u, lateral, mesh: box, respawn: 0 });
+  });
+
+  // Sharp-corner directional chevron signs (read corners ahead!)
+  const chevMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+  for (let i = 4; i < 160; i += 4) {
+    const u = i / 160;
+    const curv = getTrackCurvature(u);
+    if (Math.abs(curv) > 0.022) {
+      const p = G.trackCurve.getPointAt(u);
+      const t = G.trackCurve.getTangentAt(u);
+      const right = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize();
+      const outSide = curv > 0 ? 11.4 : -11.4;
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.2, 3.2), chevMat);
+      sign.position.copy(p).addScaledVector(right, outSide);
+      sign.position.y += 1.6;
+      sign.lookAt(G.trackCurve.getPointAt((u + 0.01) % 1).addScaledVector(right, outSide));
+      G.trackGroup.add(sign);
+    }
+  }
+
+  // Procedural textures for unmistakable Roadblock Barricades, Oil Slicks, and Boost Arrows
+  const stripeCv = document.createElement('canvas');
+  stripeCv.width = 256; stripeCv.height = 64;
+  const sCtx = stripeCv.getContext('2d');
+  sCtx.fillStyle = '#dc2626'; sCtx.fillRect(0, 0, 256, 64);
+  sCtx.fillStyle = '#ffffff';
+  for (let x = -64; x < 320; x += 48) {
+    sCtx.beginPath(); sCtx.moveTo(x, 0); sCtx.lineTo(x + 24, 0); sCtx.lineTo(x + 4, 64); sCtx.lineTo(x - 20, 64); sCtx.closePath(); sCtx.fill();
+  }
+  const stripeTex = new THREE.CanvasTexture(stripeCv);
+  const barBoardMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.35, metalness: 0.2 });
+  const barLegMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
+  const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff2222 });
+
+  // Striped Hazard Roadblock Barricades (obvious crash/slowdown obstacle!)
+  G.barriers = [];
+  const barCount = stage.barriers || 5;
+  for (let i = 0; i < barCount; i++) {
+    const u = (0.14 + (i * 0.76) / barCount) % 1;
+    if (Math.abs(u - 0.34) < 0.04 || Math.abs(u - 0.72) < 0.04) continue;
+    const lat = i % 3 === 0 ? -5.0 : (i % 3 === 1 ? 5.0 : 0.0);
+    const p = G.trackCurve.getPointAt(u);
+    const l = G.trackCurve.getPointAt((u + 0.01) % 1);
+    const t = G.trackCurve.getTangentAt(u);
+    const right = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize();
+
+    const barGroup = new THREE.Group();
+    const topBoard = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.85, 0.35), barBoardMat);
+    topBoard.position.y = 1.25;
+    const lowBoard = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.45, 0.35), barBoardMat);
+    lowBoard.position.y = 0.55;
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.65, 1.1), barLegMat);
+    legL.position.set(-2.4, 0.82, 0);
+    const legR = legL.clone(); legR.position.x = 2.4;
+    const lampL = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), beaconMat);
+    lampL.position.set(-2.4, 1.85, 0);
+    const lampR = lampL.clone(); lampR.position.x = 2.4;
+    barGroup.add(topBoard, lowBoard, legL, legR, lampL, lampR);
+
+    barGroup.position.copy(p).addScaledVector(right, lat);
+    barGroup.lookAt(l.clone().addScaledVector(right, lat));
+    G.trackGroup.add(barGroup);
+    G.barriers.push({ u, lateral: lat, width: 3.1, mesh: barGroup });
+  }
+
+  // Iridescent Oil Slick Puddles (slippery spin-out hazard on stages 2+)
+  const oilCv = document.createElement('canvas');
+  oilCv.width = 128; oilCv.height = 128;
+  const oCtx = oilCv.getContext('2d');
+  const oGrad = oCtx.createRadialGradient(64, 64, 8, 64, 64, 60);
+  oGrad.addColorStop(0, 'rgba(30, 10, 45, 0.95)');
+  oGrad.addColorStop(0.55, 'rgba(139, 92, 246, 0.82)');
+  oGrad.addColorStop(0.82, 'rgba(56, 189, 248, 0.55)');
+  oGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+  oCtx.fillStyle = oGrad; oCtx.beginPath(); oCtx.arc(64, 64, 60, 0, Math.PI * 2); oCtx.fill();
+  const oilTex = new THREE.CanvasTexture(oilCv);
+  const slickMat = new THREE.MeshBasicMaterial({ map: oilTex, transparent: true, side: THREE.DoubleSide });
+
+  G.slicks = [];
+  const slickCount = stage.slicks || 0;
+  for (let i = 0; i < slickCount; i++) {
+    const u = (0.20 + (i * 0.68) / Math.max(1, slickCount)) % 1;
+    if (Math.abs(u - 0.34) < 0.035 || Math.abs(u - 0.72) < 0.035) continue;
+    const lat = i % 2 === 0 ? 4.2 : -4.2;
+    const p = G.trackCurve.getPointAt(u);
+    const t = G.trackCurve.getTangentAt(u);
+    const right = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize();
+    const sMesh = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.6), slickMat);
+    sMesh.rotation.x = -Math.PI / 2;
+    sMesh.position.copy(p).addScaledVector(right, lat);
+    sMesh.position.y += 0.09;
+    G.trackGroup.add(sMesh);
+    G.slicks.push({ u, lateral: lat, mesh: sMesh });
+  }
+
+  // Glowing Green Forward Chevron Arrow Boost Pads (>>> on the asphalt)
+  const arrowCv = document.createElement('canvas');
+  arrowCv.width = 128; arrowCv.height = 256;
+  const aCtx = arrowCv.getContext('2d');
+  aCtx.clearRect(0, 0, 128, 256);
+  for (let k = 0; k < 3; k++) {
+    const y = 34 + k * 74;
+    aCtx.strokeStyle = k === 0 ? '#4ade80' : (k === 1 ? '#22c55e' : '#16a34a');
+    aCtx.lineWidth = 18;
+    aCtx.lineCap = 'round';
+    aCtx.lineJoin = 'round';
+    aCtx.beginPath();
+    aCtx.moveTo(22, y + 48);
+    aCtx.lineTo(64, y);
+    aCtx.lineTo(106, y + 48);
+    aCtx.stroke();
+  }
+  const arrowTex = new THREE.CanvasTexture(arrowCv);
+  const arrowMat = new THREE.MeshBasicMaterial({ map: arrowTex, transparent: true, side: THREE.DoubleSide });
+
+  G.speedPads = [];
+  [0.18, 0.52, 0.86].forEach((u, idx) => {
+    const lat = idx % 2 === 0 ? -4.5 : 4.5;
+    const p = G.trackCurve.getPointAt(u);
+    const l = G.trackCurve.getPointAt((u + 0.01) % 1);
+    const t = G.trackCurve.getTangentAt(u);
+    const right = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize();
+    const pad = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 8.8), arrowMat);
+    pad.position.copy(p).addScaledVector(right, lat);
+    pad.position.y += 0.11;
+    pad.lookAt(l.clone().addScaledVector(right, lat));
+    pad.rotateX(Math.PI / 2);
+    G.trackGroup.add(pad);
+    G.speedPads.push({ u, lateral: lat, mesh: pad });
+  });
+
+  G.scene.add(G.trackGroup);
+}
+
+function getTrackCurvature(u) {
+  const t1 = G.trackCurve.getTangentAt((u - 0.008 + 1) % 1);
+  const t2 = G.trackCurve.getTangentAt((u + 0.008) % 1);
+  // Signed Y-component of cross product indicates left vs right bend sharpness
+  return (t1.z * t2.x - t1.x * t2.z);
+}
+
+// ==================== RACERS & RACE START ====================
+function createRacer(id, label, isHuman, color, accent, startU, startLat, lapBaseSpeed) {
+  const mesh = buildSupercarMesh(color, accent);
+  G.scene.add(mesh);
+  return {
+    id, label, isHuman,
+    mesh,
+    u: startU,
+    lat: startLat,
+    speed: 0,
+    maxSpeed: lapBaseSpeed,
+    steerVel: 0,
+    heading: 0,
+    lap: 1,
+    totalProgress: startU - 1,
+    boostTimer: 0,
+    stunTimer: 0,
+    shieldTimer: 0,
+    quizCooldown: 0,
+    quizCount: 0,
+    heldItem: null,
+    finished: false,
+    finishTime: 0
+  };
+}
+
+function positionRacerMesh(r) {
+  const pos = G.trackCurve.getPointAt(r.u);
+  const look = G.trackCurve.getPointAt((r.u + 0.008) % 1);
+  const tan = G.trackCurve.getTangentAt(r.u);
+  const rightVec = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(0, 1, 0)).normalize();
+  r.mesh.position.copy(pos).addScaledVector(rightVec, r.lat);
+  r.mesh.lookAt(look.clone().addScaledVector(rightVec, r.lat));
+}
+
+function setupGridPreview(stageIdx) {
+  G.stageIdx = stageIdx;
+  const stage = STAGES[stageIdx];
+  if (!G.renderer) initThree();
+
+  G.racers.forEach(r => G.scene.remove(r.mesh));
+  G.missiles.forEach(m => G.scene.remove(m.mesh));
+  G.racers = [];
+  G.missiles = [];
+  G.finishOrder = [];
+
+  buildTrack(stage);
+
+  const humanLapSpd = stage.laps === 2 ? 0.0315 : 0.0375;
+  const aiLapSpd = humanLapSpd;
+  const is2P = G.mode === '2p';
+
+  G.racers.push(createRacer('p1', 'P1 Blue (You)', true, 0x0284c7, 0x00f0ff, 0.994, -3.8, humanLapSpd));
+  if (is2P) {
+    G.racers.push(createRacer('p2', 'P2 Pink (Player 2)', true, 0xdb2777, 0xff2e93, 0.994, 3.8, humanLapSpd));
+  } else {
+    G.racers.push(createRacer('ai1', 'AI // 隼-FALCON', false, 0xdc2626, 0xfb923c, 0.994, 3.8, aiLapSpd));
+  }
+  G.racers.push(createRacer('ai2', 'AI // 雷-THUNDER', false, 0x7c3aed, 0xc084fc, 0.985, -3.8, aiLapSpd));
+  G.racers.push(createRacer('ai3', 'AI // 嵐-TEMPEST', false, 0x059669, 0x34d399, 0.985, 3.8, aiLapSpd));
+
+  G.racers.forEach((r, idx) => {
+    r.totalProgress = r.u - 1;
+    r.aiSkill = idx === 1 ? 1.02 : (idx === 2 ? 0.98 : 0.95);
+    r.hazardCooldown = 0;
+    positionRacerMesh(r);
+  });
+
+  // Snap cam1 directly to a dramatic starting-line overview behind the grid
+  const p1 = G.racers[0];
+  const back = new THREE.Vector3(0, 6.2, -15.5).applyQuaternion(p1.mesh.quaternion);
+  G.cam1.position.copy(p1.mesh.position).add(back);
+  G.cam1.lookAt(G.trackCurve.getPointAt(0.015));
+}
+
+function startRace(stageIdx) {
+  G.previewMode = false;
+  setupGridPreview(stageIdx);
+  const stage = STAGES[stageIdx];
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('hud-layer').style.display = 'block';
+  document.getElementById('restart-btn').style.display = 'inline-block';
+  document.getElementById('hud-stage-name').textContent = `STAGE ${stage.id}: ${stage.name} (${stage.zh})`;
+  document.getElementById('hud-cefr-tag').textContent = G.level === 'a1a2' ? 'CEFR A1–A2' : 'CEFR B1–B2';
+
+  const is2P = G.mode === '2p';
+  document.getElementById('split-divider').style.display = is2P ? 'block' : 'none';
+  document.getElementById('hud-p2').style.display = is2P ? 'flex' : 'none';
+
+  G.globalQuizCooldown = 0;
+  G.raceElapsed = 0;
+  G.running = true;
+  G.paused = true;
+  runCountdown();
+}
+
+function runCountdown() {
+  const el = document.getElementById('countdown-overlay');
+  el.style.display = 'flex';
+  let c = 3;
+  el.textContent = c;
+  audio.playSFX('beep');
+  const iv = setInterval(() => {
+    c--;
+    if (c > 0) {
+      el.textContent = c;
+      audio.playSFX('beep');
+    } else if (c === 0) {
+      el.textContent = 'GO!';
+      audio.playSFX('go');
+      G.paused = false;
+    } else {
+      el.style.display = 'none';
+      clearInterval(iv);
+    }
+  }, 750);
+}
+
+function returnToMenu() {
+  G.running = false;
+  G.paused = false;
+  G.previewMode = true;
+  document.getElementById('hud-layer').style.display = 'none';
+  document.getElementById('quiz-modal').style.display = 'none';
+  document.getElementById('finish-modal').style.display = 'none';
+  document.getElementById('countdown-overlay').style.display = 'none';
+  document.getElementById('restart-btn').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'flex';
+  setupGridPreview(G.stageIdx);
+}
+
+function pushToast(msg) {
+  const feed = document.getElementById('toast-feed');
+  const div = document.createElement('div');
+  div.className = 'toast-msg';
+  div.textContent = msg;
+  feed.appendChild(div);
+  setTimeout(() => div.remove(), 2600);
+}
+
+// ==================== INPUT HANDLING ====================
+window.addEventListener('keydown', e => {
+  G.keys[e.code] = true;
+  if (G.activeQuiz) {
+    if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
+      const idx = parseInt(e.code.replace('Digit', ''), 10) - 1;
+      const btns = document.querySelectorAll('#quiz-options .q-opt-btn');
+      if (btns[idx]) btns[idx].click();
+    }
+    return;
+  }
+  if (!G.running || G.paused) return;
+  if (e.code === 'KeyF' || (G.mode === '1p' && e.code === 'Space')) useItem(G.racers[0]);
+  if (G.mode === '2p' && (e.code === 'Enter' || e.code === 'Slash')) useItem(G.racers[1]);
+});
+window.addEventListener('keyup', e => { G.keys[e.code] = false; });
+
+function useItem(racer) {
+  if (!racer || !racer.heldItem) return;
+  const item = racer.heldItem;
+  racer.heldItem = null;
+  if (item === 'nitro') {
+    racer.boostTimer = 4.6;
+    audio.playSFX('boost');
+    pushToast(`${racer.id.toUpperCase()} 發動 🔥 Super Nitro！`);
+  } else if (item === 'shield') {
+    racer.shieldTimer = 6.0;
+    audio.playSFX('beep');
+    pushToast(`${racer.id.toUpperCase()} 開啟 🛡️ Energy Shield！`);
+  } else if (item === 'emp') {
+    audio.playSFX('missile');
+    pushToast(`${racer.id.toUpperCase()} 釋放 ⚡ Shockwave EMP！`);
+    G.racers.forEach(other => {
+      if (other !== racer && other.shieldTimer <= 0) {
+        other.stunTimer = 1.6;
+        other.speed *= 0.4;
+      }
+    });
+  } else if (item === 'missile') {
+    audio.playSFX('missile');
+    // Find nearest ahead rival
+    const target = G.racers.filter(o => o !== racer && !o.finished).sort((a, b) => b.totalProgress - a.totalProgress)[0];
+    const mMesh = new THREE.Mesh(
+      new THREE.ConeGeometry(0.45, 1.8, 10).rotateX(Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0xff2e93 })
+    );
+    mMesh.position.copy(racer.mesh.position).add(new THREE.Vector3(0, 1.0, 0));
+    G.scene.add(mMesh);
+    G.missiles.push({ owner: racer, target, u: racer.u, lat: racer.lat, mesh: mMesh, life: 4.5 });
+    pushToast(`${racer.id.toUpperCase()} 發射 🚀 Homing Missile！`);
+  }
+}
+
+// ==================== SURPRISE JAPANESE QUIZ MODAL ====================
+function triggerQuiz(racer, rewardKind) {
+  if (G.activeQuiz || racer.finished) return;
+  G.paused = true;
+
+  const pool = QUESTIONS[G.level];
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  const modes = ['read', 'listen', 'speak'];
+  const qType = modes[Math.floor(Math.random() * modes.length)];
+
+  G.activeQuiz = { racer, rewardKind, q, qType };
+  G.quizLock = false;
+
+  const card = document.getElementById('quiz-card');
+  card.classList.toggle('p2-turn', racer.id === 'p2');
+  document.getElementById('quiz-player-pill').textContent = racer.id === 'p1' ? 'P1 CHALLENGE' : 'P2 CHALLENGE';
+
+  const typeLabels = { read: '📖 Reading Challenge', listen: '🎧 Listening Challenge', speak: '🎙️ Speaking Challenge' };
+  document.getElementById('quiz-type-pill').textContent = typeLabels[qType];
+  document.getElementById('quiz-reward-note').textContent =
+    rewardKind === 'portal'
+      ? '🌀 Boost Portal! Answer correctly for a 4.5s Turbo Surge!'
+      : '📦 Item Box! Answer correctly for a random Power-Up!';
+
+  const jpEl = document.getElementById('quiz-jp-main');
+  const zhEl = document.getElementById('quiz-zh-sub');
+  const hintEl = document.getElementById('quiz-hint-text');
+  hintEl.style.display = 'none';
+  hintEl.textContent = `Pinyin: ${q.pinyin}`;
+
+  const optsEl = document.getElementById('quiz-options');
+  const speakBox = document.getElementById('speak-box');
+  optsEl.innerHTML = '';
+
+  if (qType === 'listen') {
+    jpEl.textContent = '🎧 Listen to the Mandarin audio and pick the right English meaning!';
+    zhEl.textContent = '(Click "Play Mandarin Audio" above to replay)';
+    optsEl.style.display = 'grid';
+    speakBox.style.display = 'none';
+    renderChoiceButtons(q);
+    speakZH(q.zh);
+  } else if (qType === 'read') {
+    jpEl.textContent = q.zh;
+    zhEl.textContent = 'Choose the correct English meaning:';
+    optsEl.style.display = 'grid';
+    speakBox.style.display = 'none';
+    renderChoiceButtons(q);
+  } else {
+    jpEl.textContent = q.zh;
+    zhEl.textContent = `Meaning: ${q.en} (Speak the Mandarin aloud)`;
+    optsEl.style.display = 'none';
+    speakBox.style.display = 'flex';
+    document.getElementById('speak-transcript').textContent = 'Read the Mandarin sentence aloud';
+  }
+
+  document.getElementById('quiz-modal').style.display = 'flex';
+}
+
+function renderChoiceButtons(q) {
+  const optsEl = document.getElementById('quiz-options');
+  const shuffled = [...q.opts].sort(() => Math.random() - 0.5);
+  shuffled.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'q-opt-btn';
+    btn.innerHTML = `<span class="q-opt-key">${i + 1}</span><span>${opt}</span>`;
+    btn.addEventListener('click', () => resolveQuiz(opt === q.answer, btn));
+    optsEl.appendChild(btn);
+  });
+}
+
+document.getElementById('quiz-audio-btn').addEventListener('click', () => {
+  if (G.activeQuiz) speakZH(G.activeQuiz.q.zh);
+});
+document.getElementById('quiz-hint-btn').addEventListener('click', () => {
+  const h = document.getElementById('quiz-hint-text');
+  h.style.display = h.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('speak-fallback-btn').addEventListener('click', () => {
+  if (!G.activeQuiz) return;
+  document.getElementById('speak-box').style.display = 'none';
+  document.getElementById('quiz-options').style.display = 'grid';
+  document.getElementById('quiz-zh-sub').textContent = 'Switched to Multiple Choice:';
+  renderChoiceButtons(G.activeQuiz.q);
+});
+
+document.getElementById('mic-record-btn').addEventListener('click', () => {
+  if (!G.activeQuiz) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('speak-transcript').textContent = 'Speech recognition unavailable — use the Multiple Choice button below!';
+    return;
+  }
+  const btn = document.getElementById('mic-record-btn');
+  const rec = new SR();
+  rec.lang = 'zh-TW';
+  rec.interimResults = false;
+  btn.classList.add('listening');
+  btn.textContent = '🎙️ Listening... Speak Mandarin';
+  audio.duck(true);
+
+  rec.onresult = (ev) => {
+    const heard = ev.results[0][0].transcript;
+    document.getElementById('speak-transcript').textContent = `Heard: "${heard}"`;
+    const clean = s => s.replace(/[，。！？、\s,.!?]/g, '');
+    const targetChars = [...clean(G.activeQuiz.q.zh)];
+    const heardStr = clean(heard);
+    const matches = targetChars.filter(ch => heardStr.includes(ch)).length;
+    const ok = heardStr.length >= 2 && (matches >= 2 && (matches / Math.max(1, targetChars.length)) >= 0.35);
+    setTimeout(() => resolveQuiz(ok, null), 650);
+  };
+  rec.onerror = () => {
+    document.getElementById('speak-transcript').textContent = 'No speech detected — try again or switch to Multiple Choice.';
+  };
+  rec.onend = () => {
+    btn.classList.remove('listening');
+    btn.textContent = '🎙️ Press & Speak Mandarin';
+    audio.duck(false);
+  };
+  rec.start();
+});
+
+function resolveQuiz(isCorrect, clickedBtn) {
+  if (!G.activeQuiz || G.quizLock) return;
+  G.quizLock = true;
+  const { racer, rewardKind } = G.activeQuiz;
+  if (clickedBtn) clickedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+
+  setTimeout(() => {
+    document.getElementById('quiz-modal').style.display = 'none';
+    G.activeQuiz = null;
+    G.paused = false;
+    racer.quizCount++;
+    racer.quizCooldown = 8.0;
+    G.globalQuizCooldown = 6.5;
+
+    if (isCorrect) {
+      if (rewardKind === 'portal') {
+        racer.boostTimer = 4.5;
+        audio.playSFX('boost');
+        pushToast(`✅ ${racer.id.toUpperCase()} Correct! Turbo Surge engaged!`);
+      } else {
+        const p = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+        racer.heldItem = p.id;
+        audio.playSFX('boost');
+        pushToast(`✅ ${racer.id.toUpperCase()} got ${p.label}!`);
+      }
+    } else {
+      racer.stunTimer = 0.8;
+      racer.speed *= 0.6;
+      audio.playSFX('hit');
+      pushToast(`❌ ${racer.id.toUpperCase()} Missed! Brief speed drop!`);
+    }
+  }, 420);
+}
+
+// ==================== MAIN GAME LOOP ====================
+function gameLoop(now) {
+  const dt = Math.min((now - G.lastTime) / 1000, 0.05);
+  G.lastTime = now;
+
+  if (G.previewMode && G.racers.length > 0) {
+    // Gentle cinematic sway behind the starting line so player sees the grid & arch clearly
+    const t = now * 0.0005;
+    const p1 = G.racers[0];
+    const sway = new THREE.Vector3(Math.sin(t) * 3.2, 6.0 + Math.cos(t * 1.3) * 0.4, -15.0).applyQuaternion(p1.mesh.quaternion);
+    const targetPos = p1.mesh.position.clone().add(sway);
+    G.cam1.position.lerp(targetPos, 0.06);
+    const w = window.innerWidth, h = window.innerHeight;
+    G.cam1.aspect = w / h;
+    G.cam1.fov = 58;
+    G.cam1.setViewOffset(w, h, 0, Math.round(h * 0.22), w, h);
+    G.cam1.updateProjectionMatrix();
+    G.cam1.lookAt(G.trackCurve.getPointAt(0.018));
+    G.renderer.setScissorTest(false);
+    G.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+    G.renderer.render(G.scene, G.cam1);
+  } else if (G.running) {
+    if (!G.paused) {
+      updateRace(dt);
+    }
+    renderScene();
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+function updateRace(dt) {
+  const stage = STAGES[G.stageIdx];
+  G.raceElapsed += dt;
+  if (G.globalQuizCooldown > 0) G.globalQuizCooldown -= dt;
+
+  // Rotate item boxes & tick cooldowns
+  G.boxes.forEach(b => {
+    if (b.respawn > 0) {
+      b.respawn -= dt;
+      b.mesh.visible = b.respawn <= 0;
+    } else {
+      b.mesh.rotation.y += dt * 2.2;
+      b.mesh.rotation.x += dt * 1.1;
+    }
+  });
+  G.portals.forEach(p => { if (p.cooldown > 0) p.cooldown -= dt; });
+
+  // Update racers
+  G.racers.forEach(r => {
+    if (r.boostTimer > 0) r.boostTimer -= dt;
+    if (r.stunTimer > 0) r.stunTimer -= dt;
+    if (r.shieldTimer > 0) r.shieldTimer -= dt;
+    if (r.quizCooldown > 0) r.quizCooldown -= dt;
+    r.mesh.userData.shield.visible = r.shieldTimer > 0;
+
+    if (r.hazardCooldown > 0) r.hazardCooldown -= dt;
+    const curv = getTrackCurvature(r.u);
+
+    if (r.finished) {
+      r.speed *= 0.96;
+    } else if (r.isHuman) {
+      const isP1 = r.id === 'p1';
+      const up = isP1 ? (G.keys['KeyW'] || (G.mode === '1p' && G.keys['ArrowUp'])) : G.keys['ArrowUp'];
+      const down = isP1 ? (G.keys['KeyS'] || (G.mode === '1p' && G.keys['ArrowDown'])) : G.keys['ArrowDown'];
+      const left = isP1 ? (G.keys['KeyA'] || (G.mode === '1p' && G.keys['ArrowLeft'])) : G.keys['ArrowLeft'];
+      const right = isP1 ? (G.keys['KeyD'] || (G.mode === '1p' && G.keys['ArrowRight'])) : G.keys['ArrowRight'];
+
+      const speedRatio = Math.max(0, Math.min(1.3, r.speed / r.maxSpeed));
+      const topSpd = r.maxSpeed * (r.boostTimer > 0 ? 1.58 : 1.0) * (r.stunTimer > 0 ? 0.55 : 1.0);
+      if (up) r.speed += dt * (r.maxSpeed * 1.45);
+      else if (down) r.speed -= dt * (r.maxSpeed * 1.5);
+      else r.speed *= 0.988;
+      r.speed = Math.max(-r.maxSpeed * 0.25, Math.min(topSpd, r.speed));
+
+      // Direct, responsive steering + outward cornering drift (capped at 50% of player steering authority)
+      const steerDir = (right ? 1 : 0) - (left ? 1 : 0);
+      const outwardDrift = THREE.MathUtils.clamp(curv * 42 * (speedRatio * speedRatio), -8.5, 8.5);
+      const targetLatVel = steerDir * 17.0 + outwardDrift;
+      r.steerVel = THREE.MathUtils.lerp(r.steerVel, targetLatVel, dt * 11);
+      r.lat += r.steerVel * dt;
+      r.heading = THREE.MathUtils.lerp(r.heading, steerDir * 0.26, dt * 10);
+
+      // Guardrail wall-scrape: cleanly stops outward slide & caps speed to 80% while rubbing wall
+      if (Math.abs(r.lat) > 8.9) {
+        r.lat = Math.sign(r.lat) * 8.9;
+        if (Math.sign(r.steerVel) === Math.sign(r.lat)) r.steerVel = 0;
+        r.speed = Math.min(r.speed, r.maxSpeed * 0.80);
+      }
+    } else {
+      // Competitive AI with dynamic rubber-banding, barrier avoidance & portal mini-boosts
+      const leadHuman = G.racers.filter(x => x.isHuman).sort((a, b) => b.totalProgress - a.totalProgress)[0];
+      const gap = leadHuman ? (leadHuman.totalProgress - r.totalProgress) : 0;
+      const rubberBand = THREE.MathUtils.clamp(1.0 + gap * 0.42, 0.93, 1.12);
+      const aiBoost = r.boostTimer > 0 ? 1.28 : 1.0;
+      const targetSpd = r.maxSpeed * stage.aiSpeed * (r.aiSkill || 1.0) * rubberBand * aiBoost * (r.stunTimer > 0 ? 0.45 : 1.0);
+      r.speed = THREE.MathUtils.lerp(r.speed, targetSpd, dt * 3.0);
+
+      // AI steers to avoid upcoming barriers
+      let desiredLat = Math.sin(performance.now() * 0.0009 + r.u * 10 + (r.aiSkill || 1) * 5) * 4.5;
+      for (const b of G.barriers) {
+        const du = (b.u - r.u + 1) % 1;
+        if (du > 0 && du < 0.045 && Math.abs(desiredLat - b.lateral) < 3.6) {
+          desiredLat = b.lateral > 0 ? -5.2 : 5.2;
+        }
+      }
+      r.lat = THREE.MathUtils.lerp(r.lat, desiredLat, dt * 4.2);
+
+      // AI gets small portal boost too for exciting pack racing
+      for (const p of G.portals) {
+        if (Math.abs(r.u - p.u) < 0.005 && r.boostTimer <= 0) r.boostTimer = 1.6;
+      }
+    }
+
+    // Hazards & passive apex speed pads for human racers
+    if (r.isHuman && !r.finished) {
+      // Chicane Neon Barriers
+      if (r.hazardCooldown <= 0) {
+        for (const b of G.barriers) {
+          if (Math.abs(r.u - b.u) < 0.006 && Math.abs(r.lat - b.lateral) < b.width) {
+            r.hazardCooldown = 1.4;
+            if (r.shieldTimer > 0) {
+              pushToast(`🛡️ ${racerTag(r)} Shield smashed the barricade!`);
+            } else {
+              r.speed *= 0.42;
+              r.stunTimer = 0.9;
+              audio.playSFX('hit');
+              pushToast(`💥 ${racerTag(r)} Hit a barricade! Speed dropped!`);
+            }
+            break;
+          }
+        }
+      }
+      // Glitch/Oil Slicks
+      if (r.hazardCooldown <= 0) {
+        for (const s of G.slicks) {
+          if (Math.abs(r.u - s.u) < 0.006 && Math.abs(r.lat - s.lateral) < 2.6) {
+            r.hazardCooldown = 1.5;
+            if (r.shieldTimer <= 0) {
+              r.steerVel += (Math.random() > 0.5 ? 1 : -1) * 11.0;
+              r.speed *= 0.82;
+              audio.playSFX('hit');
+              pushToast(`🌀 ${racerTag(r)} Oil slick! Hold the wheel steady!`);
+            }
+            break;
+          }
+        }
+      }
+      // Passive Apex Speed Pads (no quiz, rewards racing line)
+      for (const pad of G.speedPads) {
+        if (Math.abs(r.u - pad.u) < 0.007 && Math.abs(r.lat - pad.lateral) < 2.4 && r.boostTimer < 1.2) {
+          r.boostTimer = 1.5;
+          audio.playSFX('boost');
+        }
+      }
+    }
+
+    const prevU = r.u;
+    r.u = (r.u + r.speed * dt + 1) % 1;
+    if (prevU > 0.85 && r.u < 0.15) {
+      r.lap++;
+      if (r.lap > stage.laps && !r.finished) {
+        r.finished = true;
+        r.finishTime = performance.now();
+        G.finishOrder.push(r);
+        if (G.racers.filter(x => x.isHuman).every(x => x.finished)) {
+          showFinishModal();
+        }
+      } else if (r.isHuman) {
+        audio.playSFX('beep');
+        pushToast(`🏁 ${r.id.toUpperCase()} Lap ${r.lap}/${stage.laps}!`);
+      }
+    }
+    r.totalProgress = (r.lap - 1) + r.u;
+
+    // Position 3D car on track
+    const pos = G.trackCurve.getPointAt(r.u);
+    const look = G.trackCurve.getPointAt((r.u + 0.008) % 1);
+    const tan = G.trackCurve.getTangentAt(r.u);
+    const rightVec = new THREE.Vector3().crossVectors(tan, new THREE.Vector3(0, 1, 0)).normalize();
+
+    r.mesh.position.copy(pos).addScaledVector(rightVec, r.lat);
+    r.mesh.lookAt(look.clone().addScaledVector(rightVec, r.lat));
+    if (r.isHuman) {
+      r.mesh.rotateY(-r.heading * 0.65);
+      r.mesh.rotateZ(r.heading * 0.16);
+    }
+    r.mesh.userData.wheels.forEach(w => { w.rotation.x += (r.speed / r.maxSpeed) * 18 * dt; });
+
+    // Human triggers Portals & Boxes (max 5 quizzes per race, >= 6.5s racing gap)
+    if (r.isHuman && !r.finished) {
+      G.portals.forEach(p => {
+        if (p.cooldown <= 0 && Math.abs(r.u - p.u) < 0.008) {
+          p.cooldown = 10.0;
+          if (r.quizCount < 5 && r.quizCooldown <= 0 && G.globalQuizCooldown <= 0) {
+            triggerQuiz(r, 'portal');
+          } else {
+            r.boostTimer = 2.5;
+            audio.playSFX('boost');
+            pushToast(`🌀 ${racerTag(r)} Portal Boost!`);
+          }
+        }
+      });
+      G.boxes.forEach(b => {
+        if (b.respawn <= 0 && Math.abs(r.u - b.u) < 0.008 && Math.abs(r.lat - b.lateral) < 3.0) {
+          b.respawn = 12.0;
+          b.mesh.visible = false;
+          if (r.quizCount < 5 && r.quizCooldown <= 0 && G.globalQuizCooldown <= 0) {
+            triggerQuiz(r, 'box');
+          } else {
+            const p = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+            r.heldItem = p.id;
+            audio.playSFX('boost');
+            pushToast(`📦 ${racerTag(r)} picked up ${p.label}!`);
+          }
+        }
+      });
+    }
+  });
+
+  // Update homing missiles
+  for (let i = G.missiles.length - 1; i >= 0; i--) {
+    const m = G.missiles[i];
+    m.life -= dt;
+    m.u = (m.u + 0.068 * dt) % 1;
+    if (m.target) m.lat = THREE.MathUtils.lerp(m.lat, m.target.lat, dt * 5);
+    const mp = G.trackCurve.getPointAt(m.u);
+    const mt = G.trackCurve.getTangentAt(m.u);
+    const mr = new THREE.Vector3().crossVectors(mt, new THREE.Vector3(0, 1, 0)).normalize();
+    m.mesh.position.copy(mp).addScaledVector(mr, m.lat).add(new THREE.Vector3(0, 1.0, 0));
+    m.mesh.lookAt(G.trackCurve.getPointAt((m.u + 0.01) % 1).addScaledVector(mr, m.lat));
+
+    let hit = false;
+    if (m.target && Math.abs(m.u - m.target.u) < 0.012 && Math.abs(m.lat - m.target.lat) < 2.5) {
+      if (m.target.shieldTimer <= 0) {
+        m.target.stunTimer = 2.0;
+        m.target.speed *= 0.25;
+        pushToast(`💥 ${m.target.label} was hit by a missile!`);
+      } else {
+        pushToast(`🛡️ ${m.target.label} blocked the missile with a shield!`);
+      }
+      audio.playSFX('hit');
+      hit = true;
+    }
+    if (hit || m.life <= 0) {
+      G.scene.remove(m.mesh);
+      G.missiles.splice(i, 1);
+    }
+  }
+
+  // Soft car-to-car bump separation (active after clean launch)
+  if (G.raceElapsed > 1.0) {
+    for (let i = 0; i < G.racers.length; i++) {
+      for (let j = i + 1; j < G.racers.length; j++) {
+        const a = G.racers[i], b = G.racers[j];
+        const du = Math.abs(a.u - b.u);
+        const dLat = a.lat - b.lat;
+        if (du < 0.0045 && Math.abs(dLat) < 2.1) {
+          const push = (2.1 - Math.abs(dLat)) * 0.25 * (dLat >= 0 ? 1 : -1);
+          a.lat = THREE.MathUtils.clamp(a.lat + push, -8.8, 8.8);
+          b.lat = THREE.MathUtils.clamp(b.lat - push, -8.8, 8.8);
+        }
+      }
+    }
+  }
+
+  updateHUD();
+  drawMinimap();
+}
+
+function drawMinimap() {
+  const cv = document.getElementById('minimap-canvas');
+  if (!cv || !G.minimapPts.length) return;
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  const { minX, maxX, minZ, maxZ } = G.minimapBounds;
+  const span = Math.max(maxX - minX, maxZ - minZ) || 1;
+  const pad = 12;
+  const scale = (cv.width - pad * 2) / span;
+  const toX = x => pad + (x - minX) * scale;
+  const toY = z => pad + (z - minZ) * scale;
+
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  G.minimapPts.forEach((pt, idx) => {
+    if (idx === 0) ctx.moveTo(toX(pt.x), toY(pt.z));
+    else ctx.lineTo(toX(pt.x), toY(pt.z));
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  // Draw racer dots
+  G.racers.forEach(r => {
+    const p = G.trackCurve.getPointAt(r.u);
+    ctx.fillStyle = r.id === 'p1' ? '#00f0ff' : (r.id === 'p2' ? '#ff2e93' : '#facc15');
+    ctx.beginPath();
+    ctx.arc(toX(p.x), toY(p.z), r.isHuman ? 4.5 : 3.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function racerTag(r) { return r.id.toUpperCase(); }
+
+function formatRaceTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  const d = Math.floor((sec % 1) * 10);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${d}`;
+}
+
+function updateHUD() {
+  const sorted = [...G.racers].sort((a, b) => b.totalProgress - a.totalProgress);
+  const stage = STAGES[G.stageIdx];
+  document.getElementById('hud-timer').textContent = formatRaceTime(G.raceElapsed);
+  const anyBoost = G.racers.some(r => r.isHuman && r.boostTimer > 0);
+  document.getElementById('speed-lines').classList.toggle('active', anyBoost);
+
+  const p1 = G.racers[0];
+  if (p1) {
+    const kmh = Math.round((Math.abs(p1.speed) / p1.maxSpeed) * 265);
+    document.getElementById('p1-speed').textContent = kmh;
+    document.getElementById('p1-gear').textContent = kmh < 5 ? 'N' : 'G' + Math.min(6, Math.ceil(kmh / 50));
+    document.getElementById('p1-rpm').style.width = Math.min(100, (kmh / 380) * 100) + '%';
+    const rank = sorted.indexOf(p1) + 1;
+    document.getElementById('p1-lap-pos').textContent = `LAP ${Math.min(p1.lap, stage.laps)}/${stage.laps} · #${rank}`;
+    const itemObj = POWERUPS.find(x => x.id === p1.heldItem);
+    document.getElementById('p1-item').textContent = itemObj ? itemObj.label : 'None';
+  }
+
+  if (G.mode === '2p' && G.racers[1]) {
+    const p2 = G.racers[1];
+    const kmh = Math.round((Math.abs(p2.speed) / p2.maxSpeed) * 265);
+    document.getElementById('p2-speed').textContent = kmh;
+    document.getElementById('p2-gear').textContent = kmh < 5 ? 'N' : 'G' + Math.min(6, Math.ceil(kmh / 50));
+    document.getElementById('p2-rpm').style.width = Math.min(100, (kmh / 380) * 100) + '%';
+    const rank = sorted.indexOf(p2) + 1;
+    document.getElementById('p2-lap-pos').textContent = `LAP ${Math.min(p2.lap, stage.laps)}/${stage.laps} · #${rank}`;
+    const itemObj = POWERUPS.find(x => x.id === p2.heldItem);
+    document.getElementById('p2-item').textContent = itemObj ? itemObj.label : 'None';
+  }
+}
+
+function updateChaseCam(cam, racer, aspect) {
+  cam.clearViewOffset();
+  cam.aspect = aspect;
+  const targetFov = racer.boostTimer > 0 ? 82 : 64;
+  cam.fov = THREE.MathUtils.lerp(cam.fov, targetFov, 0.12);
+  cam.updateProjectionMatrix();
+
+  const back = new THREE.Vector3(0, 4.2, -9.8).applyQuaternion(racer.mesh.quaternion);
+  const desired = racer.mesh.position.clone().add(back);
+  cam.position.lerp(desired, 0.22);
+  const lookAtTarget = racer.mesh.position.clone().add(new THREE.Vector3(0, 1.5, 8).applyQuaternion(racer.mesh.quaternion));
+  cam.lookAt(lookAtTarget);
+}
+
+function renderScene() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  G.renderer.setScissorTest(true);
+
+  if (G.mode === '2p' && G.racers[1]) {
+    const half = Math.floor(w / 2);
+    updateChaseCam(G.cam1, G.racers[0], half / h);
+    G.renderer.setViewport(0, 0, half, h);
+    G.renderer.setScissor(0, 0, half, h);
+    G.renderer.render(G.scene, G.cam1);
+
+    updateChaseCam(G.cam2, G.racers[1], (w - half) / h);
+    G.renderer.setViewport(half, 0, w - half, h);
+    G.renderer.setScissor(half, 0, w - half, h);
+    G.renderer.render(G.scene, G.cam2);
+  } else if (G.racers[0]) {
+    updateChaseCam(G.cam1, G.racers[0], w / h);
+    G.renderer.setViewport(0, 0, w, h);
+    G.renderer.setScissor(0, 0, w, h);
+    G.renderer.render(G.scene, G.cam1);
+  }
+}
+
+function showFinishModal() {
+  G.running = false;
+  const sorted = [...G.racers].sort((a, b) => b.totalProgress - a.totalProgress);
+  const list = document.getElementById('standings-list');
+  list.innerHTML = '';
+  sorted.forEach((r, idx) => {
+    const row = document.createElement('div');
+    row.className = 'standing-row';
+    row.innerHTML = `<span>#${idx + 1} ${r.label}</span><span style="color:${idx === 0 ? 'var(--gold)' : 'var(--muted)'}">${idx === 0 ? '🏆 1st Place' : 'Finished'}</span>`;
+    list.appendChild(row);
+  });
+  const stage = STAGES[G.stageIdx];
+  document.getElementById('finish-subtitle').textContent = `STAGE ${stage.id}: ${stage.name} (${stage.zh}) · Finished時間 ${formatRaceTime(G.raceElapsed)} · 難度 ${G.level.toUpperCase()}`;
+  document.getElementById('finish-modal').style.display = 'flex';
+}
+
+// Initialize live 3D starting-line preview immediately on page load
+setupGridPreview(0);
+G.lastTime = performance.now();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
