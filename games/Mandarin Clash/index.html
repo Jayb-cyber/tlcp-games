@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script data-goatcounter="https://tlcp-games.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DOJO CLASH: Arena Duel — 2D Mandarin Fighting Game | TLCP@Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0e1a;
+      --panel: rgba(15, 20, 38, 0.92);
+      --border: rgba(250, 204, 21, 0.42);
+      --gold: #facc15;
+      --red: #f43f5e;
+      --cyan: #38bdf8;
+      --green: #22c55e;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text);
+      font-family: 'Noto Sans TC', system-ui, sans-serif;
+    }
+    #arena-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1;
+    }
+
+    #back-hub-btn {
+      position: fixed; top: 12px; left: 12px; z-index: 60;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 999px;
+      background: rgba(15, 20, 38, 0.88); border: 1px solid rgba(255,255,255,0.22);
+      color: #f8fafc; text-decoration: none; font-size: 13px; font-weight: 800;
+      backdrop-filter: blur(8px); transition: all 0.16s;
+    }
+    #back-hub-btn:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-1px); }
+
+    #top-controls {
+      position: fixed; top: 12px; right: 12px; z-index: 60; display: flex; gap: 8px;
+    }
+    .icon-btn {
+      padding: 7px 12px; border-radius: 999px; cursor: pointer;
+      background: rgba(15, 20, 38, 0.88); border: 1px solid rgba(255,255,255,0.22);
+      color: #fff; font-size: 12.5px; font-weight: 800; backdrop-filter: blur(8px);
+    }
+    .icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Start Screen */
+    #start-screen {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center; padding: 14px;
+      background: radial-gradient(circle at 50% 25%, rgba(244, 63, 94, 0.18), rgba(8, 11, 22, 0.94) 72%);
+      backdrop-filter: blur(6px); overflow-y: auto;
+    }
+    #start-screen.hidden { display: none !important; }
+    .menu-card {
+      width: min(1000px, 100%); max-height: 95vh; overflow-y: auto;
+      border-radius: 24px; padding: 20px 24px;
+      background: linear-gradient(160deg, rgba(16, 22, 42, 0.96), rgba(10, 14, 28, 0.98));
+      border: 2px solid rgba(250, 204, 21, 0.45);
+      box-shadow: 0 26px 70px rgba(0, 0, 0, 0.78);
+    }
+    .game-title {
+      font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+      font-size: clamp(22px, 3.4vw, 34px); font-weight: 900; letter-spacing: 1px;
+      background: linear-gradient(90deg, #facc15, #fb923c, #f43f5e);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+    .sec-title {
+      font-size: 11.5px; font-weight: 900; color: var(--gold); letter-spacing: 1px;
+      text-transform: uppercase; margin: 11px 0 7px;
+    }
+
+    .fighter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    @media (max-width: 780px) { .fighter-grid { grid-template-columns: repeat(2, 1fr); } }
+    .fighter-card {
+      background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 10px 11px; cursor: pointer; transition: all 0.16s;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .fighter-card:hover { transform: translateY(-2px); border-color: rgba(250, 204, 21, 0.6); }
+    .fighter-card.sel-p1 { border-color: var(--cyan); background: rgba(56, 189, 248, 0.14); box-shadow: 0 0 18px rgba(56, 189, 248, 0.25); }
+    .fighter-card.sel-p2 { border-color: var(--red); background: rgba(244, 63, 94, 0.14); box-shadow: 0 0 18px rgba(244, 63, 94, 0.25); }
+    .f-portrait-wrap {
+      width: 100%; height: 82px; border-radius: 11px;
+      background: radial-gradient(circle at 50% 60%, rgba(255,255,255,0.09), rgba(10,14,28,0.65));
+      display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 2px;
+    }
+    .f-head { display: flex; justify-content: space-between; align-items: center; }
+    .f-name { font-weight: 900; font-size: 14.5px; color: #fff; }
+    .f-style { font-size: 11px; color: var(--gold); font-weight: 700; }
+    .stat-row { font-size: 10.5px; color: #cbd5e1; }
+    .f-moves { font-size: 10.5px; color: var(--muted); line-height: 1.38; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 4px; margin-top: 2px; }
+
+    .map-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    @media (max-width: 780px) { .map-grid { grid-template-columns: repeat(2, 1fr); } }
+    .map-btn {
+      padding: 8px 9px; border-radius: 11px; cursor: pointer; text-align: left;
+      background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12);
+      color: #e2e8f0; transition: all 0.14s;
+    }
+    .map-btn b { display: block; font-size: 12px; color: #fff; }
+    .map-btn small { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .map-btn.active { border-color: var(--gold); background: rgba(250, 204, 21, 0.16); }
+
+    .opt-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .opt-group {
+      flex: 1; min-width: 220px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 9px 11px;
+    }
+    .pill-row { display: flex; gap: 8px; margin-top: 5px; }
+    .pill-sel {
+      flex: 1; padding: 7px 9px; border-radius: 9px; cursor: pointer;
+      background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255,255,255,0.16);
+      color: #cbd5e1; font-size: 12px; font-weight: 800; text-align: center;
+    }
+    .pill-sel.active { border-color: var(--cyan); background: rgba(56, 189, 248, 0.18); color: #fff; }
+
+    .controls-strip {
+      margin-top: 10px; padding: 9px 13px; border-radius: 11px;
+      background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08);
+      font-size: 11.5px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between;
+    }
+    .kbd {
+      display: inline-block; padding: 1px 6px; border-radius: 5px;
+      background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25);
+      font-family: 'Orbitron', sans-serif; font-size: 10.5px; color: #fff; margin: 0 2px;
+    }
+    .start-cta {
+      width: 100%; margin-top: 12px; padding: 13px 20px; border: none; border-radius: 13px; cursor: pointer;
+      background: linear-gradient(90deg, #facc15, #f97316, #f43f5e);
+      color: #0b0e1a; font-family: 'Orbitron', 'Noto Sans TC', sans-serif;
+      font-size: 16.5px; font-weight: 900; letter-spacing: 1.2px;
+      box-shadow: 0 10px 28px rgba(244, 63, 94, 0.35); transition: transform 0.14s;
+    }
+    .start-cta:hover { transform: translateY(-2px); filter: brightness(1.06); }
+
+    /* In-Game HUD */
+    #hud-layer { position: fixed; inset: 0; z-index: 15; pointer-events: none; display: none; }
+    #stage-pill {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      padding: 6px 16px; border-radius: 999px;
+      background: rgba(15, 20, 38, 0.86); border: 1px solid rgba(250, 204, 21, 0.45);
+      font-size: 12.5px; font-weight: 800; display: flex; gap: 10px; align-items: center;
+      backdrop-filter: blur(8px);
+    }
+    #fighter-huds {
+      position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 10px; flex-wrap: nowrap; width: min(940px, 96vw); justify-content: center;
+    }
+    .f-hud-card {
+      flex: 1; max-width: 228px; padding: 9px 11px; border-radius: 15px;
+      background: rgba(12, 17, 34, 0.88); border: 2px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(6px);
+    }
+    .f-hud-card.p1 { border-color: var(--cyan); }
+    .f-hud-card.p2 { border-color: var(--red); }
+    .f-hud-card.ko { opacity: 0.45; filter: grayscale(0.7); }
+    .fh-top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; }
+    .hp-bar { width: 100%; height: 9px; border-radius: 999px; background: rgba(255,255,255,0.12); overflow: hidden; margin: 5px 0; }
+    .hp-fill { height: 100%; border-radius: 999px; transition: width 0.12s linear; }
+    .charge-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: 800; }
+    .chg-badge { padding: 2px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); color: #64748b; }
+    .chg-badge.ready-sp { background: rgba(250, 204, 21, 0.25); color: #facc15; border: 1px solid #facc15; }
+    .chg-badge.ready-ult { background: rgba(244, 63, 94, 0.32); color: #fda4af; border: 1px solid #f43f5e; animation: pulseUlt 0.75s infinite; }
+    @keyframes pulseUlt { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+    #toast-box {
+      position: fixed; top: 56px; left: 50%; transform: translateX(-50%);
+      z-index: 25; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none;
+    }
+    .toast-item {
+      padding: 6px 14px; border-radius: 999px; background: rgba(15, 20, 38, 0.94);
+      border: 1.5px solid var(--gold); color: #fff; font-size: 13px; font-weight: 800;
+    }
+
+    /* English Box Quiz Modal */
+    #quiz-modal {
+      position: fixed; inset: 0; z-index: 55; display: none;
+      align-items: center; justify-content: center; padding: 16px;
+      background: rgba(5, 8, 18, 0.80); backdrop-filter: blur(8px);
+    }
+    .quiz-card {
+      width: min(560px, 100%); border-radius: 22px; padding: 22px 24px;
+      background: linear-gradient(160deg, #111827, #0b0f1e);
+      border: 2.5px solid var(--gold); box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+    }
+    .quiz-card.red-box { border-color: var(--red); }
+    .q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .q-pill { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 900; background: rgba(250, 204, 21, 0.2); color: var(--gold); }
+    .quiz-card.red-box .q-pill { background: rgba(244, 63, 94, 0.25); color: #fda4af; }
+    .q-prompt {
+      padding: 15px; border-radius: 14px; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12); margin-bottom: 12px;
+    }
+    .q-en { font-size: 20px; font-weight: 900; color: #fff; line-height: 1.4; }
+    .q-sub { font-size: 13px; color: var(--muted); margin-top: 5px; }
+    .q-hint { display: none; margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: rgba(56, 189, 248, 0.16); color: #7dd3fc; font-size: 12.5px; font-weight: 700; }
+    .q-tools { display: flex; gap: 8px; margin-bottom: 12px; }
+    .q-tool-btn {
+      padding: 6px 12px; border-radius: 9px; cursor: pointer;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; font-size: 12px; font-weight: 700;
+    }
+    .q-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    @media (max-width: 520px) { .q-opts { grid-template-columns: 1fr; } }
+    .q-opt {
+      padding: 12px 13px; border-radius: 12px; cursor: pointer; text-align: left;
+      background: rgba(255,255,255,0.05); border: 1.5px solid rgba(255,255,255,0.16);
+      color: #fff; font-size: 13.5px; font-weight: 800; display: flex; align-items: center; gap: 9px;
+      transition: all 0.13s;
+    }
+    .q-opt:hover { border-color: var(--cyan); background: rgba(56, 189, 248, 0.15); }
+    .q-opt.ok { background: rgba(34, 197, 94, 0.28); border-color: var(--green); }
+    .q-opt.bad { background: rgba(244, 63, 94, 0.28); border-color: var(--red); }
+    .q-key { width: 22px; height: 22px; border-radius: 6px; background: rgba(255,255,255,0.14); display: inline-flex; align-items: center; justify-content: center; font-family: 'Orbitron', sans-serif; font-size: 11px; flex-shrink: 0; }
+
+    /* Victory Modal */
+    #end-modal {
+      position: fixed; inset: 0; z-index: 58; display: none;
+      align-items: center; justify-content: center; padding: 18px;
+      background: rgba(5, 8, 18, 0.86); backdrop-filter: blur(8px);
+    }
+    .end-card {
+      width: min(520px, 100%); border-radius: 22px; padding: 26px; text-align: center;
+      background: linear-gradient(160deg, #111827, #0b0f1e); border: 2.5px solid var(--gold);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+    }
+    .end-stats { margin: 14px 0 18px; display: flex; flex-direction: column; gap: 7px; text-align: left; }
+    .end-row { display: flex; justify-content: space-between; padding: 9px 13px; border-radius: 10px; background: rgba(255,255,255,0.05); font-size: 13.5px; font-weight: 800; }
+    .btn-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .btn-main { padding: 11px 22px; border-radius: 12px; border: none; cursor: pointer; background: linear-gradient(90deg, #facc15, #f97316); color: #0b0e1a; font-weight: 900; font-size: 14px; }
+    .btn-alt { padding: 11px 18px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2); color: #fff; font-weight: 800; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <canvas id="arena-canvas"></canvas>
+  <a href="../../index.html" id="back-hub-btn"><span>←</span><span>TLCP@Games</span></a>
+  <div id="top-controls">
+    <button id="bgm-btn" class="icon-btn" type="button">🎵 BGM: ON</button>
+    <button id="menu-btn" class="icon-btn" type="button" style="display:none;">↺ Menu</button>
+  </div>
+
+  <!-- Start Screen -->
+  <div id="start-screen">
+    <div class="menu-card">
+      <h1 class="game-title">⚔️ DOJO CLASH: ARENA DUEL</h1>
+      <p class="subtitle">2D Platform Fighter × Mandarin Learning — Break Yellow Boxes for Specials & Red Boxes for Screen-Wide Ultimates (1 active charge slot per fighter)!</p>
+
+      <div class="sec-title">1. Choose Your Fighter (Click for P1; in 2P mode click again for P2)</div>
+      <div class="fighter-grid" id="fighter-grid"></div>
+
+      <div class="sec-title">2. Select Stage (5 Original Arenas, Including 2 Shapeshifting Stages!)</div>
+      <div class="map-grid" id="map-grid"></div>
+
+      <div class="opt-bar">
+        <div class="opt-group">
+          <div style="font-size:11.5px; font-weight:900; color:var(--gold);">3. Battle Mode</div>
+          <div class="pill-row">
+            <button class="pill-sel active" data-mode="1p" type="button">🤖 1P 4-Way Duel (vs 3 AI)</button>
+            <button class="pill-sel" data-mode="2p" type="button">⚡ 2P Local Versus (+2 AI)</button>
+          </div>
+        </div>
+        <div class="opt-group">
+          <div style="font-size:11.5px; font-weight:900; color:var(--gold);">4. Mandarin Difficulty (CEFR)</div>
+          <div class="pill-row">
+            <button class="pill-sel active" data-level="a1a2" type="button">🌱 CEFR A1–A2</button>
+            <button class="pill-sel" data-level="b1b2" type="button">🔥 CEFR B1–B2</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-strip" id="controls-strip">
+        <div id="p1-ctrl-hint"><strong style="color:var(--cyan);">1P 2-Handed:</strong><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> Move / Double-Tap Dash · <span class="kbd">J</span> Combo Attack · <span class="kbd">K</span> Special / Ult</div>
+        <div id="p2-ctrl-hint" style="opacity:0.65;"><strong style="color:var(--red);">In 2P Mode:</strong>P1 uses <span class="kbd">E</span>/<span class="kbd">R</span> · P2 uses <span class="kbd">Arrows</span> + <span class="kbd">Shift</span> Attack / <span class="kbd">/</span> Special/Ult</div>
+        <div style="color:var(--gold);">💨 Double-tap Left/Right = Afterimage Dash ｜ 📦 Hit Boxes 2× for Mandarin Quiz!</div>
+      </div>
+
+      <button id="start-btn" class="start-cta" type="button">FIGHT! // ENTER THE ARENA</button>
+    </div>
+  </div>
+
+  <!-- In-Game HUD -->
+  <div id="hud-layer">
+    <div id="stage-pill">
+      <span id="hud-map-name">Sunset Dojo</span>
+      <span style="color:var(--gold);" id="hud-level-tag">CEFR A1–A2</span>
+      <span style="color:var(--cyan);" id="hud-quiz-stat">Mandarin Quiz: 0/0</span>
+    </div>
+    <div id="toast-box"></div>
+    <div id="fighter-huds"></div>
+  </div>
+
+  <!-- English Box Quiz Modal -->
+  <div id="quiz-modal">
+    <div class="quiz-card" id="quiz-card">
+      <div class="q-head">
+        <span class="q-pill" id="q-box-pill">🟨 Yellow Box · Unlock Special</span>
+        <span style="font-size:12px; font-weight:800; color:var(--cyan);" id="q-player-lbl">P1 Answer</span>
+      </div>
+      <div class="q-prompt">
+        <div class="q-en" id="q-en-text"></div>
+        <div class="q-sub">Choose the best English translation (keys 1–4 for quick answer):</div>
+        <div class="q-hint" id="q-hint-text"></div>
+      </div>
+      <div class="q-tools">
+        <button id="q-audio-btn" class="q-tool-btn" type="button">🔊 Play Mandarin Audio</button>
+        <button id="q-hint-btn" class="q-tool-btn" type="button">💡 Pinyin Hint</button>
+      </div>
+      <div class="q-opts" id="q-opts"></div>
+    </div>
+  </div>
+
+  <!-- Match End Modal -->
+  <div id="end-modal">
+    <div class="end-card">
+      <div style="font-size:44px;">🏆</div>
+      <h2 id="end-title" style="font-family:'Orbitron','Noto Sans TC',sans-serif; font-size:26px; color:var(--gold); margin:6px 0;">VICTORY!</h2>
+      <p id="end-sub" style="color:var(--muted); font-size:13.5px;"></p>
+      <div class="end-stats" id="end-stats"></div>
+      <div class="btn-row">
+        <button id="rematch-btn" class="btn-main" type="button">⚔️ Rematch</button>
+        <button id="end-menu-btn" class="btn-alt" type="button">🏠 Change Fighter / Stage</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // =========================================================================
+    // 1. FIGHTER ROSTER (4 ORIGINAL MARTIAL ARTISTS — ZERO COPYRIGHT)
+    // =========================================================================
+    const ROSTER = {
+      human: {
+        id: 'human', name: 'Ren', species: 'Human', style: 'Kickboxing',
+        color: '#38bdf8', accent: '#facc15',
+        speed: 5.5, maxHp: 100, dmg: 10, comboLen: 3, range: 70, comboNames: ['JAB!', 'LOW KICK!', 'ROUNDHOUSE!'],
+        spName: '3 Energy Blasts', spDesc: 'Fires 3 straight-line plasma blasts',
+        ultName: 'CELESTIAL NOVA', ultDesc: 'Giant sky-born energy orb hits all foes',
+        statsText: 'SPD ★★★☆ · PWR ★★★☆ · HP 100'
+      },
+      cat: {
+        id: 'cat', name: 'Kage', species: 'Ninja Cat', style: 'Tiger Claw Kung-Fu',
+        color: '#a855f7', accent: '#f43f5e',
+        speed: 7.0, maxHp: 90, dmg: 7, comboLen: 4, range: 64, comboNames: ['CLAW!', 'CROSS SLASH!', 'SPIN SWEEP!', 'TIGER X-REND!'],
+        spName: 'Shadow Blink', spDesc: 'Teleports to nearest foe for a sure light hit',
+        ultName: 'CRIMSON CLAW STORM', ultDesc: '6 giant claw gashes rip across the whole screen',
+        statsText: 'SPD ★★★★★ · PWR ★★☆☆ · HP 90'
+      },
+      dog: {
+        id: 'dog', name: 'Buster', species: 'Boxer Dog', style: 'Boxing',
+        color: '#f97316', accent: '#fef08a',
+        speed: 5.0, maxHp: 110, dmg: 15, comboLen: 2, range: 70, comboNames: ['1: JAB!', '2: HEAVY CROSS!'],
+        spName: '2x Rush Combo', spDesc: 'If 1st punch lands, unleashes a 4-hit flurry',
+        ultName: 'INFERNO HAYMAKER', ultDesc: 'Winds up a punch launching a screen-wide fireball',
+        statsText: 'SPD ★★★☆ · PWR ★★★★★ · HP 110'
+      },
+      turtle: {
+        id: 'turtle', name: 'Master Bo', species: 'Monk Turtle', style: 'Shaolin Bajiquan',
+        color: '#22c55e', accent: '#eab308',
+        speed: 4.1, maxHp: 140, dmg: 11, comboLen: 3, range: 68, comboNames: ['ELBOW!', 'SHOULDER RAM!', 'BAJI PALM!'],
+        spName: 'Invincible Shell Spin', spDesc: '3s invincible spin; 1st hit bursts full combo',
+        ultName: 'EARTHSHAKER STOMP', ultDesc: 'Stomps ground sending seismic waves map-wide',
+        statsText: 'SPD ★★☆☆ · PWR ★★★☆ · HP 140'
+      }
+    };
+    const ROSTER_IDS = ['human', 'cat', 'dog', 'turtle'];
+    const ULT_DAMAGE = 45;
+
+    // =========================================================================
+    // 2. FIVE ORIGINAL MAPS (1 FLAT, 1 MULTI-LAYER, 1 COMPLEX, 2 SHAPESHIFTING)
+    // =========================================================================
+    const MAPS = [
+      {
+        id: 'flat_dojo', name: 'Sunset Dojo', tag: 'Totally Flat Arena', bg1: '#1e1b4b', bg2: '#7c2d12', accent: '#facc15',
+        shapeshift: false,
+        phases: [[ { x: 140, y: 540, w: 920, h: 34, solid: true } ]]
+      },
+      {
+        id: 'sky_pagoda', name: 'Sky Pagoda', tag: 'Multi-Layer Platforms', bg1: '#0c4a6e', bg2: '#312e81', accent: '#38bdf8',
+        shapeshift: false,
+        phases: [[
+          { x: 160, y: 555, w: 880, h: 32, solid: true },
+          { x: 230, y: 415, w: 230, h: 18, thin: true },
+          { x: 740, y: 415, w: 230, h: 18, thin: true },
+          { x: 465, y: 285, w: 270, h: 18, thin: true }
+        ]]
+      },
+      {
+        id: 'volcanic_forge', name: 'Volcanic Forge', tag: 'Moving Lifts & Splits', bg1: '#270b14', bg2: '#7f1d1d', accent: '#f97316',
+        shapeshift: false,
+        phases: [[
+          { x: 110, y: 545, w: 330, h: 32, solid: true },
+          { x: 760, y: 545, w: 330, h: 32, solid: true },
+          { x: 480, y: 455, w: 240, h: 20, thin: true, moveY: 95, speed: 1.4 },
+          { x: 180, y: 360, w: 190, h: 18, thin: true },
+          { x: 830, y: 360, w: 190, h: 18, thin: true },
+          { x: 490, y: 245, w: 220, h: 18, thin: true }
+        ]]
+      },
+      {
+        id: 'prism_sanctum', name: 'Prism Sanctum', tag: '✨ Shapeshifting #1', bg1: '#1e1038', bg2: '#0f172a', accent: '#c084fc',
+        shapeshift: true, shiftInterval: 8.5,
+        phases: [
+          [
+            { x: 170, y: 545, w: 860, h: 30, solid: true },
+            { x: 300, y: 390, w: 220, h: 18, thin: true },
+            { x: 680, y: 390, w: 220, h: 18, thin: true }
+          ],
+          [
+            { x: 110, y: 520, w: 290, h: 28, solid: true },
+            { x: 455, y: 420, w: 290, h: 24, thin: true },
+            { x: 800, y: 520, w: 290, h: 28, solid: true },
+            { x: 480, y: 260, w: 240, h: 18, thin: true }
+          ],
+          [
+            { x: 260, y: 560, w: 680, h: 30, solid: true },
+            { x: 120, y: 370, w: 210, h: 18, thin: true },
+            { x: 870, y: 370, w: 210, h: 18, thin: true },
+            { x: 460, y: 310, w: 280, h: 18, thin: true }
+          ]
+        ]
+      },
+      {
+        id: 'clockwork_spire', name: 'Clockwork Spire', tag: '🌀 Shapeshifting #2', bg1: '#052e2b', bg2: '#1e1b4b', accent: '#2dd4bf',
+        shapeshift: true, shiftInterval: 9.0,
+        phases: [
+          [
+            { x: 150, y: 540, w: 360, h: 28, solid: true },
+            { x: 690, y: 540, w: 360, h: 28, solid: true },
+            { x: 465, y: 380, w: 270, h: 20, thin: true, moveX: 110, speed: 1.2 },
+            { x: 200, y: 270, w: 180, h: 18, thin: true },
+            { x: 820, y: 270, w: 180, h: 18, thin: true }
+          ],
+          [
+            { x: 350, y: 555, w: 500, h: 30, solid: true },
+            { x: 120, y: 430, w: 210, h: 20, thin: true, moveY: 75, speed: 1.6 },
+            { x: 870, y: 430, w: 210, h: 20, thin: true, moveY: -75, speed: 1.6 },
+            { x: 480, y: 280, w: 240, h: 18, thin: true }
+          ],
+          [
+            { x: 110, y: 520, w: 220, h: 26, solid: true },
+            { x: 490, y: 520, w: 220, h: 26, solid: true },
+            { x: 870, y: 520, w: 220, h: 26, solid: true },
+            { x: 290, y: 360, w: 240, h: 18, thin: true },
+            { x: 670, y: 360, w: 240, h: 18, thin: true }
+          ]
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 3. ENGLISH QUESTION BANK (CEFR A1-A2 & B1-B2)
+    // =========================================================================
+    const QUESTIONS = {
+      a1a2: [
+        { zh: "小心！跳過這次攻擊！", pinyin: "Xiǎoxīn! Tiào guò zhè cì gōngjī!", ans: "Watch out! Jump over the attack!", opts: ["Watch out! Jump over the attack!", "Please sit down and rest here!", "Let's go buy a cup of coffee!", "The weather is very cold today!"] },
+        { zh: "他是道場裡速度最快的格鬥家。", pinyin: "Tā shì dàochǎng lǐ sùdù zuì kuài de gédòujiā.", ans: "He is the fastest fighter in the dojo.", opts: ["He is the fastest fighter in the dojo.", "He is the youngest student in the dojo.", "He wakes up at seven every morning.", "He loves eating beef noodle soup."] },
+        { zh: "在比賽結束前絕不放棄。", pinyin: "Zài bǐsài jiéshù qián jué bù fàngqì.", ans: "Never give up until the match is over.", opts: ["Never give up until the match is over.", "Please warm up before the match starts.", "The match is tomorrow at three PM.", "I forgot to bring my boxing gloves."] },
+        { zh: "她每天早上都練習武術。", pinyin: "Tā měitiān zǎoshang dōu liànxí wǔshù.", ans: "She practices martial arts every morning.", opts: ["She practices martial arts every morning.", "She watches movies every night.", "She is cooking dinner in the kitchen.", "She wants to swim at the beach."] },
+        { zh: "一個黃色寶箱剛剛從天上掉下來！", pinyin: "Yīgè huángsè bǎoxiāng gānggāng cóng tiānshàng diào xiàlái!", ans: "A yellow box just fell from the sky!", opts: ["A yellow box just fell from the sky!", "A small bird just flew inside!", "I just dropped my keys on the floor!", "A rainbow appeared in the sky!"] },
+        { zh: "深呼吸，保持冷靜。", pinyin: "Shēn hūxī, bǎochí lěngjìng.", ans: "Take a deep breath and stay calm.", opts: ["Take a deep breath and stay calm.", "Shout loudly and run faster.", "Please open all the windows.", "Drink a glass of ice water quickly."] },
+        { zh: "你需要打這個箱子兩次才能打開它。", pinyin: "Nǐ xūyào dǎ zhège xiāngzi liǎng cì cáinéng dǎkāi tā.", ans: "You need to hit the box twice to open it.", opts: ["You need to hit the box twice to open it.", "This box is too heavy to lift.", "Please put the box under the table.", "There are two new pairs of shoes inside."] },
+        { zh: "舉起防禦姿勢並保護好自己。", pinyin: "Jǔ qǐ fángyù zīshì bìng bǎohù hǎo zìjǐ.", ans: "Keep your guard up and protect yourself.", opts: ["Keep your guard up and protect yourself.", "Put your backpack in the locker.", "Remember to lock the front door.", "Silence your phone before class."] },
+        { zh: "這隻重量級烏龜擁有最多的血量。", pinyin: "Zhè zhī zhòngliàngjí wūguī yǒngyǒu zuì duō de xuěliàng.", ans: "This heavy turtle has the most health.", opts: ["This heavy turtle has the most health.", "This turtle runs faster than a rabbit.", "The turtle is sleeping by the pond.", "That dog is not very strong."] },
+        { zh: "我的對手跳上了最上層的平台。", pinyin: "Wǒ de duìshǒu tiào shàng le zuì shàngcéng de píngtái.", ans: "My opponent jumped onto the top platform.", opts: ["My opponent jumped onto the top platform.", "My friend caught the last train.", "The referee declared a tie.", "The whole crowd stood up and clapped."] },
+        { zh: "開始訓練前請先熱身。", pinyin: "Kāishǐ xùnliàn qián qǐng xiān rèshēn.", ans: "Please warm up before we start training.", opts: ["Please warm up before we start training.", "Turn off the lights after training.", "Could you pour me some warm water?", "We don't have gym class tomorrow."] },
+        { zh: "他揮出一記快拳並後退了一步。", pinyin: "Tā huī chū yī jì kuàiquán bìng hòutuì le yī bù.", ans: "He threw a quick jab and stepped back.", opts: ["He threw a quick jab and stepped back.", "He tossed the ball into the basket.", "He walked inside and shut the door.", "He accidentally stepped in a puddle."] },
+        { zh: "不要站得太靠近邊緣！", pinyin: "Bùyào zhàn de tài kàojìn biānyuán!", ans: "Don't stand too close to the edge!", opts: ["Don't stand too close to the edge!", "Don't stack the books too high!", "Please stand at the front of the line!", "No drinks are allowed in here!"] },
+        { zh: "我想學習如何踢得更高。", pinyin: "Wǒ xiǎng xuéxí rúhé tī de gèng gāo.", ans: "I want to learn how to kick higher.", opts: ["I want to learn how to kick higher.", "I want to buy bigger sneakers.", "I ran faster yesterday than today.", "I need two more hours of sleep."] },
+        { zh: "紅色寶箱會給你一個終極大招。", pinyin: "Hóngsè bǎoxiāng huì gěi nǐ yīgè zhōngjí dàzhāo.", ans: "The red box gives you an ultimate move.", opts: ["The red box gives you an ultimate move.", "The red backpack is full of textbooks.", "Put the red apples in the fridge.", "That red sports car is super fast."] },
+        { zh: "兩位選手都準備好迎接下一回合了。", pinyin: "Liǎng wèi xuǎnshǒu dōu zhǔnbèi hǎo yíngjiē xià yī huíhé le.", ans: "Both players are ready for the next round.", opts: ["Both players are ready for the next round.", "All the students have left the room.", "This tournament has ten rounds total.", "We walked in the park for two hours."] },
+        { zh: "連按兩下左或右即可快速衝刺。", pinyin: "Lián àn liǎng xià zuǒ huò yòu jíkě kuàisù chōngcì.", ans: "Double tap left or right to dash quickly.", opts: ["Double tap left or right to dash quickly.", "Hold spacebar to pause the match.", "Turn right and walk two blocks.", "Left-click to adjust the music volume."] },
+        { zh: "忍者貓像影子一樣迅速移動。", pinyin: "Rěnzhě māo xiàng yǐngzi yīyàng xùnsù yídòng.", ans: "The ninja cat moved like a shadow.", opts: ["The ninja cat moved like a shadow.", "The black cat is napping on the sofa.", "The shadows are long in the afternoon.", "We saw a tiger at the city zoo."] },
+        { zh: "每場比賽結束後要多喝水。", pinyin: "Měi chǎng bǐsài jiéshù hòu yào duō hē shuǐ.", ans: "Drink plenty of water after every match.", opts: ["Drink plenty of water after every match.", "Don't eat too much before a fight.", "This iced green tea tastes refreshing.", "I left my water bottle at home."] },
+        { zh: "你擋得住那一記重拳嗎？", pinyin: "Nǐ dǎng de zhù nà yī jì zhòngquán ma?", ans: "Can you block that heavy punch?", opts: ["Can you block that heavy punch?", "Can you help me carry this box?", "Does this road lead to the station?", "Are you free for lunch tomorrow?"] },
+        { zh: "勝利屬於最勇敢的戰士。", pinyin: "Shènglì shǔyú zuì yǒnggǎn de zhànshì.", ans: "Victory belongs to the bravest warrior.", opts: ["Victory belongs to the bravest warrior.", "This sword belongs to a museum.", "Everyone celebrated her birthday.", "Today's weather is great for hiking."] },
+        { zh: "我們握個手，來場公平的對決吧。", pinyin: "Wǒmen wò ge shǒu, lái chǎng gōngpíng de duìjué ba.", ans: "Let's shake hands and have a fair fight.", opts: ["Let's shake hands and have a fair fight.", "Wash your hands before dinner.", "Let's grab snacks at the night market.", "The prices at this shop are very fair."] },
+        { zh: "快看！地板開始移動了！", pinyin: "Kuài kàn! Dìbǎn kāishǐ yídòng le!", ans: "Look! The floor is starting to move!", opts: ["Look! The floor is starting to move!", "Look! It's starting to pour outside!", "Sweep the floor before heading home!", "This building has ten stories!"] },
+        { zh: "你還剩下兩條命。", pinyin: "Nǐ hái shèngxià liǎng tiáo mìng.", ans: "You still have two lives left.", opts: ["You still have two lives left.", "We still have two minutes left.", "There are two slices of cake left.", "He has two adorable puppies."] },
+        { zh: "剛剛那記迴旋踢太精彩了！", pinyin: "Gānggāng nà jì huíxuántī tài jīngcǎi le!", ans: "That was an amazing spinning kick!", opts: ["That was an amazing spinning kick!", "That concert performance was awesome!", "That basketball bounced super high!", "Her jacket looks really stylish today!"] },
+        { zh: "試著連續命中三下。", pinyin: "Shìzhe liánxù mìngzhòng sān xià.", ans: "Try to land three hits in a row.", opts: ["Try to land three hits in a row.", "Finish the quiz within three minutes.", "We went swimming three days in a row.", "Line up three chairs in a row."] },
+        { zh: "等待正確的時機再出擊。", pinyin: "Děngdài zhèngquè de shíjī zài chūjí.", ans: "Wait for the right moment to strike.", opts: ["Wait for the right moment to strike.", "Line up next to the bus stop sign.", "It is exactly twelve noon right now.", "I love reading in a quiet library."] },
+        { zh: "拳擊犬戴著鮮紅色的手套。", pinyin: "Quánjí quǎn dàizhe xiānhóngsè de shǒutào.", ans: "The boxer dog wears bright red gloves.", opts: ["The boxer dog wears bright red gloves.", "The dog loves chasing a red ball.", "Wear warm gloves in the winter.", "She bought brand-new white sneakers."] },
+        { zh: "誰會是最後站著的格鬥家？", pinyin: "Shéi huì shì zuìhòu zhànzhe de gédòujiā?", ans: "Who will be the last fighter standing?", opts: ["Who will be the last fighter standing?", "Who is the tallest person in class?", "When does the last bus depart?", "Please stand up and greet the teacher."] },
+        { zh: "運動前後記得要拉筋伸展。", pinyin: "Yùndòng qiánhòu jìde yào lājīn shēnzhǎn.", ans: "Remember to stretch before and after working out.", opts: ["Remember to stretch before and after working out.", "Remember to lock the gym door after class.", "Don't forget to bring your umbrella today.", "Please turn off the TV before going to sleep."] },
+        { zh: "我的肩膀今天有點痠痛。", pinyin: "Wǒ de jiānbǎng jīntiān yǒudiǎn suāntòng.", ans: "My shoulders are a little sore today.", opts: ["My shoulders are a little sore today.", "My backpack is too heavy to carry.", "I bought a new jacket yesterday.", "The weather is getting warmer today."] },
+        { zh: "我們每週三晚上一起去健身房。", pinyin: "Wǒmen měi zhōusān wǎnshang yīqǐ qù jiànshēnfáng.", ans: "We go to the gym together every Wednesday night.", opts: ["We go to the gym together every Wednesday night.", "We eat dinner at a restaurant every Friday.", "The library closes early on Wednesday.", "I have an English test next Monday morning."] },
+        { zh: "流汗之後記得多補充水分。", pinyin: "Liúhàn zhīhòu jìde duō bǔchōng shuǐfèn.", ans: "Remember to rehydrate after sweating.", opts: ["Remember to rehydrate after sweating.", "Put on a thick coat when it rains.", "Wash the fruit before eating it.", "Turn on the air conditioner when it's hot."] },
+        { zh: "這雙運動鞋穿起來非常舒服。", pinyin: "Zhè shuāng yùndòngxié chuān qǐlái fēicháng shūfu.", ans: "These sneakers are very comfortable to wear.", opts: ["These sneakers are very comfortable to wear.", "These jeans are a little too tight.", "That coffee shop is very quiet.", "This chair is too small for the desk."] },
+        { zh: "早睡早起對身體很有幫助。", pinyin: "Zǎoshuì zǎoqǐ duì shēntǐ hěn yǒu bāngzhù.", ans: "Going to bed early and waking up early is great for your health.", opts: ["Going to bed early and waking up early is great for your health.", "Staying up late helps you finish homework faster.", "Eating too much candy is bad for your teeth.", "Taking the subway is faster than driving."] },
+        { zh: "做得好！你贏得了冠軍！", pinyin: "Zuò de hǎo! Nǐ yíngdé le guànjūn!", ans: "Great job! You won the championship!", opts: ["Great job! You won the championship!", "Good morning and good luck today!", "Don't worry, next time will be better!", "Thanks for helping me with this report!"] }
+      ],
+      b1b2: [
+        { zh: "預判對手的下一步能為你帶來決定性優勢。", pinyin: "Yùpàn duìshǒu de xià yībù néng wèi nǐ dàilái juédìngxìng yōushì.", ans: "Anticipating your rival's next move gives you a decisive edge.", opts: ["Anticipating your rival's next move gives you a decisive edge.", "Copying your rival's outfit entertains the crowd.", "Getting enough sleep is the only secret to winning.", "The referee's call decided the entire tournament."] },
+        { zh: "場地即將變形——立刻重新調整站位！", pinyin: "Chǎngdì jíjiāng biànxíng — lìkè chóngxīn tiáozhěng zhànwèi!", ans: "The stage is about to shift—reposition immediately!", opts: ["The stage is about to shift—reposition immediately!", "Time is almost up—stop attacking now!", "The lights went out—stay where you are!", "The stands are packed—use the side exit!"] },
+        { zh: "命中第一擊便會觸發延長連招。", pinyin: "Mìngzhòng dì yī jī biàn huì chùfā yáncháng liánzhāo.", ans: "Landing the opening strike triggers an extended combo chain.", opts: ["Landing the opening strike triggers an extended combo chain.", "Blocking an attack drains all your stamina.", "Jumping off the edge restores full health.", "Special moves require a thirty-second cooldown."] },
+        { zh: "他在堅固龜殼內高速旋轉時處於無敵狀態。", pinyin: "Tā zài jiāngù guīké nèi gāosù xuánzhuǎn shí chǔyú wúdí zhuàngtài.", ans: "He remained invincible while spinning inside his fortified shell.", opts: ["He remained invincible while spinning inside his fortified shell.", "He got dizzy and fell in the center of the stage.", "He moves twice as fast as every other fighter.", "He forfeited the match before it even began."] },
+        { zh: "抓準二段跳的時機可以救你免於被擊出場外。", pinyin: "Zhuāzhǔn èrduàntiào de shíjī kěyǐ jiù nǐ miǎnyú bèi jīchū chǎngwài.", ans: "Timing your double jump can save you from being knocked out.", opts: ["Timing your double jump can save you from being knocked out.", "Jumping three times triggers your ultimate move.", "Standing in the middle prevents all damage.", "Holding guard pushes opponents off the stage."] },
+        { zh: "儘管承受了沉重傷害，她仍上演了驚人逆轉。", pinyin: "Jǐnguǎn chéngshòu le chénzhòng shānghài, tā réng shàngyǎn le jīngrén nìzhuǎn.", ans: "Despite taking heavy damage, she staged a remarkable comeback.", opts: ["Despite taking heavy damage, she staged a remarkable comeback.", "She withdrew from the tournament after a minor scratch.", "She defeated everyone within the first ten seconds.", "The match ended early due to a huge skill gap."] },
+        { zh: "精通步法與純粹的打擊力量同樣至關重要。", pinyin: "Jīngtōng bùfǎ yǔ chúncuì de dǎjí lìliàng tóngyàng zhìguān zhòngyào.", ans: "Mastery of footwork is just as vital as raw striking power.", opts: ["Mastery of footwork is just as vital as raw striking power.", "If you're strong enough, you never need to dodge.", "The tournament rules ban all kicking techniques.", "Lightweight fighters always have the highest power."] },
+        { zh: "如地震般的衝擊波撼動了競技場的每個角落。", pinyin: "Rú dìzhèn bān de chōngjíbō hàndòng le jìngjìchǎng de měi gè jiǎoluò.", ans: "The seismic shockwave shook every corner of the arena.", opts: ["The seismic shockwave shook every corner of the arena.", "A gentle breeze drifted across the dojo roof.", "The champion placed a trophy in the center.", "Rain made the arena floor slippery."] },
+        { zh: "等待對手的破綻，不要魯莽地衝進去。", pinyin: "Děngdài duìshǒu de pòzhàn, bùyào lǔmǎng de chōng jìnqù.", ans: "Wait for an opening instead of rushing in recklessly.", opts: ["Wait for an opening instead of rushing in recklessly.", "Charge straight ahead the second the match begins.", "Hide in the corner whenever facing a strong rival.", "Always bow to the referee before every punch."] },
+        { zh: "抓準時機的反擊能夠扭轉戰局。", pinyin: "Zhuāzhǔn shíjī de fǎnjī nénggòu niǔzhuǎn zhànjú.", ans: "A well-timed counterattack can turn the tide of battle.", opts: ["A well-timed counterattack can turn the tide of battle.", "Switching characters often confuses your opponents.", "Flat stages are much harder than shifting ones.", "This victory came down to pure luck."] },
+        { zh: "小心——你的連招可能會被第三位選手打斷。", pinyin: "Xiǎoxīn — nǐ de liánzhāo kěnéng huì bèi dì sān wèi xuǎnshǒu dǎduàn.", ans: "Be careful—your combo can be interrupted by a third fighter.", opts: ["Be careful—your combo can be interrupted by a third fighter.", "Relax—you become invincible once a combo begins.", "Note that this stage only allows two fighters.", "You may only use one special per match."] },
+        { zh: "使用快速衝刺能讓你閃避迎面而來的氣彈。", pinyin: "Shǐyòng kuàisù chōngcì néng ràng nǐ shǎnbì yíngmiàn érlái de qìdàn.", ans: "Using a quick dash lets you evade incoming projectiles.", opts: ["Using a quick dash lets you evade incoming projectiles.", "Jumping in place reflects all ranged blasts.", "Dashing cuts your defense in half.", "Energy blasts can only be fired in midair."] },
+        { zh: "適應變形地形需要敏銳的局勢判斷力。", pinyin: "Shìyìng biànxíng dìxíng xūyào mǐnruì de júshì pànduànlì.", ans: "Adapting to shifting terrain requires sharp situational awareness.", opts: ["Adapting to shifting terrain requires sharp situational awareness.", "Flat stages require no strategy at all.", "Stages shift with zero visual warning.", "Fighters on top platforms cannot hit foes below."] },
+        { zh: "掌控舞台中央能限制對手的行動選擇。", pinyin: "Zhǎngkòng wǔtái zhōngyāng néng xiànzhì duìshǒu de xíngdòng xuǎnzé.", ans: "Controlling the center of the stage limits your opponent's options.", opts: ["Controlling the center of the stage limits your opponent's options.", "Standing on the very edge is the safest spot.", "Traps spawn in the center every ten seconds.", "Giving up stage control makes winning easier."] },
+        { zh: "由於同時只能持有一項技能，請明智地使用。", pinyin: "Yóuyú tóngshí zhǐ néng chíyǒu yī xiàng jìnéng, qǐng míngzhì de shǐyòng.", ans: "Since you can only hold one charge, spend it wisely.", opts: ["Since you can only hold one charge, spend it wisely.", "You can stack ten specials and fire them at once.", "Holding an ultimate disables basic attacks.", "Unused charges carry over to the next match."] },
+        { zh: "他毫不鬆懈的壓制把對手逼向了出局邊界。", pinyin: "Tā háobù sōngxiè de yāzhì bǎ duìshǒu bī xiàng le chūjú biānjiè.", ans: "His relentless pressure forced the opponent toward the blast zone.", opts: ["His relentless pressure forced the opponent toward the blast zone.", "He played defensively until the timer ran out.", "All his strikes missed because he was too far.", "The opponent jumped off to end the match."] },
+        { zh: "血量越低，被擊中時飛出去的距離就越遠。", pinyin: "Xuěliàng yuè dī, bèi jízhòng shí fēi chūqù de jùlí jiù yuè yuǎn.", ans: "Lower health increases how far you fly when struck.", opts: ["Lower health increases how far you fly when struck.", "Lower health makes your character run faster.", "Hitting zero health instantly heals you to full.", "Knockback distance never changes with health."] },
+        { zh: "在近距離交鋒中，精準度比胡亂按鍵更重要。", pinyin: "Zài jìnjùlí jiāofēng zhōng, jīngzhǔndù bǐ húluàn ànjiàn gèng zhòngyào.", ans: "Precision matters more than button-mashing in close quarters.", opts: ["Precision matters more than button-mashing in close quarters.", "Mashing attack always wins at close range.", "Ranged fighters dominate up close.", "Keeping your distance is against the rules."] },
+        { zh: "她在紫光一閃間消失，並從背後發動突襲。", pinyin: "Tā zài zǐguāng yīshǎn jiān xiāoshī, bìng cóng bèihòu fādòng túxí.", ans: "She vanished in a flash of purple light and struck from behind.", opts: ["She vanished in a flash of purple light and struck from behind.", "She raised a shield to block every frontal hit.", "She dropped from the sky to shake the stage.", "She paused at the ledge to catch her breath."] },
+        { zh: "在高壓下仍能保持鎮定，才能展現真正的武道修養。", pinyin: "Zài gāoyā xià réng néng bǎochí zhèndìng, cáinéng zhǎnxiàn zhēnzhèng de wǔdào xiūyǎng.", ans: "True discipline is revealed when you stay composed under pressure.", opts: ["True discipline is revealed when you stay composed under pressure.", "Getting angry makes combos much easier.", "Discipline only depends on raw attack stats.", "You should pause the match whenever stressed."] },
+        { zh: "拳擊手的一二組合拳能造成毀滅性的衝擊。", pinyin: "Quánjíshǒu de yī-èr zǔhéquán néng zàochéng huǐmièxìng de chōngjí.", ans: "The boxer's one-two combination delivers devastating impact.", opts: ["The boxer's one-two combination delivers devastating impact.", "The boxer specializes in four high spinning kicks.", "Combinations deal less damage than single jabs.", "The one-two combo only works in midair."] },
+        { zh: "引誘對手揮空攻擊會創造出絕佳的反擊機會。", pinyin: "Yǐnyòu duìshǒu huīkōng gōngjī huì chuàngzào chū juéjiā de fǎnjī jīhuì.", ans: "Baiting out a missed attack creates a golden opportunity.", opts: ["Baiting out a missed attack creates a golden opportunity.", "Missing an attack boosts your movement speed.", "Every missed punch drains your own health.", "Blocking successfully stuns the attacker for three seconds."] },
+        { zh: "八極拳強調短距離的爆發力與穩固的馬步。", pinyin: "Bājíquán qiángdiào duǎnjùlí de bàofālì yǔ wěngù de mǎbù.", ans: "Bajiquan emphasizes explosive short-range power and solid stance.", opts: ["Bajiquan emphasizes explosive short-range power and solid stance.", "Bajiquan is a style focused on long-range blasts.", "Bajiquan requires floating in midair the whole match.", "Bajiquan ignores balance and lower-body stability."] },
+        { zh: "要順利回到平台上需要冷靜的空中操控。", pinyin: "Yào shùnlì huídào píngtái shàng xūyào lěngjìng de kōngzhōng cāokòng.", ans: "Recovering back onto the platform takes calm aerial control.", opts: ["Recovering back onto the platform takes calm aerial control.", "Once you leave a platform, you can never return.", "Air movement is ten times slower than running.", "Pressing down warps you back to stage center."] },
+        { zh: "每種武術在速度、距離與耐打度上各有不同的平衡。", pinyin: "Měi zhǒng wǔshù zài sùdù, jùlí yǔ nàidǎdù shàng gè yǒu bùtóng de pínghéng.", ans: "Every martial art balances speed, reach, and durability differently.", opts: ["Every martial art balances speed, reach, and durability differently.", "Every fighter has identical stats across the board.", "The fastest fighter also has the highest health.", "Longer reach always comes with faster speed."] },
+        { zh: "一次魯莽的邊緣跳躍差點讓他賠上最後一條命。", pinyin: "Yī cì lǔmǎng de biānyuán tiàoyuè chàdiǎn ràng tā péishàng zuìhòu yī tiáo mìng.", ans: "A reckless jump off the ledge nearly cost him his final stock.", opts: ["A reckless jump off the ledge nearly cost him his final stock.", "Jumping off the edge granted him two extra lives.", "He stood still in the center to win the match.", "This arena has no blast zones at all."] },
+        { zh: "搶在對手之前擊破紅箱需要敏捷的反應速度。", pinyin: "Qiǎng zài duìshǒu zhīqián jípò hóngxiāng xūyào mǐnjié de fǎnyìng sùdù.", ans: "Breaking a red crate before your rivals requires quick reflexes.", opts: ["Breaking a red crate before your rivals requires quick reflexes.", "Red crates open automatically when you walk past.", "Breaking a red crate temporarily slows you down.", "Red crates only appear in the final five seconds."] },
+        { zh: "即使是最慢的格鬥家也能靠出色的走位主宰戰局。", pinyin: "Jíshǐ shì zuì màn de gédòujiā yě néng kào chūsè de zǒuwèi zhǔzǎi zhànjú.", ans: "Even the slowest fighter can dominate with superior positioning.", opts: ["Even the slowest fighter can dominate with superior positioning.", "Slow fighters can never win a platform match.", "Positioning has zero impact in fighting games.", "Standing completely still wins automatically."] },
+        { zh: "最後一擊鎖定勝局時，全場觀眾爆發出熱烈歡呼。", pinyin: "Zuìhòu yī jī suǒdìng shèngjú shí, quánchǎng guānzhòng bàofā chū rèliè huānhū.", ans: "The crowd erupted as the final blow sealed the victory.", opts: ["The crowd erupted as the final blow sealed the victory.", "The match went into overtime after a tie.", "A fighter forfeited midway through the round.", "The audience left before the match began."] },
+        { zh: "如果覺得肌肉拉傷了，應該立刻停止運動並冰敷。", pinyin: "Rúguǒ juéde jīròu lāshāng le, yīnggāi lìkè tíngzhǐ yùndòng bìng bīngfū.", ans: "If you feel a pulled muscle, stop exercising immediately and ice it.", opts: ["If you feel a pulled muscle, stop exercising immediately and ice it.", "If you feel tired, keep running twice as fast.", "Drinking hot soup immediately cures a sprained ankle.", "You should skip stretching whenever you are in a hurry."] },
+        { zh: "均衡的飲食與充足的睡眠能幫助身體更快恢復。", pinyin: "Jūnhéng de yǐnshí yǔ chōngzú de shuìmián néng bāngzhù shēntǐ gèng kuài huīfù.", ans: "A balanced diet and enough sleep help your body recover faster.", opts: ["A balanced diet and enough sleep help your body recover faster.", "Skipping breakfast gives you more energy for training.", "Only lifting heavy weights matters for staying healthy.", "Drinking coffee late at night improves sleep quality."] },
+        { zh: "設定切合實際的目標能讓你更容易保持運動習慣。", pinyin: "Shèdìng qièhé shíjì de mùbiāo néng ràng nǐ gèng róngyì bǎochí yùndòng xíguàn.", ans: "Setting realistic goals makes it easier to stick to a workout routine.", opts: ["Setting realistic goals makes it easier to stick to a workout routine.", "Changing your schedule every day builds strong habits.", "Buying expensive gear guarantees instant results.", "Comparing yourself to others is the best motivation."] },
+        { zh: "在道館練習時，尊重教練與夥伴是最基本的禮儀。", pinyin: "Zài dàoguǎn liànxí shí, zūnzhòng jiàoliàn yǔ huǒbàn shì zuì jīběn de lǐyí.", ans: "Respecting your coach and training partners is basic dojo etiquette.", opts: ["Respecting your coach and training partners is basic dojo etiquette.", "Arriving twenty minutes late is normal for morning class.", "You never need to clean up equipment after practice.", "Shouting at beginners helps them learn faster."] },
+        { zh: "深層呼吸不僅能放鬆肌肉，也能減輕日常生活中的壓力。", pinyin: "Shēncéng hūxī bùjǐn néng fàngsōng jīròu, yě néng jiǎnqīng rìcháng shēnghuó zhōng de yālì.", ans: "Deep breathing relaxes your muscles and reduces everyday stress.", opts: ["Deep breathing relaxes your muscles and reduces everyday stress.", "Holding your breath makes you lift heavier weights.", "Checking work emails at midnight reduces stress.", "Skipping rest days prevents muscle soreness."] },
+        { zh: "持之以恆的小進步，累積起來會帶來巨大的改變。", pinyin: "Chízhīyǐhéng de xiǎo jìnbù, lěijī qǐlái huì dàilái jùdà de gǎibiàn.", ans: "Consistent small improvements add up to massive changes over time.", opts: ["Consistent small improvements add up to massive changes over time.", "Only dramatic overnight breakthroughs are worth celebrating.", "Taking a month off makes your skills sharper.", "Repeating the same mistake leads to automatic mastery."] },
+        { zh: "持續練習能讓高難度技巧化為自然本能。", pinyin: "Chíxù liànxí néng ràng gāonándù jìqiǎo huàwéi zìrán běnnéng.", ans: "Consistent practice turns difficult techniques into second nature.", opts: ["Consistent practice turns difficult techniques into second nature.", "Advanced techniques rely purely on luck.", "Practicing more than five minutes hurts performance.", "Forgetting the basics helps you improve faster."] }
+      ]
+    };
+
+    // =========================================================================
+    // 4. WEB AUDIO ENGINE (148 BPM MARTIAL SYNTH-ROCK + COMBAT SFX + TTS)
+    // =========================================================================
+    const AudioSys = {
+      ctx: null, master: null, bgmGain: null, enabled: true, timer: null, step: 0,
+      init() {
+        if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain(); this.master.gain.value = 0.6; this.master.connect(this.ctx.destination);
+        this.bgmGain = this.ctx.createGain(); this.bgmGain.gain.value = 0.34; this.bgmGain.connect(this.master);
+        this.startBGM();
+      },
+      duck(on) {
+        if (!this.bgmGain || !this.ctx) return;
+        this.bgmGain.gain.setTargetAtTime(on ? 0.04 : (this.enabled ? 0.34 : 0), this.ctx.currentTime, 0.06);
+      },
+      toggle() {
+        this.enabled = !this.enabled;
+        if (this.bgmGain && this.ctx) this.bgmGain.gain.setTargetAtTime(this.enabled ? 0.34 : 0, this.ctx.currentTime, 0.05);
+        return this.enabled;
+      },
+      startBGM() {
+        if (this.timer) return;
+        const stepMs = (60 / 148 / 4) * 1000;
+        const bass = [110,110,146.8,110, 130.8,130.8,164.8,130.8, 98,98,130.8,98, 123.5,123.5,146.8,164.8];
+        const lead = [440,0,523.3,587.3, 659.3,0,587.3,523.3, 392,0,440,523.3, 587.3,659.3,784,659.3];
+        this.timer = setInterval(() => {
+          if (!this.enabled || !this.ctx || this.ctx.state !== 'running') return;
+          const t = this.ctx.currentTime, s = this.step % 16;
+          if (s % 4 === 0) {
+            const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+            o.type = 'sine'; o.frequency.setValueAtTime(145, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.10);
+            g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+            o.connect(g); g.connect(this.bgmGain); o.start(t); o.stop(t + 0.12);
+          }
+          const bo = this.ctx.createOscillator(), bg = this.ctx.createGain();
+          bo.type = 'sawtooth'; bo.frequency.setValueAtTime(bass[s], t);
+          bg.gain.setValueAtTime(0.16, t); bg.gain.exponentialRampToValueAtTime(0.01, t + stepMs / 1000 * 0.9);
+          bo.connect(bg); bg.connect(this.bgmGain); bo.start(t); bo.stop(t + stepMs / 1000);
+          if (lead[s]) {
+            const lo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+            lo.type = 'square'; lo.frequency.setValueAtTime(lead[s], t);
+            lg.gain.setValueAtTime(0.08, t); lg.gain.exponentialRampToValueAtTime(0.005, t + stepMs / 1000 * 1.4);
+            lo.connect(lg); lg.connect(this.bgmGain); lo.start(t); lo.stop(t + stepMs / 1000 * 1.5);
+          }
+          this.step++;
+        }, stepMs);
+      },
+      sfx(kind) {
+        this.init();
+        if (!this.ctx || !this.enabled) return;
+        const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+        if (kind === 'hit') {
+          o.type = 'sawtooth'; o.frequency.setValueAtTime(195, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.12);
+          g.gain.setValueAtTime(0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.14);
+        } else if (kind === 'heavy') {
+          o.type = 'square'; o.frequency.setValueAtTime(145, t); o.frequency.exponentialRampToValueAtTime(32, t + 0.25);
+          g.gain.setValueAtTime(0.42, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.27);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.28);
+        } else if (kind === 'blast') {
+          o.type = 'triangle'; o.frequency.setValueAtTime(720, t); o.frequency.exponentialRampToValueAtTime(210, t + 0.18);
+          g.gain.setValueAtTime(0.26, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.21);
+        } else if (kind === 'ult') {
+          o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(940, t + 0.65);
+          g.gain.setValueAtTime(0.36, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.72);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.75);
+        } else if (kind === 'box') {
+          o.type = 'triangle'; o.frequency.setValueAtTime(523, t); o.frequency.setValueAtTime(784, t + 0.08);
+          g.gain.setValueAtTime(0.28, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.25);
+        } else if (kind === 'ko') {
+          o.type = 'sawtooth'; o.frequency.setValueAtTime(320, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.45);
+          g.gain.setValueAtTime(0.42, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.48);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.5);
+        }
+      }
+    };
+
+    function speakZH(text) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-TW'; u.rate = 0.94;
+      AudioSys.duck(true);
+      u.onend = () => AudioSys.duck(false);
+      u.onerror = () => AudioSys.duck(false);
+      window.speechSynthesis.speak(u);
+    }
+
+    // =========================================================================
+    // 5. HIGH-CRAFT ARTICULATED 2D CHARACTER SPRITE RENDERER
+    // =========================================================================
+    function drawCharacterArt(c, charId, opts = {}) {
+      const {
+        t = 0, facing = 1, attacking = false, comboStep = 0,
+        moving = false, inAir = false, ultPose = false, shellMode = false, scale = 1
+      } = opts;
+
+      c.save();
+      c.scale(scale, scale);
+
+      // Turtle Shell Spin Special Form
+      if (shellMode) {
+        c.save();
+        // Swirling golden chi aura
+        const grad = c.createRadialGradient(0, 0, 12, 0, 0, 44);
+        grad.addColorStop(0, 'rgba(250,204,21,0.75)');
+        grad.addColorStop(0.6, 'rgba(34,197,94,0.45)');
+        grad.addColorStop(1, 'rgba(34,197,94,0)');
+        c.fillStyle = grad; c.beginPath(); c.arc(0, 0, 44, 0, Math.PI * 2); c.fill();
+        c.rotate(t * 24);
+        c.fillStyle = '#15803d'; c.strokeStyle = '#0b0e1a'; c.lineWidth = 3.5;
+        c.beginPath(); c.arc(0, 0, 30, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Hexagonal jade plates
+        c.strokeStyle = '#facc15'; c.lineWidth = 2.5;
+        c.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = (i * Math.PI) / 3;
+          const px = Math.cos(a) * 16, py = Math.sin(a) * 16;
+          i === 0 ? c.moveTo(px, py) : c.lineTo(px, py);
+        }
+        c.closePath(); c.stroke();
+        c.fillStyle = '#4ade80'; c.fill();
+        c.restore();
+        c.restore();
+        return;
+      }
+
+      c.scale(facing, 1);
+      const ink = '#0b0e1a';
+      const bob = inAir ? -2 : Math.sin(t * 9) * 2.2;
+      const stride = moving ? Math.sin(t * 16) * 9 : 0;
+      const atkReach = attacking ? 16 : 0;
+
+      c.lineJoin = 'round'; c.lineCap = 'round';
+
+      if (charId === 'human') {
+        // === REN: ORIGINAL PRO KICKBOXER (UNDERCUT HAIR, NO BANDANA, ATHLETIC RASHGUARD & FIGHT SHORTS) ===
+        // Back leg + taped ankle
+        c.fillStyle = '#fde68a'; c.strokeStyle = ink; c.lineWidth = 2.6;
+        c.beginPath(); c.roundRect(-12 - stride * 0.7, 15 + bob, 10, 21, 5); c.fill(); c.stroke();
+        c.fillStyle = '#38bdf8'; c.fillRect(-12 - stride * 0.7, 27 + bob, 10, 7);
+
+        // Front leg (Hit 2 = Low Shin Kick, Hit 3 = High Spinning Roundhouse Kick!)
+        if (attacking && comboStep === 2) {
+          c.save(); c.translate(4, 12 + bob); c.rotate(-0.85);
+          c.fillStyle = '#fde68a'; c.beginPath(); c.roundRect(0, -5, 38, 11, 5); c.fill(); c.stroke();
+          c.fillStyle = '#06b6d4'; c.fillRect(20, -5, 14, 11);
+          c.restore();
+          c.strokeStyle = '#38bdf8'; c.lineWidth = 7;
+          c.beginPath(); c.arc(12, -4, 44, -1.25, 0.5); c.stroke();
+        } else if (attacking && comboStep === 1) {
+          c.save(); c.translate(4, 18 + bob); c.rotate(-0.18);
+          c.fillStyle = '#fde68a'; c.beginPath(); c.roundRect(0, -4, 34, 10, 5); c.fill(); c.stroke();
+          c.fillStyle = '#06b6d4'; c.fillRect(18, -4, 12, 10);
+          c.restore();
+          c.strokeStyle = '#facc15'; c.lineWidth = 5;
+          c.beginPath(); c.moveTo(18, 16 + bob); c.lineTo(46, 12 + bob); c.stroke();
+        } else {
+          c.fillStyle = '#fde68a';
+          c.beginPath(); c.roundRect(3 + stride * 0.7, 15 + bob, 10, 21, 5); c.fill(); c.stroke();
+          c.fillStyle = '#06b6d4'; c.fillRect(3 + stride * 0.7, 27 + bob, 10, 7);
+        }
+
+        // Modern Pro Athletic Rashguard (Deep Navy + Teal/Gold Diagonal Stripe) & Fight Shorts
+        c.fillStyle = '#0f172a';
+        c.beginPath(); c.roundRect(-15, -12 + bob, 30, 24, 8); c.fill(); c.stroke();
+        c.fillStyle = '#06b6d4';
+        c.beginPath(); c.moveTo(-14, 6 + bob); c.lineTo(14, -8 + bob); c.lineTo(14, -1 + bob); c.lineTo(-14, 12 + bob); c.closePath(); c.fill();
+        // Athletic Muay Thai Fight Shorts
+        c.fillStyle = '#1e293b'; c.fillRect(-15, 8 + bob, 30, 12); c.strokeRect(-15, 8 + bob, 30, 12);
+        c.fillStyle = '#facc15'; c.fillRect(-15, 8 + bob, 30, 4);
+
+        // Head + Stylish Swept Chestnut-Gold Undercut Hair (NO headband/bandana!)
+        c.fillStyle = '#fde68a'; c.beginPath(); c.arc(0, -24 + bob, 14, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Clean fade sides + swept golden-brown undercut top
+        c.fillStyle = '#451a03';
+        c.beginPath(); c.arc(-2, -26 + bob, 13.5, Math.PI * 0.85, Math.PI * 1.95); c.fill();
+        c.fillStyle = '#b45309';
+        c.beginPath();
+        c.moveTo(-14, -27 + bob); c.quadraticCurveTo(-8, -42 + bob, 12, -39 + bob);
+        c.quadraticCurveTo(18, -33 + bob, 11, -29 + bob); c.quadraticCurveTo(0, -32 + bob, -14, -27 + bob);
+        c.closePath(); c.fill(); c.stroke();
+        // Sharp side-profile eye & focused brow
+        c.fillStyle = '#0f172a'; c.fillRect(4, -25 + bob, 4, 5); c.fillStyle = '#fff'; c.fillRect(6, -25 + bob, 1.5, 2);
+        c.strokeStyle = ink; c.lineWidth = 2.2; c.beginPath(); c.moveTo(2, -28 + bob); c.lineTo(10, -26 + bob); c.stroke();
+
+        // Arms & Teal Pro Kickboxing Gloves
+        if (ultPose) {
+          c.fillStyle = '#fde68a';
+          c.beginPath(); c.roundRect(-20, -45 + bob, 9, 28, 4); c.fill(); c.stroke();
+          c.beginPath(); c.roundRect(12, -45 + bob, 9, 28, 4); c.fill(); c.stroke();
+          c.fillStyle = '#06b6d4'; c.beginPath(); c.arc(-15, -47 + bob, 9, 0, Math.PI * 2); c.fill(); c.stroke();
+          c.beginPath(); c.arc(16, -47 + bob, 9, 0, Math.PI * 2); c.fill(); c.stroke();
+        } else {
+          // Back guard glove
+          c.fillStyle = '#0891b2'; c.beginPath(); c.arc(-5, -5 + bob, 8, 0, Math.PI * 2); c.fill(); c.stroke();
+          // Front striking arm + teal glove
+          const punchBoost = (attacking && comboStep === 0) ? 24 : 0;
+          c.fillStyle = '#fde68a';
+          c.beginPath(); c.roundRect(6, -7 + bob, 12 + punchBoost, 8, 4); c.fill(); c.stroke();
+          c.fillStyle = '#06b6d4';
+          c.beginPath(); c.arc(20 + punchBoost, -3 + bob, 9, 0, Math.PI * 2); c.fill(); c.stroke();
+          if (attacking && comboStep === 0) {
+            c.strokeStyle = '#facc15'; c.lineWidth = 4.5;
+            c.beginPath(); c.moveTo(8, -3 + bob); c.lineTo(36 + punchBoost, -3 + bob); c.stroke();
+          }
+        }
+      } else if (charId === 'cat') {
+        // === KAGE: NINJA CAT (SLEEK SIDE-PROFILE TIGER CLAW) ===
+        // Swaying ninja cat tail
+        c.strokeStyle = ink; c.lineWidth = 7;
+        c.beginPath(); c.moveTo(-12, 12 + bob); c.quadraticCurveTo(-30, 8 + Math.sin(t * 10) * 8, -26, -12 + Math.cos(t * 10) * 6); c.stroke();
+        c.strokeStyle = '#6b21a8'; c.lineWidth = 4; c.stroke();
+
+        // Agile legs (Hit 3 = Spinning Low Sweep Kick!)
+        c.fillStyle = '#1e1b4b'; c.strokeStyle = ink; c.lineWidth = 2.4;
+        if (attacking && comboStep === 2) {
+          c.beginPath(); c.roundRect(-14, 18 + bob, 11, 16, 4); c.fill(); c.stroke();
+          c.fillStyle = '#a855f7';
+          c.beginPath(); c.roundRect(2, 22 + bob, 34, 9, 4); c.fill(); c.stroke();
+          c.strokeStyle = '#c084fc'; c.lineWidth = 5;
+          c.beginPath(); c.arc(12, 26 + bob, 28, -0.4, 0.5); c.stroke();
+        } else {
+          c.beginPath(); c.roundRect(-11 - stride * 0.7, 14 + bob, 9, 21, 4); c.fill(); c.stroke();
+          c.beginPath(); c.roundRect(3 + stride * 0.7, 14 + bob, 9, 21, 4); c.fill(); c.stroke();
+        }
+
+        // Sleek Shinobi Vest
+        c.fillStyle = '#3b0764'; c.strokeStyle = ink; c.lineWidth = 2.4;
+        c.beginPath(); c.roundRect(-14, -10 + bob, 28, 28, 8); c.fill(); c.stroke();
+        c.strokeStyle = '#f43f5e'; c.lineWidth = 2.5;
+        c.beginPath(); c.moveTo(-12, -8 + bob); c.lineTo(12, 12 + bob); c.moveTo(12, -8 + bob); c.lineTo(-12, 12 + bob); c.stroke();
+
+        // Flowing Crimson Ninja Scarf
+        c.fillStyle = '#f43f5e'; c.strokeStyle = ink; c.lineWidth = 2.2;
+        const sw = Math.sin(t * 14) * 6;
+        c.beginPath(); c.moveTo(-12, -10 + bob); c.quadraticCurveTo(-28, -6 + sw, -38, 4 + sw); c.lineTo(-32, 10 + sw); c.lineTo(-10, -4 + bob); c.closePath(); c.fill(); c.stroke();
+        c.beginPath(); c.roundRect(-14, -13 + bob, 28, 8, 4); c.fill(); c.stroke();
+
+        // Proper Side-Profile Cat Head: single crisp foreground ear + pointed feline muzzle + ninja mask!
+        // Single sleek side-profile ear swept slightly back
+        c.fillStyle = '#581c87'; c.strokeStyle = ink; c.lineWidth = 2.4;
+        c.beginPath(); c.moveTo(-9, -32 + bob); c.lineTo(-13, -49 + bob); c.lineTo(3, -36 + bob); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#f472b6';
+        c.beginPath(); c.moveTo(-7, -34 + bob); c.lineTo(-10, -44 + bob); c.lineTo(0, -36 + bob); c.closePath(); c.fill();
+        // Side-profile cranium + subtle cat muzzle protruding right
+        c.fillStyle = '#581c87';
+        c.beginPath(); c.arc(-1, -24 + bob, 13.5, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.beginPath(); c.ellipse(11, -20 + bob, 6.5, 5.2, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Dark ninja lower face-mask covering snout + pink nose tip
+        c.fillStyle = '#1e1b4b';
+        c.beginPath(); c.roundRect(-5, -22 + bob, 20, 9, 4); c.fill(); c.stroke();
+        c.fillStyle = '#f472b6'; c.beginPath(); c.arc(16, -21 + bob, 2.2, 0, Math.PI * 2); c.fill();
+        // Fierce side-profile golden slit eye + angled brow
+        c.fillStyle = '#facc15'; c.beginPath(); c.ellipse(6, -26 + bob, 4.8, 2.8, -0.2, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#0b0e1a'; c.fillRect(6.5, -28.5 + bob, 1.8, 5);
+        c.strokeStyle = ink; c.lineWidth = 2.2;
+        c.beginPath(); c.moveTo(1, -30 + bob); c.lineTo(11, -27.5 + bob); c.stroke();
+
+        // 4-Hit Tiger Claw Animations (Swipe / Reverse Slash / Sweep / Twin X-Rend!)
+        const reach = ultPose ? 22 : atkReach;
+        c.fillStyle = '#3b0764'; c.strokeStyle = ink; c.lineWidth = 2.4;
+        c.beginPath(); c.roundRect(6, -6 + bob, 14 + reach, 8, 4); c.fill(); c.stroke();
+        c.strokeStyle = '#f43f5e'; c.lineWidth = 2.8;
+        for (let k = -4; k <= 4; k += 4) {
+          c.beginPath(); c.moveTo(19 + reach, -2 + k + bob); c.lineTo(31 + reach, -4 + k * 1.4 + bob); c.stroke();
+        }
+        if (attacking || ultPose) {
+          if (comboStep === 3 || ultPose) {
+            // Finisher: Twin-Fang X-Rend!
+            c.strokeStyle = '#f43f5e'; c.lineWidth = 5;
+            c.beginPath(); c.moveTo(14, -24 + bob); c.lineTo(48, 16 + bob); c.moveTo(14, 16 + bob); c.lineTo(48, -24 + bob); c.stroke();
+          } else if (comboStep === 1) {
+            // Hit 2: Reverse upward magenta claw arc
+            c.strokeStyle = '#e879f9'; c.lineWidth = 4.5;
+            c.beginPath(); c.arc(20, 4 + bob, 30, -1.1, 0.2); c.stroke();
+          } else if (comboStep === 0) {
+            // Hit 1: Crisp downward tiger swipe
+            c.strokeStyle = '#f43f5e'; c.lineWidth = 4;
+            c.beginPath(); c.arc(18, -4 + bob, 28, -0.5, 0.9); c.stroke();
+          }
+        }
+      } else if (charId === 'dog') {
+        // === BUSTER: BOXER DOG ===
+        // Sturdy Laced Boxing Boots
+        c.fillStyle = '#dc2626'; c.strokeStyle = ink; c.lineWidth = 2.6;
+        c.beginPath(); c.roundRect(-14 - stride * 0.5, 16 + bob, 12, 20, 5); c.fill(); c.stroke();
+        c.beginPath(); c.roundRect(3 + stride * 0.5, 16 + bob, 12, 20, 5); c.fill(); c.stroke();
+        c.fillStyle = '#fff'; c.fillRect(-13 - stride * 0.5, 18 + bob, 10, 4); c.fillRect(4 + stride * 0.5, 18 + bob, 10, 4);
+
+        // Championship Boxing Shorts + Broad Muscular Torso
+        c.fillStyle = '#ea580c';
+        c.beginPath(); c.roundRect(-18, -14 + bob, 36, 30, 10); c.fill(); c.stroke();
+        c.fillStyle = '#1e293b'; c.fillRect(-16, 10 + bob, 32, 10); c.strokeRect(-16, 10 + bob, 32, 10);
+        c.fillStyle = '#facc15'; c.fillRect(-16, 8 + bob, 32, 5); // Gold belt trim
+
+        // Expressive Boxer Dog Head + Snout + Floppy Ear
+        c.fillStyle = '#d97706';
+        c.beginPath(); c.arc(0, -25 + bob, 15.5, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Snout muzzle & black nose
+        c.fillStyle = '#fef3c7';
+        c.beginPath(); c.ellipse(10, -21 + bob, 10, 7.5, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = '#0f172a'; c.beginPath(); c.ellipse(17, -23 + bob, 4, 3, 0, 0, Math.PI * 2); c.fill();
+        // Floppy ear
+        c.fillStyle = '#78350f';
+        c.beginPath(); c.ellipse(-11, -21 + bob, 6, 12, 0.25, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Fierce eye + brow
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(5, -28 + bob, 4, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = '#0f172a'; c.beginPath(); c.arc(6.5, -28 + bob, 2, 0, Math.PI * 2); c.fill();
+
+        // Oversized Glossy Red Boxing Gloves (1-2 Boxing Combo: 1 = Snap Jab, 2 = Heavy Cross/Uppercut!)
+        const gloveX = ultPose ? -14 : (attacking && comboStep === 1 ? 34 + atkReach : 20 + atkReach * 1.1);
+        const gloveY = ultPose ? -6 + bob : (attacking && comboStep === 1 ? -14 + bob : -2 + bob);
+        c.fillStyle = '#b91c1c'; c.beginPath(); c.arc(attacking && comboStep === 1 ? -10 : 2, -4 + bob, 11, 0, Math.PI * 2); c.fill(); c.stroke();
+        if (attacking && comboStep === 1) {
+          // Heavy "2" Cross/Uppercut fiery shock ring!
+          c.strokeStyle = '#facc15'; c.lineWidth = 5;
+          c.beginPath(); c.arc(gloveX, gloveY, 20, -1.2, 1.2); c.stroke();
+        }
+        // Front striking glove + fiery aura if ultPose!
+        if (ultPose) {
+          const fg = c.createRadialGradient(gloveX, gloveY, 4, gloveX, gloveY, 28);
+          fg.addColorStop(0, '#fef08a'); fg.addColorStop(0.55, '#f97316'); fg.addColorStop(1, 'rgba(239,68,68,0)');
+          c.fillStyle = fg; c.beginPath(); c.arc(gloveX, gloveY, 28, 0, Math.PI * 2); c.fill();
+        }
+        c.fillStyle = '#ef4444'; c.beginPath(); c.arc(gloveX, gloveY, 13, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = 'rgba(255,255,255,0.45)'; c.beginPath(); c.arc(gloveX - 4, gloveY - 4, 4, 0, Math.PI * 2); c.fill();
+      } else if (charId === 'turtle') {
+        // === MASTER BO: MONK TURTLE (SHAOLIN BAJIQUAN) ===
+        // Detailed Hexagonal Jade-Gold Shell on Back!
+        c.fillStyle = '#15803d'; c.strokeStyle = ink; c.lineWidth = 2.8;
+        c.beginPath(); c.ellipse(-13, 1 + bob, 15, 24, -0.08, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.strokeStyle = '#facc15'; c.lineWidth = 2;
+        c.beginPath(); c.ellipse(-13, 1 + bob, 9, 15, -0.08, 0, Math.PI * 2); c.stroke();
+
+        // Sturdy Monk Legs (Ult Pose: High Bajiquan Stomp Leg Raised!)
+        c.fillStyle = '#166534'; c.strokeStyle = ink; c.lineWidth = 2.6;
+        c.beginPath(); c.roundRect(-12 - stride * 0.4, 16 + bob, 12, 20, 5); c.fill(); c.stroke();
+        if (ultPose) {
+          c.beginPath(); c.roundRect(6, 2 + bob, 14, 18, 5); c.fill(); c.stroke();
+        } else {
+          c.beginPath(); c.roundRect(4 + stride * 0.4, 16 + bob, 12, 20, 5); c.fill(); c.stroke();
+        }
+
+        // Saffron Shaolin Monk Robe + Wooden Prayer Beads
+        c.fillStyle = '#f59e0b';
+        c.beginPath(); c.roundRect(-13, -12 + bob, 30, 31, 9); c.fill(); c.stroke();
+        c.fillStyle = '#fde68a'; // Plastron chest
+        c.beginPath(); c.roundRect(0, -10 + bob, 14, 24, 5); c.fill(); c.stroke();
+        // Prayer Beads necklace
+        c.fillStyle = '#78350f';
+        for (let b = -6; b <= 10; b += 4.5) {
+          c.beginPath(); c.arc(b, -10 + bob + Math.abs(b - 2) * 0.25, 3, 0, Math.PI * 2); c.fill(); c.stroke();
+        }
+
+        // Wise Monk Turtle Head + White Eyebrows & Mustache
+        c.fillStyle = '#4ade80';
+        c.beginPath(); c.arc(4, -25 + bob, 14, 0, Math.PI * 2); c.fill(); c.stroke();
+        c.fillStyle = '#0f172a'; c.beginPath(); c.arc(10, -26 + bob, 2.5, 0, Math.PI * 2); c.fill();
+        // Wise white martial eyebrows & beard
+        c.strokeStyle = '#ffffff'; c.lineWidth = 3.2;
+        c.beginPath(); c.moveTo(4, -30 + bob); c.lineTo(15, -28 + bob); c.stroke();
+        c.beginPath(); c.moveTo(8, -19 + bob); c.quadraticCurveTo(16, -18 + bob, 18, -13 + bob); c.stroke();
+
+        // Bajiquan 3-Hit Martial Form: Elbow Strike -> Shoulder Ram -> Twin-Palm Chi Thrust!
+        c.fillStyle = '#4ade80'; c.strokeStyle = ink; c.lineWidth = 2.6;
+        if (attacking && comboStep === 0) {
+          // Hit 1: Iron Elbow Strike (bent forward arm)
+          c.beginPath(); c.roundRect(8, -8 + bob, 20, 11, 5); c.fill(); c.stroke();
+          c.strokeStyle = '#facc15'; c.lineWidth = 4;
+          c.beginPath(); c.moveTo(26, -12 + bob); c.lineTo(36, -2 + bob); c.lineTo(26, 8 + bob); c.stroke();
+        } else if (attacking && comboStep === 1) {
+          // Hit 2: Armored Shoulder Ram (burst aura forward)
+          c.strokeStyle = '#4ade80'; c.lineWidth = 6;
+          c.beginPath(); c.arc(16, -2 + bob, 24, -0.9, 0.9); c.stroke();
+          c.beginPath(); c.roundRect(4, -4 + bob, 16, 10, 5); c.fill(); c.stroke();
+        } else {
+          // Idle or Hit 3 Finisher: Explosive Twin-Palm Chi Thrust!
+          c.beginPath(); c.roundRect(10, -5 + bob, 16 + atkReach * 1.2, 10, 5); c.fill(); c.stroke();
+          c.fillStyle = '#facc15'; c.fillRect(14 + atkReach * 0.5, -5 + bob, 6, 10);
+          if (attacking && comboStep === 2) {
+            c.strokeStyle = '#facc15'; c.lineWidth = 5;
+            c.beginPath(); c.arc(34 + atkReach, 0 + bob, 22, -1.3, 1.3); c.stroke();
+            c.strokeStyle = '#ffffff'; c.lineWidth = 3;
+            c.beginPath(); c.arc(42 + atkReach, 0 + bob, 14, -1.1, 1.1); c.stroke();
+          }
+        }
+      }
+      c.restore();
+    }
+
+    // =========================================================================
+    // 6. GAME STATE & MENU BUILDER (WITH LIVE CHARACTER PORTRAIT CANVASES!)
+    // =========================================================================
+    const W = 1200, H = 700;
+    const G = {
+      mode: '1p', level: 'a1a2', mapIdx: 0, p1Char: 'human', p2Char: 'cat',
+      running: false, paused: false, keys: {},
+      fighters: [], platforms: [], boxes: [], projectiles: [], particles: [], afterimages: [], hitEffects: [], floatTexts: [],
+      phaseIdx: 0, shiftTimer: 0, shiftWarn: 0,
+      boxTimer: 10, hitstop: 0, shake: 0,
+      cutscene: null, pendingMatchEnd: false, matchEndTimer: 0, activeQuiz: null, quizLock: false, quizDeck: [], quizRight: 0, quizTotal: 0,
+      lastTime: 0, elapsed: 0
+    };
+
+    const canvas = document.getElementById('arena-canvas');
+    const ctx = canvas.getContext('2d');
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resize); resize();
+
+    function renderMenuRoster() {
+      const grid = document.getElementById('fighter-grid');
+      grid.innerHTML = ROSTER_IDS.map(id => {
+        const f = ROSTER[id];
+        const cls = (G.p1Char === id ? ' sel-p1' : '') + (G.mode === '2p' && G.p2Char === id ? ' sel-p2' : '');
+        const tag = G.p1Char === id ? '<span style="color:var(--cyan);font-size:11px;font-weight:900;">P1</span>' :
+                    (G.mode === '2p' && G.p2Char === id ? '<span style="color:var(--red);font-size:11px;font-weight:900;">P2</span>' : '');
+        return `<div class="fighter-card${cls}" data-fid="${id}">
+          <div class="f-portrait-wrap"><canvas class="f-port-cv" data-cid="${id}" width="120" height="82"></canvas></div>
+          <div class="f-head"><span class="f-name">${f.name}</span>${tag}</div>
+          <div class="f-style">${f.species} · ${f.style}</div>
+          <div class="stat-row">${f.statsText}</div>
+          <div class="f-moves">
+            <div><strong style="color:var(--gold);">🟨 必殺：</strong>${f.spDesc}</div>
+            <div><strong style="color:#fda4af;">🟥 奧義：</strong>${f.ultDesc}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // Draw crisp articulated portraits on every card!
+      grid.querySelectorAll('.f-port-cv').forEach(cv => {
+        const pctx = cv.getContext('2d');
+        pctx.save(); pctx.translate(58, 48);
+        drawCharacterArt(pctx, cv.dataset.cid, { scale: 0.92, facing: 1 });
+        pctx.restore();
+      });
+
+      grid.querySelectorAll('[data-fid]').forEach(el => el.addEventListener('click', () => {
+        const id = el.dataset.fid;
+        if (G.mode === '1p') { G.p1Char = id; }
+        else {
+          if (G.p1Char === id) return;
+          if (G.p2Char === id) { G.p2Char = G.p1Char; G.p1Char = id; }
+          else { G.p2Char = G.p1Char; G.p1Char = id; }
+        }
+        renderMenuRoster();
+      }));
+    }
+
+    function renderMenuMaps() {
+      const grid = document.getElementById('map-grid');
+      grid.innerHTML = MAPS.map((m, idx) => `
+        <button type="button" class="map-btn ${G.mapIdx === idx ? 'active' : ''}" data-mid="${idx}">
+          <b>${idx + 1}. ${m.name}</b>
+          <small>${m.tag}</small>
+        </button>
+      `).join('');
+      grid.querySelectorAll('[data-mid]').forEach(btn => btn.addEventListener('click', () => {
+        G.mapIdx = Number(btn.dataset.mid);
+        renderMenuMaps();
+      }));
+    }
+
+    function updateCtrlStrip() {
+      const p1h = document.getElementById('p1-ctrl-hint');
+      const p2h = document.getElementById('p2-ctrl-hint');
+      if (G.mode === '1p') {
+        p1h.innerHTML = '<strong style="color:var(--cyan);">1P 2-Handed:</strong><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> Move / Double-Tap Dash · <span class="kbd">J</span> Combo Attack · <span class="kbd">K</span> Special / Ult';
+        p2h.style.opacity = '0.6';
+      } else {
+        p1h.innerHTML = '<strong style="color:var(--cyan);">P1 1-Handed:</strong><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> Move / Double-Tap Dash · <span class="kbd">E</span> Combo Attack · <span class="kbd">R</span> Special / Ult';
+        p2h.style.opacity = '1';
+      }
+    }
+    document.querySelectorAll('[data-mode]').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active'); G.mode = btn.dataset.mode;
+      if (G.p2Char === G.p1Char) G.p2Char = ROSTER_IDS.find(x => x !== G.p1Char);
+      updateCtrlStrip();
+      renderMenuRoster();
+    }));
+    document.querySelectorAll('[data-level]').forEach(btn => btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-level]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active'); G.level = btn.dataset.level;
+    }));
+    document.getElementById('bgm-btn').addEventListener('click', () => {
+      const on = AudioSys.toggle();
+      document.getElementById('bgm-btn').textContent = on ? '🎵 BGM: ON' : '🔇 BGM: OFF';
+    });
+    document.getElementById('menu-btn').addEventListener('click', backToMenu);
+    document.getElementById('end-menu-btn').addEventListener('click', backToMenu);
+    document.getElementById('rematch-btn').addEventListener('click', () => {
+      document.getElementById('end-modal').style.display = 'none';
+      startMatch();
+    });
+    document.getElementById('start-btn').addEventListener('click', () => {
+      AudioSys.init(); startMatch();
+    });
+
+    function backToMenu() {
+      G.running = false; G.paused = false; G.activeQuiz = null; G.cutscene = null;
+      document.getElementById('hud-layer').style.display = 'none';
+      document.getElementById('quiz-modal').style.display = 'none';
+      document.getElementById('end-modal').style.display = 'none';
+      document.getElementById('menu-btn').style.display = 'none';
+      document.getElementById('start-screen').classList.remove('hidden');
+    }
+
+    function pushToast(msg) {
+      const b = document.getElementById('toast-box');
+      const d = document.createElement('div'); d.className = 'toast-item'; d.textContent = msg;
+      b.appendChild(d); setTimeout(() => d.remove(), 2600);
+    }
+
+    // =========================================================================
+    // 7. MATCH INITIALIZATION & ONE-HANDED CONTROLS (SINGLE CHARGE SLOT!)
+    // =========================================================================
+    function clonePlatforms(phase) {
+      return phase.map(p => ({ ...p, baseX: p.x, baseY: p.y }));
+    }
+
+    function createFighter(charId, slot, isHuman, ctrlTag, spawnX) {
+      const spec = ROSTER[charId];
+      return {
+        charId, spec, slot, isHuman, ctrlTag,
+        x: spawnX, y: 200, vx: 0, vy: 0, w: 54, h: 78,
+        facing: spawnX < W / 2 ? 1 : -1,
+        hp: spec.maxHp, maxHp: spec.maxHp, stocks: 3,
+        onGround: false, jumpsLeft: 2, dropTimer: 0,
+        invuln: 1.2, stun: 0, hitFlash: 0,
+        sx: 1, sy: 1, lean: 0, hitChain: 0,
+        atkTimer: 0, atkCd: 0, comboStep: 0, comboReset: 0,
+        charge: null, // SINGLE SLOT: null | 'special' | 'ult' (cannot hold both!)
+        shellTimer: 0,
+        dashTimer: 0, dashCd: 0, dashGhostTick: 0, lastTapDir: 0, lastTapTime: 0,
+        blastQueue: 0, blastDelay: 0,
+        kos: 0, dmgDealt: 0, eliminated: false,
+        animT: 0, aiCd: 0
+      };
+    }
+
+    function startMatch() {
+      const map = MAPS[G.mapIdx];
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('hud-layer').style.display = 'block';
+      document.getElementById('menu-btn').style.display = 'inline-block';
+      document.getElementById('hud-map-name').textContent = `${map.name} · ${map.tag}`;
+      document.getElementById('hud-level-tag').textContent = G.level === 'a1a2' ? 'CEFR A1–A2' : 'CEFR B1–B2';
+
+      G.phaseIdx = 0;
+      G.platforms = clonePlatforms(map.phases[0]);
+      G.shiftTimer = map.shapeshift ? map.shiftInterval : 9999;
+      G.shiftWarn = 0;
+      G.boxes = []; G.projectiles = []; G.particles = []; G.afterimages = []; G.hitEffects = []; G.floatTexts = [];
+      G.boxTimer = 10 + Math.random() * 5;
+      G.hitstop = 0; G.shake = 0; G.cutscene = null; G.pendingMatchEnd = false; G.matchEndTimer = 0; G.activeQuiz = null;
+      G.quizDeck = []; G.quizRight = 0; G.quizTotal = 0; G.elapsed = 0;
+
+      const others = ROSTER_IDS.filter(id => id !== G.p1Char && (G.mode === '1p' || id !== G.p2Char));
+      const spawns = [280, 920, 480, 720];
+      G.fighters = [];
+      G.fighters.push(createFighter(G.p1Char, 0, true, 'P1', spawns[0]));
+      if (G.mode === '2p') {
+        G.fighters.push(createFighter(G.p2Char, 1, true, 'P2', spawns[1]));
+      } else {
+        G.fighters.push(createFighter(others.shift(), 1, false, 'AI-1', spawns[1]));
+      }
+      others.forEach((cid, i) => G.fighters.push(createFighter(cid, 2 + i, false, `AI-${G.mode === '2p' ? i + 1 : i + 2}`, spawns[2 + i])));
+
+      G.running = true; G.paused = false;
+      G.lastTime = performance.now();
+      updateHUD();
+      pushToast(G.mode === '1p' ? `⚔️ ${map.name} 開戰！[WASD]Move / Double-Tap Dash · [J]普攻 · [K]大招` : `⚔️ ${map.name} FIGHT! P1:[E/R] ｜ P2:[Shift /] · Double-Tap Dash!`);
+    }
+
+    // One-Handed Controls:
+    // P1: WASD + E (attack) + R (special/ult)
+    // P2: Arrows + ShiftRight (attack) + Slash (special/ult)
+    window.addEventListener('keydown', e => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
+      G.keys[e.code] = true;
+      if (G.activeQuiz) {
+        if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
+          const i = Number(e.code.replace('Digit', '')) - 1;
+          const btns = document.querySelectorAll('#q-opts .q-opt');
+          if (btns[i]) btns[i].click();
+        }
+        return;
+      }
+      if (!G.running || G.paused || G.cutscene) return;
+      const p1 = G.fighters[0];
+      if (p1 && !p1.eliminated) {
+        if (!e.repeat && e.code === 'KeyA') handleDashTap(p1, -1);
+        if (!e.repeat && e.code === 'KeyD') handleDashTap(p1, 1);
+        if (e.code === 'KeyW') doJump(p1);
+        if (e.code === 'KeyS') p1.dropTimer = 0.25;
+        if (G.mode === '1p') {
+          if (e.code === 'KeyJ' || e.code === 'KeyE') doBasicAttack(p1);
+          if (e.code === 'KeyK' || e.code === 'KeyR') triggerChargedSkill(p1);
+        } else {
+          if (e.code === 'KeyE') doBasicAttack(p1);
+          if (e.code === 'KeyR') triggerChargedSkill(p1);
+        }
+      }
+      if (G.mode === '2p') {
+        const p2 = G.fighters[1];
+        if (p2 && !p2.eliminated) {
+          if (!e.repeat && e.code === 'ArrowLeft') handleDashTap(p2, -1);
+          if (!e.repeat && e.code === 'ArrowRight') handleDashTap(p2, 1);
+          if (e.code === 'ArrowUp') doJump(p2);
+          if (e.code === 'ArrowDown') p2.dropTimer = 0.25;
+          if (e.code === 'ShiftRight' || e.code === 'ShiftLeft') doBasicAttack(p2);
+          if (e.code === 'Slash') triggerChargedSkill(p2);
+        }
+      }
+    });
+    window.addEventListener('keyup', e => { G.keys[e.code] = false; });
+
+    function handleDashTap(f, dir) {
+      if (f.stun > 0 || f.dashCd > 0) return;
+      const now = performance.now();
+      if (f.lastTapDir === dir && (now - f.lastTapTime) < 270) {
+        f.dashTimer = 0.20;
+        f.dashCd = 0.60;
+        f.dashGhostTick = 0;
+        f.facing = dir;
+        f.vx = dir * (f.spec.speed * 2.85);
+        f.vy = Math.min(f.vy, -1.2);
+        f.invuln = Math.max(f.invuln, 0.16);
+        f.lastTapDir = 0;
+        AudioSys.sfx('blast');
+        spawnParticles(f.x, f.y + 16, f.spec.color, 10);
+        G.afterimages.push({ x: f.x, y: f.y, charId: f.charId, facing: f.facing, life: 0.38 });
+      } else {
+        f.lastTapDir = dir;
+        f.lastTapTime = now;
+      }
+    }
+
+    function doJump(f) {
+      if (f.stun > 0 || f.jumpsLeft <= 0) return;
+      f.vy = -12.8; f.onGround = false; f.jumpsLeft--;
+      f.sx = 0.80; f.sy = 1.24; // Crisp vertical stretch on jump!
+      spawnParticles(f.x, f.y + f.h / 2, '#e2e8f0', 8);
+    }
+
+    function triggerChargedSkill(f) {
+      if (!f.charge || f.stun > 0 || f.shellTimer > 0) return;
+      if (f.charge === 'ult') doUltimateAttack(f);
+      else if (f.charge === 'special') doSpecialAttack(f);
+    }
+
+    function doBasicAttack(f) {
+      if (f.stun > 0 || f.atkCd > 0 || f.shellTimer > 0) return;
+      f.comboStep = (f.comboReset > 0 ? (f.comboStep + 1) % f.spec.comboLen : 0);
+      const isFinisher = f.comboStep === f.spec.comboLen - 1;
+      // Generous manual chain window; resets automatically after finisher or if interrupted by stun!
+      f.comboReset = isFinisher ? 0 : 0.62;
+      f.atkTimer = isFinisher ? 0.28 : 0.19;
+      f.atkCd = isFinisher
+        ? (f.charId === 'dog' ? 0.42 : 0.36)
+        : (f.charId === 'cat' ? 0.16 : (f.charId === 'dog' ? 0.24 : 0.20));
+      // Martial arts forward step-in lunge so follow-up combo hits naturally stay in range!
+      f.vx = f.facing * (isFinisher ? 7.0 : 5.0);
+      // Expressive martial body posture snap (lean back on high kick/uppercut, lean forward on jabs/elbows!)
+      if (f.charId === 'human' && f.comboStep === 2) { f.lean = -0.32; f.sx = 1.15; f.sy = 0.90; }
+      else if (f.charId === 'dog' && f.comboStep === 1) { f.lean = -0.26; f.sx = 0.88; f.sy = 1.20; }
+      else if (f.charId === 'cat' && f.comboStep === 2) { f.lean = 0.35; f.sx = 1.24; f.sy = 0.78; }
+      else { f.lean = 0.30; f.sx = 1.18; f.sy = 0.88; }
+      AudioSys.sfx(isFinisher ? 'heavy' : 'hit');
+
+      const hx = f.x + f.facing * (f.spec.range * 0.68);
+      const hy = f.y;
+      for (let i = G.boxes.length - 1; i >= 0; i--) {
+        const b = G.boxes[i];
+        if (Math.hypot(b.x - hx, b.y - hy) < 64) {
+          b.hp--;
+          spawnParticles(b.x, b.y, b.kind === 'red' ? '#f43f5e' : '#facc15', 12);
+          AudioSys.sfx('box');
+          if (b.hp <= 0) {
+            G.boxes.splice(i, 1);
+            if (f.isHuman) {
+              triggerBoxQuiz(f, b.kind);
+            } else if (Math.random() < 0.55) {
+              f.charge = b.kind === 'red' ? 'ult' : 'special';
+              pushToast(`🤖 ${f.spec.name} grabbed a ${b.kind === 'red' ? '🟥 Ultimate' : '🟨 Special'} charge!`);
+              updateHUD();
+            }
+          }
+        }
+      }
+
+      const dmg = Math.round(f.spec.dmg * (isFinisher ? 1.45 : 1.0));
+      // Early combo hits keep target close in brief hitstun so player can manually chain; finisher launches!
+      const kbX = isFinisher ? 12.6 : 2.1;
+      const kbY = isFinisher ? -8.2 : -1.2;
+      const moveLabel = (f.spec.comboNames && f.spec.comboNames[f.comboStep]) || '';
+      G.fighters.forEach(t => {
+        if (t === f || t.eliminated || t.invuln > 0 || t.shellTimer > 0) return;
+        if (Math.abs(t.x - hx) < f.spec.range * 0.82 && Math.abs(t.y - hy) < 64) {
+          applyHit(f, t, dmg, f.facing * kbX, kbY, isFinisher ? 0.30 : 0.34, moveLabel);
+        }
+      });
+    }
+
+    function doSpecialAttack(f) {
+      f.charge = null;
+      updateHUD();
+
+      if (f.charId === 'human') {
+        f.blastQueue = 3; f.blastDelay = 0;
+        pushToast(`⚡ ${f.ctrlTag} Ren fired [3 Energy Blasts]!`);
+      } else if (f.charId === 'cat') {
+        const target = G.fighters.filter(o => o !== f && !o.eliminated)
+          .sort((a, b) => Math.hypot(a.x - f.x, a.y - f.y) - Math.hypot(b.x - f.x, b.y - f.y))[0];
+        if (target) {
+          // Leave glowing afterimage + teleport lightning trail
+          G.afterimages.push({ x: f.x, y: f.y, charId: 'cat', facing: f.facing, life: 0.45 });
+          for (let s = 0; s < 10; s++) {
+            const p = s / 10;
+            spawnParticles(f.x + (target.x - f.x) * p, f.y + (target.y - f.y) * p, '#a855f7', 2);
+          }
+          f.x = target.x - target.facing * 48;
+          f.y = target.y - 6;
+          f.facing = target.x >= f.x ? 1 : -1;
+          f.atkTimer = 0.30;
+          spawnParticles(target.x, target.y, '#f43f5e', 20);
+          AudioSys.sfx('blast');
+          if (target.shellTimer <= 0) applyHit(f, target, 14, f.facing * 7.8, -5.8);
+          pushToast(`🐾 ${f.ctrlTag} Kage landed [Shadow Blink]!`);
+        }
+      } else if (f.charId === 'dog') {
+        f.atkTimer = 0.32;
+        const hx = f.x + f.facing * (f.spec.range * 0.78);
+        const target = G.fighters.find(t => t !== f && !t.eliminated && t.invuln <= 0 && t.shellTimer <= 0 && Math.abs(t.x - hx) < f.spec.range * 0.85 && Math.abs(t.y - f.y) < 64);
+        AudioSys.sfx('heavy');
+        if (target) {
+          pushToast(`🥊 ${f.ctrlTag} Buster landed [2x Rush 4-Hit Barrage]!`);
+          let hitNum = 0;
+          const iv = setInterval(() => {
+            if (!G.running || target.eliminated) { clearInterval(iv); return; }
+            hitNum++;
+            f.atkTimer = 0.16; f.comboStep = hitNum % 2;
+            spawnParticles(target.x, target.y, '#f97316', 12);
+            applyHit(f, target, 9, f.facing * (hitNum === 4 ? 13.5 : 2.2), hitNum === 4 ? -9.0 : -2.0);
+            if (hitNum >= 4) clearInterval(iv);
+          }, 115);
+        } else {
+          pushToast(`🥊 ${f.ctrlTag} Buster missed the rush opener!`);
+        }
+      } else if (f.charId === 'turtle') {
+        f.shellTimer = 3.0;
+        AudioSys.sfx('blast');
+        pushToast(`🐢 ${f.ctrlTag} Master Bo entered [Invincible Shell Spin] (3s)!`);
+      }
+    }
+
+    function doUltimateAttack(f) {
+      if (G.cutscene) return;
+      f.charge = null;
+      updateHUD();
+      AudioSys.sfx('ult');
+      G.cutscene = { fighter: f, timer: 0, maxTimer: 2.55, applied: false };
+      pushToast(`🔥 ${f.ctrlTag} ${f.spec.name} unleashed [${f.spec.ultName}]!!`);
+    }
+
+    function applyHit(attacker, target, dmg, kbX, kbY, customStun = 0.26, moveLabel = '') {
+      target.hp = Math.max(0, target.hp - dmg);
+      attacker.dmgDealt += dmg;
+      const missingRatio = 1 - (target.hp / target.maxHp);
+      const isLauncher = Math.abs(kbX) > 4.5;
+      const kbScale = isLauncher ? (0.85 + missingRatio * 1.15) : 1.0;
+      target.vx = kbX * kbScale;
+      target.vy = kbY * kbScale;
+      target.stun = customStun;
+      target.hitFlash = 0.12;
+      target.sx = 0.78; target.sy = 1.22;
+      target.lean = -Math.sign(kbX || 1) * 0.38;
+      target.comboReset = 0; // Getting hit cleanly interrupts any ongoing combo!
+      attacker.hitChain = (attacker.comboReset > 0 || isLauncher) ? attacker.hitChain + 1 : 1;
+      G.hitstop = Math.max(G.hitstop, isLauncher ? 0.085 : 0.038);
+      G.shake = Math.max(G.shake, isLauncher ? 13 : 5.0);
+      spawnParticles(target.x, target.y, attacker.spec.accent, isLauncher ? 24 : 11);
+      G.hitEffects.push({ x: (attacker.x + target.x) * 0.5, y: target.y - 4, r: 10, maxR: isLauncher ? 72 : 42, color: isLauncher ? '#f43f5e' : '#facc15', life: 0.24, maxLife: 0.24 });
+      const chainTag = attacker.hitChain >= 2 ? `${attacker.hitChain} HIT · ` : '';
+      const label = moveLabel ? `${chainTag}${moveLabel} -${dmg}` : `-${dmg}`;
+      G.floatTexts.push({ x: target.x, y: target.y - 52, text: label, color: isLauncher ? '#f43f5e' : '#facc15', life: 0.9 });
+      if (isLauncher) attacker.hitChain = 0;
+      AudioSys.sfx(dmg >= 15 ? 'heavy' : 'hit');
+      if (target.hp <= 0) handleKO(target, attacker);
+      updateHUD();
+    }
+
+    function handleKO(victim, killer) {
+      if (victim.eliminated) return;
+      victim.stocks--;
+      if (killer && killer !== victim) killer.kos++;
+      AudioSys.sfx('ko');
+      G.shake = 14;
+      spawnParticles(Math.max(40, Math.min(W - 40, victim.x)), Math.max(40, Math.min(H - 40, victim.y)), victim.spec.color, 34);
+      if (victim.stocks <= 0) {
+        victim.eliminated = true;
+        pushToast(`💀 ${victim.ctrlTag} ${victim.spec.name} ELIMINATED!`);
+        checkMatchOver();
+      } else {
+        victim.hp = victim.maxHp;
+        victim.x = W / 2 + (Math.random() - 0.5) * 200;
+        victim.y = 120; victim.vx = 0; victim.vy = 0;
+        victim.invuln = 2.0; victim.stun = 0; victim.shellTimer = 0;
+        pushToast(`💥 ${victim.ctrlTag} ${victim.spec.name} KO'd! (${victim.stocks} stocks left)`);
+      }
+      updateHUD();
+    }
+
+    function checkMatchOver() {
+      if (G.pendingMatchEnd) return;
+      const alive = G.fighters.filter(f => !f.eliminated);
+      const humansAlive = alive.filter(f => f.isHuman);
+      if (alive.length <= 1 || humansAlive.length === 0) {
+        G.pendingMatchEnd = true;
+        G.matchEndTimer = 1.0; // Wait 1 full second AFTER any active ult cutscene finishes!
+      }
+    }
+
+    function showEndModal() {
+      G.running = false;
+      const alive = G.fighters.filter(f => !f.eliminated);
+      const winner = alive[0] || [...G.fighters].sort((a, b) => b.dmgDealt - a.dmgDealt)[0];
+      document.getElementById('end-title').textContent = `🏆 ${winner.ctrlTag} ${winner.spec.name} WINS!`;
+      document.getElementById('end-sub').textContent = `Stage: ${MAPS[G.mapIdx].name} · Mandarin Quiz Accuracy: ${G.quizRight}/${G.quizTotal}`;
+      document.getElementById('end-stats').innerHTML = [...G.fighters].sort((a, b) => (b.stocks - a.stocks) || (b.dmgDealt - a.dmgDealt)).map(f => `
+        <div class="end-row">
+          <span style="color:${f.spec.color};">${f.ctrlTag} ${f.spec.name} (${f.spec.style})</span>
+          <span>KO ${f.kos} · DMG ${f.dmgDealt} · Stocks ${Math.max(0, f.stocks)}</span>
+        </div>
+      `).join('');
+      document.getElementById('end-modal').style.display = 'flex';
+    }
+
+    // =========================================================================
+    // 8. ENGLISH BOX QUIZ MODAL (SINGLE CHARGE SLOT RULE)
+    // =========================================================================
+    function triggerBoxQuiz(fighter, boxKind) {
+      if (G.activeQuiz) return;
+      G.paused = true; G.quizLock = false;
+      if (G.quizDeck.length === 0) {
+        G.quizDeck = [...QUESTIONS[G.level]].sort(() => Math.random() - 0.5);
+      }
+      const q = G.quizDeck.pop();
+      G.activeQuiz = { fighter, boxKind, q };
+
+      const card = document.getElementById('quiz-card');
+      card.classList.toggle('red-box', boxKind === 'red');
+      document.getElementById('q-box-pill').textContent = boxKind === 'red' ? '🟥 Red Box · Unlock Full-Arena Ultimate!' : '🟨 Yellow Box · Unlock Signature Special!';
+      document.getElementById('q-player-lbl').textContent = `${fighter.ctrlTag} ${fighter.spec.name}'s Turn`;
+      document.getElementById('q-en-text').textContent = q.zh;
+      const hint = document.getElementById('q-hint-text');
+      hint.style.display = 'none'; hint.textContent = `Pinyin: ${q.pinyin}`;
+
+      const optsEl = document.getElementById('q-opts');
+      optsEl.innerHTML = '';
+      [...q.opts].sort(() => Math.random() - 0.5).forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'q-opt';
+        b.innerHTML = `<span class="q-key">${i + 1}</span><span>${opt}</span>`;
+        b.addEventListener('click', () => resolveQuiz(opt === q.ans, b));
+        optsEl.appendChild(b);
+      });
+
+      document.getElementById('quiz-modal').style.display = 'flex';
+      speakZH(q.zh);
+    }
+
+    document.getElementById('q-audio-btn').addEventListener('click', () => { if (G.activeQuiz) speakZH(G.activeQuiz.q.zh); });
+    document.getElementById('q-hint-btn').addEventListener('click', () => {
+      const h = document.getElementById('q-hint-text');
+      h.style.display = h.style.display === 'none' ? 'block' : 'none';
+    });
+
+    function resolveQuiz(ok, btn) {
+      if (!G.activeQuiz || G.quizLock) return;
+      G.quizLock = true;
+      G.quizTotal++; if (ok) G.quizRight++;
+      btn.classList.add(ok ? 'ok' : 'bad');
+      const { fighter, boxKind } = G.activeQuiz;
+
+      setTimeout(() => {
+        document.getElementById('quiz-modal').style.display = 'none';
+        G.activeQuiz = null; G.paused = false;
+        if (ok) {
+          AudioSys.sfx('box');
+          const keyLabel = fighter.ctrlTag === 'P1' ? (G.mode === '1p' ? 'K' : 'R') : '/';
+          if (boxKind === 'red') {
+            fighter.charge = 'ult';
+            pushToast(`🔥 Correct! ${fighter.ctrlTag} ULT READY! (Press ${keyLabel})`);
+          } else {
+            fighter.charge = 'special';
+            pushToast(`⚡ Correct! ${fighter.ctrlTag} SPECIAL READY! (Press ${keyLabel})`);
+          }
+        } else {
+          AudioSys.sfx('hit');
+          pushToast(`❌ Missed! The box energy faded—try the next one!`);
+        }
+        updateHUD();
+      }, 420);
+    }
+
+    // =========================================================================
+    // 9. PHYSICS, SHAPESHIFTING MAPS, AI & PARTICLE ENGINE
+    // =========================================================================
+    function spawnParticles(x, y, color, count) {
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6.5;
+        G.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1.5, color, r: 3 + Math.random() * 4.5, life: 0.4 + Math.random() * 0.35 });
+      }
+    }
+
+    function updateSimulation(dt) {
+      G.elapsed += dt;
+      if (G.shake > 0) G.shake = Math.max(0, G.shake - dt * 28);
+
+      if (G.cutscene) {
+        G.cutscene.timer += dt;
+        if (G.cutscene.timer >= 1.35 && !G.cutscene.applied) {
+          G.cutscene.applied = true;
+          const caster = G.cutscene.fighter;
+          AudioSys.sfx('heavy'); G.shake = 22;
+          G.fighters.forEach(t => {
+            if (t !== caster && !t.eliminated) {
+              const dir = t.x >= caster.x ? 1 : -1;
+              applyHit(caster, t, ULT_DAMAGE, dir * 14.0, -10.5);
+            }
+          });
+        }
+        if (G.cutscene.timer >= G.cutscene.maxTimer) G.cutscene = null;
+        return;
+      }
+
+      if (G.pendingMatchEnd) {
+        G.matchEndTimer -= dt;
+        if (G.matchEndTimer <= 0) {
+          showEndModal();
+          return;
+        }
+      }
+
+      if (G.hitstop > 0) { G.hitstop -= dt; return; }
+      const map = MAPS[G.mapIdx];
+
+      if (map.shapeshift) {
+        G.shiftTimer -= dt;
+        if (G.shiftTimer <= 2.0) G.shiftWarn = 2.0 - G.shiftTimer;
+        if (G.shiftTimer <= 0) {
+          const next = (G.phaseIdx + 1 + Math.floor(Math.random() * (map.phases.length - 1))) % map.phases.length;
+          G.phaseIdx = next; G.platforms = clonePlatforms(map.phases[next]);
+          G.shiftTimer = map.shiftInterval; G.shiftWarn = 0; G.shake = 6;
+          pushToast(`🌀 STAGE SHIFT! Layout morphed to Phase #${next + 1}!`);
+        }
+      }
+      G.platforms.forEach(p => {
+        if (p.moveY) p.y = p.baseY + Math.sin(G.elapsed * p.speed) * p.moveY;
+        if (p.moveX) p.x = p.baseX + Math.sin(G.elapsed * p.speed) * p.moveX;
+      });
+
+      G.boxTimer -= dt;
+      if (G.boxTimer <= 0 && G.boxes.length < 2) {
+        const kind = Math.random() < 0.35 ? 'red' : 'yellow';
+        const plat = G.platforms[Math.floor(Math.random() * G.platforms.length)];
+        const bx = plat.x + 40 + Math.random() * Math.max(20, plat.w - 80);
+        G.boxes.push({ x: bx, y: -30, vy: 0, kind, hp: 2 });
+        G.boxTimer = 10 + Math.random() * 5;
+        pushToast(kind === 'red' ? '🟥 Red Ultimate Box dropped! Hit 2× for a Mandarin quiz!' : '🟨 Yellow Special Box dropped! Hit 2× for a Mandarin quiz!');
+      }
+
+      G.boxes.forEach(b => {
+        b.vy = Math.min(8, b.vy + 18 * dt); b.y += b.vy;
+        for (const p of G.platforms) {
+          if (b.x > p.x && b.x < p.x + p.w && b.y + 22 >= p.y && b.y + 22 <= p.y + 24 && b.vy >= 0) {
+            b.y = p.y - 22; b.vy = 0;
+          }
+        }
+      });
+
+      G.fighters.forEach(f => {
+        if (f.eliminated) return;
+        f.animT += dt;
+        if (f.invuln > 0) f.invuln -= dt;
+        if (f.stun > 0) f.stun -= dt;
+        if (f.hitFlash > 0) f.hitFlash -= dt;
+        if (f.comboReset <= 0 && f.atkTimer <= 0) f.hitChain = 0;
+        // Elastic squash/stretch & momentum lean spring recovery
+        f.sx += (1 - f.sx) * Math.min(1, dt * 14);
+        f.sy += (1 - f.sy) * Math.min(1, dt * 14);
+        const targetLean = f.dashTimer > 0 ? 0.34 : (Math.abs(f.vx) > 1.2 ? 0.14 : 0);
+        f.lean += (targetLean - f.lean) * Math.min(1, dt * 10);
+        if (f.atkTimer > 0) f.atkTimer -= dt;
+        if (f.atkCd > 0) f.atkCd -= dt;
+        if (f.comboReset > 0) f.comboReset -= dt;
+        if (f.dropTimer > 0) f.dropTimer -= dt;
+        if (f.dashCd > 0) f.dashCd -= dt;
+        if (f.dashTimer > 0) {
+          f.dashTimer -= dt;
+          f.dashGhostTick -= dt;
+          if (f.dashGhostTick <= 0) {
+            f.dashGhostTick = 0.045;
+            G.afterimages.push({ x: f.x, y: f.y, charId: f.charId, facing: f.facing, life: 0.34 });
+          }
+        }
+
+        // Human 3 plasma energy blasts
+        if (f.blastQueue > 0) {
+          f.blastDelay -= dt;
+          if (f.blastDelay <= 0) {
+            f.blastQueue--; f.blastDelay = 0.16;
+            AudioSys.sfx('blast');
+            spawnParticles(f.x + f.facing * 32, f.y - 4, '#38bdf8', 8);
+            G.projectiles.push({ owner: f, x: f.x + f.facing * 36, y: f.y - 4, vx: f.facing * 15.5, dmg: 10, color: '#38bdf8', life: 1.4 });
+          }
+        }
+
+        // Turtle 3s invincible shell spin
+        if (f.shellTimer > 0) {
+          f.shellTimer -= dt;
+          if (Math.random() < 0.45) spawnParticles(f.x, f.y + 18, '#facc15', 2);
+          for (const t of G.fighters) {
+            if (t === f || t.eliminated || t.invuln > 0) continue;
+            if (Math.hypot(t.x - f.x, t.y - f.y) < 56) {
+              f.shellTimer = 0;
+              spawnParticles(t.x, t.y, '#22c55e', 24);
+              applyHit(f, t, 28, (t.x >= f.x ? 1 : -1) * 12.0, -8.5);
+              pushToast(`🐢 Master Bo's Shell Spin combo struck ${t.spec.name}!`);
+              break;
+            }
+          }
+        }
+
+        let moveDir = 0;
+        if (f.stun <= 0) {
+          if (f.isHuman) {
+            if (f.ctrlTag === 'P1') moveDir = (G.keys.KeyD ? 1 : 0) - (G.keys.KeyA ? 1 : 0);
+            else moveDir = (G.keys.ArrowRight ? 1 : 0) - (G.keys.ArrowLeft ? 1 : 0);
+          } else {
+            moveDir = updateAI(f, dt);
+          }
+        }
+        const spdMult = f.shellTimer > 0 ? 1.48 : 1.0;
+        if (f.dashTimer > 0) {
+          f.vx *= 0.96;
+        } else if (f.stun <= 0) {
+          f.vx = f.vx * 0.78 + moveDir * f.spec.speed * spdMult * 0.22;
+          if (moveDir !== 0) f.facing = moveDir;
+        } else {
+          f.vx *= 0.94;
+        }
+
+        f.vy = Math.min(18, f.vy + 32 * dt);
+        const prevBottom = f.y + f.h / 2;
+        f.x += f.vx * 60 * dt; f.y += f.vy * 60 * dt;
+        f.onGround = false;
+
+        for (const p of G.platforms) {
+          if (f.x + f.w * 0.35 > p.x && f.x - f.w * 0.35 < p.x + p.w) {
+            if (p.thin && f.dropTimer > 0) continue;
+            const curBottom = f.y + f.h / 2;
+            if (f.vy >= 0 && prevBottom <= p.y + 18 && curBottom >= p.y) {
+              if (f.vy > 4.5) { f.sx = 1.24; f.sy = 0.78; spawnParticles(f.x, p.y, '#cbd5e1', 5); }
+              f.y = p.y - f.h / 2; f.vy = 0; f.onGround = true; f.jumpsLeft = 2;
+            }
+          }
+        }
+
+        if (f.y > H + 115 || f.x < -145 || f.x > W + 145) handleKO(f, null);
+      });
+
+      for (let i = G.projectiles.length - 1; i >= 0; i--) {
+        const pr = G.projectiles[i];
+        pr.life -= dt; pr.x += pr.vx * 60 * dt;
+        if (Math.random() < 0.5) spawnParticles(pr.x, pr.y, pr.color, 1);
+        let hit = false;
+        for (const t of G.fighters) {
+          if (t === pr.owner || t.eliminated || t.invuln > 0 || t.shellTimer > 0) continue;
+          if (Math.hypot(t.x - pr.x, t.y - pr.y) < 42) {
+            applyHit(pr.owner, t, pr.dmg, Math.sign(pr.vx) * 6.8, -4.2);
+            hit = true; break;
+          }
+        }
+        if (hit || pr.life <= 0 || pr.x < -50 || pr.x > W + 50) G.projectiles.splice(i, 1);
+      }
+
+      for (let i = G.afterimages.length - 1; i >= 0; i--) {
+        G.afterimages[i].life -= dt;
+        if (G.afterimages[i].life <= 0) G.afterimages.splice(i, 1);
+      }
+      for (let i = G.particles.length - 1; i >= 0; i--) {
+        const pt = G.particles[i];
+        pt.life -= dt; pt.x += pt.vx; pt.y += pt.vy; pt.vy += 0.16;
+        if (pt.life <= 0) G.particles.splice(i, 1);
+      }
+      for (let i = G.hitEffects.length - 1; i >= 0; i--) {
+        const he = G.hitEffects[i];
+        he.life -= dt;
+        he.r = he.maxR * (1 - he.life / he.maxLife);
+        if (he.life <= 0) G.hitEffects.splice(i, 1);
+      }
+      for (let i = G.floatTexts.length - 1; i >= 0; i--) {
+        const ft = G.floatTexts[i];
+        ft.life -= dt; ft.y -= 38 * dt;
+        if (ft.life <= 0) G.floatTexts.splice(i, 1);
+      }
+    }
+
+    function updateAI(f, dt) {
+      f.aiCd -= dt;
+      if (f.y > 540 || f.x < 140 || f.x > W - 140) {
+        if (f.vy > 0 && f.jumpsLeft > 0) doJump(f);
+        return f.x < W / 2 ? 1 : -1;
+      }
+      if (f.charge && Math.random() < 0.025) { triggerChargedSkill(f); return 0; }
+      const target = G.fighters.filter(o => o !== f && !o.eliminated)
+        .sort((a, b) => Math.hypot(a.x - f.x, a.y - f.y) - Math.hypot(b.x - f.x, b.y - f.y))[0];
+      if (!target) return 0;
+      const dx = target.x - f.x, dy = target.y - f.y;
+      if (Math.abs(dx) < f.spec.range && Math.abs(dy) < 60 && f.aiCd <= 0) {
+        f.facing = dx >= 0 ? 1 : -1; doBasicAttack(f);
+        f.aiCd = 0.42 + Math.random() * 0.35; return 0;
+      }
+      if (dy < -90 && f.onGround && Math.random() < 0.05) doJump(f);
+      return Math.abs(dx) > 30 ? Math.sign(dx) : 0;
+    }
+
+    // =========================================================================
+    // 10. ARENA & UPGRADED ANIME ULTIMATE CUTSCENE RENDERER
+    // =========================================================================
+    function render() {
+      const cw = canvas.width, ch = canvas.height;
+      const scale = Math.min(cw / W, ch / H);
+      const offX = (cw - W * scale) / 2, offY = (ch - H * scale) / 2;
+      const map = MAPS[G.mapIdx];
+
+      const bg = ctx.createLinearGradient(0, 0, 0, ch);
+      bg.addColorStop(0, map.bg1); bg.addColorStop(1, map.bg2);
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, cw, ch);
+
+      ctx.save();
+      const sx = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 2 : 0;
+      const sy = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 2 : 0;
+      ctx.translate(offX + sx, offY + sy);
+      ctx.scale(scale, scale);
+
+      // Scenic backdrop moon/sun + silhouette peaks
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath(); ctx.arc(W / 2, 220, 155, 0, Math.PI * 2); ctx.fill();
+
+      // Platforms
+      G.platforms.forEach(p => {
+        ctx.fillStyle = p.solid ? '#1e293b' : '#334155';
+        ctx.strokeStyle = G.shiftWarn > 0 ? (Math.floor(G.elapsed * 12) % 2 === 0 ? '#f43f5e' : map.accent) : map.accent;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = map.accent;
+        ctx.fillRect(p.x + 6, p.y, p.w - 12, 4);
+      });
+
+      // Mystery Boxes
+      G.boxes.forEach(b => {
+        ctx.save(); ctx.translate(b.x, b.y);
+        ctx.shadowColor = b.kind === 'red' ? '#f43f5e' : '#facc15'; ctx.shadowBlur = 16;
+        ctx.fillStyle = b.kind === 'red' ? '#f43f5e' : '#facc15';
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.roundRect(-22, -22, 44, 44, 8); ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#0f172a'; ctx.font = '900 22px Orbitron, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(b.kind === 'red' ? 'U' : '?', 0, 8);
+        if (b.hp === 1) {
+          ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(-15, -15); ctx.lineTo(0, 0); ctx.lineTo(14, -9); ctx.stroke();
+        }
+        ctx.restore();
+      });
+
+      // Afterimages (Kage teleport)
+      G.afterimages.forEach(ai => {
+        ctx.save(); ctx.translate(ai.x, ai.y); ctx.globalAlpha = ai.life;
+        drawCharacterArt(ctx, ai.charId, { facing: ai.facing, scale: 1.15 });
+        ctx.restore();
+      });
+
+      // Fighters
+      G.fighters.forEach(f => {
+        if (f.eliminated) return;
+        ctx.save(); ctx.translate(f.x, f.y);
+        if (f.invuln > 0 && Math.floor(G.elapsed * 16) % 2 === 0) ctx.globalAlpha = 0.55;
+        // Ground shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.32)';
+        ctx.beginPath(); ctx.ellipse(0, 39, 24, 7, 0, 0, Math.PI * 2); ctx.fill();
+        // Ready charge aura
+        if (f.charge) {
+          ctx.strokeStyle = f.charge === 'ult' ? '#f43f5e' : '#facc15';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(0, 0, 44 + Math.sin(G.elapsed * 11) * 4, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.save();
+        ctx.translate(0, 36);
+        ctx.rotate(f.lean * f.facing);
+        ctx.scale(f.sx, f.sy);
+        ctx.translate(0, -36);
+        if (f.hitFlash > 0) ctx.filter = 'brightness(2.4)';
+        drawCharacterArt(ctx, f.charId, {
+          t: f.animT, facing: f.facing, attacking: f.atkTimer > 0, comboStep: f.comboStep,
+          moving: Math.abs(f.vx) > 0.6, inAir: !f.onGround, shellMode: f.shellTimer > 0, scale: 1.18
+        });
+        ctx.filter = 'none';
+        ctx.restore();
+        ctx.fillStyle = '#fff'; ctx.font = '900 13px Orbitron, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(f.ctrlTag, 0, -56);
+        ctx.restore();
+      });
+
+      // Plasma Energy Blasts (Ren)
+      G.projectiles.forEach(pr => {
+        ctx.save(); ctx.translate(pr.x, pr.y);
+        ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 22;
+        ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.ellipse(0, 0, 24, 12, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(-10 * Math.sign(pr.vx), 0, 8, 16, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      });
+
+      // Impact Shockwave Rings & Comic Starbursts
+      G.hitEffects.forEach(he => {
+        const alpha = Math.max(0, he.life / he.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = he.color; ctx.lineWidth = 6 * alpha;
+        ctx.beginPath(); ctx.arc(he.x, he.y, he.r, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(he.x, he.y, he.r * 0.35, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      });
+
+      // Particles & Damage Numbers
+      G.particles.forEach(pt => {
+        ctx.globalAlpha = Math.max(0, pt.life * 2);
+        ctx.fillStyle = pt.color;
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      G.floatTexts.forEach(ft => {
+        ctx.fillStyle = ft.color; ctx.font = '900 24px Orbitron, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(ft.text, ft.x, ft.y);
+      });
+
+      if (G.cutscene) drawUltimateCutscene(G.cutscene);
+      else if (G.pendingMatchEnd) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(5, 8, 22, 0.42)'; ctx.fillRect(0, 260, W, 140);
+        ctx.fillStyle = '#facc15'; ctx.font = '900 72px Orbitron, sans-serif'; ctx.textAlign = 'center';
+        ctx.shadowColor = '#f43f5e'; ctx.shadowBlur = 24;
+        ctx.fillText('GAME SET!', W / 2, 355);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    function drawUltimateCutscene(cs) {
+      const f = cs.fighter, p = cs.timer / cs.maxTimer;
+      // Dramatic dark speedline backdrop
+      ctx.fillStyle = `rgba(5, 8, 22, ${Math.min(0.84, p * 2.8)})`;
+      ctx.fillRect(0, 0, W, H);
+
+      // Anime radial speed lines
+      ctx.save(); ctx.translate(W / 2, H / 2);
+      ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 3;
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2 + cs.timer * 0.6;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a) * 180, Math.sin(a) * 180);
+        ctx.lineTo(Math.cos(a) * 760, Math.sin(a) * 760); ctx.stroke();
+      }
+      ctx.restore();
+
+      if (p < 0.50) {
+        // PHASE 1: HERO CUT-IN POSE BANNER!
+        const slide = Math.min(1, p * 4);
+        ctx.save();
+        ctx.fillStyle = f.spec.color;
+        ctx.beginPath(); ctx.moveTo(0, 175); ctx.lineTo(W, 145); ctx.lineTo(W, 385); ctx.lineTo(0, 415); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#0b0e1a';
+        ctx.beginPath(); ctx.moveTo(0, 190); ctx.lineTo(W, 160); ctx.lineTo(W, 370); ctx.lineTo(0, 400); ctx.closePath(); ctx.fill();
+
+        // Giant 3.2x Hero Martial Arts Pose Cut-In!
+        ctx.save();
+        ctx.translate(230 * slide, 315);
+        drawCharacterArt(ctx, f.charId, { t: cs.timer * 3, facing: 1, ultPose: true, scale: 3.1 });
+        ctx.restore();
+
+        // Bold Super Move Title
+        ctx.fillStyle = '#facc15'; ctx.font = '900 44px Orbitron, Noto Sans TC, sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(f.spec.ultName, 390 + (1 - slide) * 160, 275);
+        ctx.fillStyle = '#ffffff'; ctx.font = '800 22px Noto Sans TC, sans-serif';
+        ctx.fillText(`${f.ctrlTag} ${f.spec.name} · ${f.spec.style} ULTIMATE UNLEASHED!`, 390 + (1 - slide) * 160, 325);
+        ctx.restore();
+      } else {
+        // PHASE 2: SCREEN-WIDE SUPER FINISHER!
+        const ep = (p - 0.50) / 0.50;
+        if (f.charId === 'human') {
+          // Colossal Celestial Nova descending + blinding shock dome!
+          const orbY = -140 + Math.min(1, ep * 1.4) * 600;
+          const rad = ep > 0.65 ? 250 + (ep - 0.65) * 1400 : 230;
+          const grad = ctx.createRadialGradient(W / 2, orbY, 24, W / 2, orbY, rad);
+          grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.4, '#38bdf8'); grad.addColorStop(0.75, 'rgba(250,204,21,0.55)'); grad.addColorStop(1, 'rgba(56,189,248,0)');
+          ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(W / 2, orbY, rad, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6;
+          ctx.beginPath(); ctx.ellipse(W / 2, orbY, rad * 1.15, rad * 0.28, ep * 3, 0, Math.PI * 2); ctx.stroke();
+        } else if (f.charId === 'cat') {
+          // 6 Giant Glowing Crimson-Magenta Claw Slashes tearing across entire screen!
+          for (let i = 0; i < 6; i++) {
+            const prog = Math.min(1, Math.max(0, ep * 2.5 - i * 0.12));
+            if (prog > 0) {
+              const x0 = 90 + i * 175, y0 = i % 2 === 0 ? 50 : 650;
+              const x1 = x0 + 260 * prog, y1 = i % 2 === 0 ? 50 + 600 * prog : 650 - 600 * prog;
+              ctx.strokeStyle = '#f43f5e'; ctx.lineWidth = 26; ctx.lineCap = 'round';
+              ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+              ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 8;
+              ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+            }
+          }
+        } else if (f.charId === 'dog') {
+          // Colossal Solar Fireball sweeping screen with swirling flame rings!
+          const fx = -180 + ep * (W + 380);
+          const fg = ctx.createRadialGradient(fx, H / 2, 35, fx, H / 2, 360);
+          fg.addColorStop(0, '#ffffff'); fg.addColorStop(0.35, '#fef08a'); fg.addColorStop(0.65, '#f97316'); fg.addColorStop(1, 'rgba(239,68,68,0)');
+          ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fx, H / 2, 360, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 9;
+          ctx.beginPath(); ctx.arc(fx, H / 2, 220 + Math.sin(ep * 18) * 20, 0, Math.PI * 2); ctx.stroke();
+        } else if (f.charId === 'turtle') {
+          // Towering Golden Seismic Pillars & Concentric Shockwaves erupting across arena!
+          for (let i = 0; i < 6; i++) {
+            const px = 120 + i * 190;
+            const ph = Math.sin(Math.min(1, ep * 1.6) * Math.PI) * 520;
+            const pg = ctx.createLinearGradient(px, 600 - ph, px, 600);
+            pg.addColorStop(0, 'rgba(250,204,21,0)'); pg.addColorStop(0.4, '#facc15'); pg.addColorStop(1, '#22c55e');
+            ctx.fillStyle = pg; ctx.fillRect(px - 32, 600 - ph, 64, ph);
+          }
+          for (let r = 0; r < 5; r++) {
+            const rad = ((ep * 1050) + r * 140) % 1050;
+            ctx.strokeStyle = '#facc15'; ctx.lineWidth = 14;
+            ctx.beginPath(); ctx.arc(W / 2, 580, rad, Math.PI, 0); ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function updateHUD() {
+      document.getElementById('hud-quiz-stat').textContent = `Mandarin Quiz: ${G.quizRight}/${G.quizTotal}`;
+      const wrap = document.getElementById('fighter-huds');
+      wrap.innerHTML = G.fighters.map(f => {
+        const pct = Math.max(0, Math.round((f.hp / f.maxHp) * 100));
+        const cls = (f.ctrlTag === 'P1' ? ' p1' : (f.ctrlTag === 'P2' ? ' p2' : '')) + (f.eliminated ? ' ko' : '');
+        const keyHint = f.ctrlTag === 'P1' ? (G.mode === '1p' ? '[K]' : '[R]') : (f.ctrlTag === 'P2' ? '[/]' : '');
+        const chgHtml = f.charge === 'ult'
+          ? `<span class="chg-badge ready-ult">🟥 ULT READY ${keyHint}</span>`
+          : (f.charge === 'special'
+            ? `<span class="chg-badge ready-sp">🟨 SPECIAL ${keyHint}</span>`
+            : `<span class="chg-badge">No Charge</span>`);
+        return `<div class="f-hud-card${cls}">
+          <div class="fh-top">
+            <span style="color:${f.spec.color};">${f.ctrlTag} ${f.spec.name}</span>
+            <span>${'❤️'.repeat(Math.max(0, f.stocks))}</span>
+          </div>
+          <div class="hp-bar"><div class="hp-fill" style="width:${pct}%; background:${f.spec.color};"></div></div>
+          <div class="charge-row">
+            <span>HP ${f.hp}/${f.maxHp}</span>
+            ${chgHtml}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function loop(now) {
+      const dt = Math.min((now - G.lastTime) / 1000, 0.05);
+      G.lastTime = now;
+      if (G.running && !G.paused) updateSimulation(dt);
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    renderMenuRoster();
+    renderMenuMaps();
+    G.platforms = clonePlatforms(MAPS[0].phases[0]);
+    G.lastTime = performance.now();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
